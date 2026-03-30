@@ -37,51 +37,52 @@ function Dashboard() {
   }, []);
 
   const widgets = [
-    { title: 'Total Customers', value: analytics.total_customers, icon: <PeopleIcon sx={{ fontSize: 32 }} />, color: '#2196F3' },
-    { title: 'Total Tailors', value: analytics.total_tailors, icon: <TailorsIcon sx={{ fontSize: 32 }} />, color: '#2196F3' },
-    { title: 'Total Orders', value: analytics.total_orders, icon: <OrdersIcon sx={{ fontSize: 32 }} />, color: '#2196F3' },
-    { title: 'Total Payments', value: analytics.total_payments, icon: <PaymentIcon sx={{ fontSize: 32 }} />, color: '#2196F3' },
-    { title: 'Pending Orders', value: analytics.pending_orders, icon: <PendingIcon sx={{ fontSize: 32 }} />, color: '#2196F3' },
-    { title: 'Completed Orders', value: analytics.completed_orders, icon: <CheckCircleIcon sx={{ fontSize: 32 }} />, color: '#2196F3' },
-    { title: 'In Progress', value: analytics.in_progress_orders, icon: <ShippingIcon sx={{ fontSize: 32 }} />, color: '#2196F3' },
-    { title: 'Total Revenue', value: `$${analytics.total_revenue || 0}`, icon: <TrendingUpIcon sx={{ fontSize: 32 }} />, color: '#2196F3' }
+    { title: 'Total Customers', value: analytics.total_customers, icon: <PeopleIcon sx={{ fontSize: 28 }} />, color: '#2196F3' },
+    { title: 'Total Tailors', value: analytics.total_tailors, icon: <TailorsIcon sx={{ fontSize: 28 }} />, color: '#9C27B0' },
+    { title: 'Total Orders', value: analytics.total_orders, icon: <OrdersIcon sx={{ fontSize: 28 }} />, color: '#FF9800' },
+    { title: 'Total Payments', value: analytics.total_payments, icon: <PaymentIcon sx={{ fontSize: 28 }} />, color: '#4CAF50' },
+    { title: 'Pending Orders', value: analytics.pending_orders, icon: <PendingIcon sx={{ fontSize: 28 }} />, color: '#FFC107' },
+    { title: 'Completed Orders', value: analytics.completed_orders, icon: <CheckCircleIcon sx={{ fontSize: 28 }} />, color: '#00BCD4' },
+    { title: 'In Progress', value: analytics.in_progress_orders, icon: <ShippingIcon sx={{ fontSize: 28 }} />, color: '#3F51B5' },
+    { title: 'Total Revenue', value: `$${analytics.total_revenue || 0}`, icon: <TrendingUpIcon sx={{ fontSize: 28 }} />, color: '#E91E63' }
   ];
 
   return (
     <Layout title="Dashboard">
       <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
         <Box sx={{ maxWidth: '1200px', width: '100%' }}>
-          <Grid container spacing={2}>
+          <Grid container spacing={2.5}>
             {widgets.map((widget, index) => (
               <Grid item xs={6} sm={4} md={3} key={index}>
                 <Paper sx={{
-                  p: 2,
+                  p: 2.5,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   bgcolor: '#ffffff',
                   border: '1px solid #e0e0e0',
                   borderRadius: 2,
-                  minHeight: 120,
-                  maxHeight: 120,
+                  height: 150,
                   justifyContent: 'center'
                 }}>
                   <Box sx={{
                     bgcolor: widget.color,
                     color: '#ffffff',
-                    p: 1.2,
-                    borderRadius: '10px',
-                    mb: 1.2,
+                    p: 1.5,
+                    borderRadius: '12px',
+                    mb: 1.5,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    width: 56,
+                    height: 56
                   }}>
                     {widget.icon}
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#000', mb: 0.3 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#000', mb: 0.5 }}>
                     {widget.value}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#666', textAlign: 'center', fontSize: '0.75rem' }}>
+                  <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', fontSize: '0.813rem' }}>
                     {widget.title}
                   </Typography>
                 </Paper>
