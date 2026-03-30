@@ -142,8 +142,8 @@ function Home() {
                 mixBlendMode: 'overlay',
               }}
             />
-            <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', alignItems: 'center' }}>
-              <Box sx={{ maxWidth: 600 }}>
+            <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Box sx={{ maxWidth: 600, textAlign: 'center' }}>
                 <Typography 
                   variant="h2" 
                   sx={{ 

@@ -31,7 +31,7 @@ function Login() {
       bgcolor: '#ffffff',
       position: 'relative'
     }}>
-      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 1 }}>
         <Paper elevation={24} sx={{
           p: 5,
           borderRadius: 4,
