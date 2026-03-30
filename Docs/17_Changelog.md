@@ -24,6 +24,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-03-30
+
+### Added - Admin Panel Complete Redesign
+- Professional admin panel with collapsible sidebar navigation
+- Dashboard with 8 medium-sized analytics widgets
+- Professional analytics section below widgets
+- Clean white theme with blue (#2196F3) accent colors
+- Sidebar with toggle button (Menu/ChevronLeft icons)
+- Active page highlighting in blue color
+- Complete page management system:
+  - Dashboard - Analytics overview
+  - Users - Customer management with status chips
+  - Orders - Order tracking with status colors
+  - Tailors - Tailor management
+  - Measurements - Customer measurement records
+  - Payments - Payment tracking with status
+  - Reports - Daily/Weekly/Monthly analytics
+  - Settings - System configuration
+- Professional login page:
+  - Centered popup design
+  - "StitchyFlow Login" header text
+  - Clean white theme with blue buttons
+  - No animations or hints
+  - JWT authentication with adminToken
+- Backend admin API routes:
+  - GET /api/v1/admin/analytics
+  - GET /api/v1/admin/users
+  - GET /api/v1/admin/orders
+  - GET /api/v1/admin/tailors
+  - GET /api/v1/admin/measurements
+  - GET /api/v1/admin/payments
+  - GET /api/v1/admin/reports
+- Protected routes with JWT authentication
+- Logout functionality
+- Responsive table layouts
+- Material-UI components throughout
+- Admin panel README documentation
+
+### Changed
+- Updated App.js with all new routes
+- Improved authentication flow
+- Enhanced UI/UX consistency
+- Better error handling in admin pages
+
+---
+
 ## [1.0.0] - 2026-03-30
 
 ### Added

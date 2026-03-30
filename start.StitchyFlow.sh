@@ -68,28 +68,27 @@ start_service() {
     
     if check_port $port; then
         print_warning "${service_name} is already running on port ${port}"
+        return 0
     else
-        cd "$directory" 2>/dev/null
-        if [ $? -ne 0 ]; then
+        if [ ! -d "$directory" ]; then
             print_error "Directory not found: ${directory}"
             return 1
         fi
         
-        # Start the service in background
-        eval "$command" > /dev/null 2>&1 &
+        # Start the service in background from the directory
+        (cd "$directory" && eval "$command" > /dev/null 2>&1 &)
         
         # Wait for service to start
-        sleep 3
+        sleep 5
         
         if check_port $port; then
             print_status "${service_name} started successfully on port ${port}"
+            return 0
         else
             print_error "Failed to start ${service_name}"
             return 1
         fi
     fi
-    
-    return 0
 }
 
 # Start system initialization
@@ -134,21 +133,32 @@ fi
 sleep 1
 echo ""
 
+# Track service start status
+BACKEND_STARTED=false
+FRONTEND_STARTED=false
+ADMIN_STARTED=false
+
 # Start Backend API
 echo -e "${MAGENTA}${BOLD}[3/5] Starting Backend Services${NC}"
-start_service "Backend API" 5000 "./StitchyFlow/backend" "npm start"
+if start_service "Backend API" 5000 "./StitchyFlow/backend" "npm start"; then
+    BACKEND_STARTED=true
+fi
 sleep 2
 echo ""
 
 # Start Frontend
 echo -e "${MAGENTA}${BOLD}[4/5] Starting Frontend Services${NC}"
-start_service "Frontend Application" 3000 "./StitchyFlow/frontend" "npm start"
+if start_service "Frontend Application" 3000 "./StitchyFlow/frontend" "npm start"; then
+    FRONTEND_STARTED=true
+fi
 sleep 2
 echo ""
 
 # Start Admin Panel
 echo -e "${MAGENTA}${BOLD}[5/5] Starting Admin Panel${NC}"
-start_service "Admin Panel" 4000 "./StitchyFlow/admin" "npm start"
+if start_service "Admin Panel" 4000 "./StitchyFlow/admin" "npm start"; then
+    ADMIN_STARTED=true
+fi
 sleep 2
 echo ""
 
@@ -223,9 +233,34 @@ else
 fi
 
 echo ""
-echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║${GREEN}${BOLD}                    ✓ StitchyFlow Started Successfully                     ${CYAN}║${NC}"
-echo -e "${CYAN}╚════════════════════════════════════════════════════════════════════════════╝${NC}"
+
+# Determine overall status
+if [ "$BACKEND_STARTED" = true ] && [ "$FRONTEND_STARTED" = true ] && [ "$ADMIN_STARTED" = true ]; then
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${GREEN}${BOLD}                    ✓ StitchyFlow Started Successfully                     ${CYAN}║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════════════════╝${NC}"
+elif [ "$BACKEND_STARTED" = false ] && [ "$FRONTEND_STARTED" = false ] && [ "$ADMIN_STARTED" = false ]; then
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${RED}${BOLD}                    ✗ Application Not Yet Implemented                      ${CYAN}║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${YELLOW}${BOLD}⚠ Notice:${NC} The StitchyFlow application code has not been created yet."
+    echo -e "${WHITE}The following directories are missing:${NC}"
+    echo -e "  ${RED}✗${NC} ./StitchyFlow/backend"
+    echo -e "  ${RED}✗${NC} ./StitchyFlow/frontend"
+    echo -e "  ${RED}✗${NC} ./StitchyFlow/admin"
+    echo ""
+    echo -e "${CYAN}${BOLD}Next Steps:${NC}"
+    echo -e "  1. Implement the backend API (Node.js/Express.js)"
+    echo -e "  2. Implement the frontend application (React.js)"
+    echo -e "  3. Implement the admin panel (React.js)"
+    echo -e "  4. Run this script again to start all services"
+    echo ""
+else
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${YELLOW}${BOLD}                    ⚠ Partial Startup - Some Services Failed              ${CYAN}║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════════════════╝${NC}"
+fi
 echo ""
 
 # Footer
@@ -243,5 +278,10 @@ echo -e "${WHITE}${BOLD}📋 Live Application Logs (Press Ctrl+C to exit logs, s
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-# Tail logs if available
-tail -f ./StitchyFlow/backend/logs/*.log 2>/dev/null || echo -e "${YELLOW}No log files found yet. Services are running in background.${NC}"
+# Only show logs if backend actually started
+if [ "$BACKEND_STARTED" = true ]; then
+    tail -f ./StitchyFlow/backend/logs/*.log 2>/dev/null || echo -e "${YELLOW}No log files found yet. Services are running in background.${NC}"
+else
+    echo -e "${YELLOW}Application services not running. Only MySQL and phpMyAdmin are available.${NC}"
+    echo ""
+fi

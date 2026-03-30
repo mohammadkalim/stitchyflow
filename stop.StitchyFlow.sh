@@ -175,7 +175,7 @@ fi
 
 if [ "$ALL_STOPPED" = true ]; then
     echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${GREEN}${BOLD}                  ✓ All StitchyFlow Services Stopped Successfully          ${CYAN}║${NC}"
+    echo -e "${CYAN}║${GREEN}${BOLD}                ✓ All StitchyFlow Application Services Stopped            ${CYAN}║${NC}"
     echo -e "${CYAN}╚════════════════════════════════════════════════════════════════════════════╝${NC}"
 else
     echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════════════╗${NC}"
