@@ -235,23 +235,6 @@ function Home() {
           <ArrowForwardIcon sx={{ color: '#410093' }} />
         </IconButton>
         
-        {/* Slide Indicators */}
-        <Box sx={{ position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 3, display: 'flex', gap: 1 }}>
-          {sliderData.map((_, index) => (
-            <Box
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              sx={{
-                width: currentSlide === index ? 30 : 10,
-                height: 10,
-                borderRadius: 5,
-                bgcolor: currentSlide === index ? '#410093' : 'rgba(255,255,255,0.5)',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-            />
-          ))}
-        </Box>
       </Box>
 
       {/* Services Section */}
