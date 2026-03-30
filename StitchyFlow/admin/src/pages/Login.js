@@ -50,11 +50,7 @@ function Login() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
-              transition: 'transform 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.05)'
-              }
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)'
             }}>
               <Typography sx={{ fontSize: 48, color: '#ffffff', fontWeight: 700 }}>
                 S
@@ -203,14 +199,9 @@ function Login() {
                 letterSpacing: '0.5px',
                 textTransform: 'uppercase',
                 boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
-                transition: 'all 0.3s ease',
                 '&:hover': {
                   background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.2)',
-                  transform: 'translateY(-2px)'
-                },
-                '&:active': {
-                  transform: 'translateY(0px)'
+                  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.2)'
                 }
               }}
             >
