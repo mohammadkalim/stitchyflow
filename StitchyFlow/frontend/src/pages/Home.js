@@ -206,34 +206,6 @@ function Home() {
         ))}
         
         {/* Slider Controls */}
-        <IconButton
-          onClick={prevSlide}
-          sx={{
-            position: 'absolute',
-            left: 20,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            bgcolor: 'rgba(255,255,255,0.9)',
-            zIndex: 3,
-            '&:hover': { bgcolor: '#fff' },
-          }}
-        >
-          <ArrowBackIcon sx={{ color: '#410093' }} />
-        </IconButton>
-        <IconButton
-          onClick={nextSlide}
-          sx={{
-            position: 'absolute',
-            right: 20,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            bgcolor: 'rgba(255,255,255,0.9)',
-            zIndex: 3,
-            '&:hover': { bgcolor: '#fff' },
-          }}
-        >
-          <ArrowForwardIcon sx={{ color: '#410093' }} />
-        </IconButton>
         
       </Box>
 
