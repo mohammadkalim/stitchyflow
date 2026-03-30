@@ -186,9 +186,10 @@ function Home() {
                     backgroundColor: '#29B6F6',
                     fontWeight: 600,
                     borderRadius: '10px',
-                    px: 4,
-                    py: 1.5,
-                    fontSize: '1rem',
+                    px: 6,
+                    py: 2,
+                    fontSize: '1.1rem',
+                    mt: 4,
                     boxShadow: '0 4px 20px rgba(41, 182, 246, 0.4)',
                     '&:hover': {
                       backgroundColor: '#4FC3F7',
