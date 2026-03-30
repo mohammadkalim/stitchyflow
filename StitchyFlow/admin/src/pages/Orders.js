@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip } from '@mui/material';
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Box, Typography } from '@mui/material';
 import axios from 'axios';
 import Layout from '../components/Layout';
 
@@ -23,48 +23,62 @@ function Orders() {
 
   const getStatusColor = (status) => {
     const colors = {
-      pending: '#ff9800',
-      in_progress: '#2196F3',
-      completed: '#4caf50',
-      cancelled: '#f44336'
+      pending: { bg: '#FFF3E0', color: '#E65100' },
+      in_progress: { bg: '#E3F2FD', color: '#1565C0' },
+      completed: { bg: '#E8F5E9', color: '#2E7D32' },
+      cancelled: { bg: '#FFEBEE', color: '#C62828' }
     };
-    return colors[status] || '#757575';
+    return colors[status] || { bg: '#f5f5f5', color: '#666' };
   };
 
   return (
-    <Layout title="Orders">
-      <TableContainer component={Paper} sx={{ bgcolor: '#ffffff', border: '1px solid #e0e0e0' }}>
-        <Table>
-          <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Order ID</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Customer</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Tailor</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Total Amount</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.order_id} hover>
-                <TableCell>{order.order_id}</TableCell>
-                <TableCell>{order.customer_name}</TableCell>
-                <TableCell>{order.tailor_name}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={order.status}
-                    size="small"
-                    sx={{ bgcolor: getStatusColor(order.status), color: '#fff' }}
-                  />
-                </TableCell>
-                <TableCell>${order.total_amount}</TableCell>
-                <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
+    <Layout title="Dashboard - Orders">
+      <Paper sx={{ 
+        bgcolor: '#ffffff', 
+        borderRadius: '16px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+        border: '1px solid rgba(0,0,0,0.05)',
+        overflow: 'hidden'
+      }}>
+        <Box sx={{ p: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a2e' }}>Orders Management</Typography>
+        </Box>
+        <TableContainer>
+          <Table>
+            <TableHead sx={{ bgcolor: '#f8f9fa' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600, color: '#666', py: 2 }}>Order ID</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#666', py: 2 }}>Customer</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#666', py: 2 }}>Tailor</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#666', py: 2 }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#666', py: 2 }}>Total Amount</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: '#666', py: 2 }}>Date</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {orders.map((order) => {
+                const statusStyle = getStatusColor(order.status);
+                return (
+                  <TableRow key={order.order_id} hover sx={{ '&:hover': { bgcolor: '#f8f9fa' } }}>
+                    <TableCell sx={{ fontWeight: 500, color: '#1a1a2e' }}>#{order.order_id}</TableCell>
+                    <TableCell sx={{ color: '#666' }}>{order.customer_name}</TableCell>
+                    <TableCell sx={{ color: '#666' }}>{order.tailor_name}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={order.status.replace('_', ' ').toUpperCase()}
+                        size="small"
+                        sx={{ bgcolor: statusStyle.bg, color: statusStyle.color, fontWeight: 600, fontSize: '0.7rem' }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#1a1a2e' }}>${order.total_amount}</TableCell>
+                    <TableCell sx={{ color: '#666' }}>{new Date(order.created_at).toLocaleDateString()}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
     </Layout>
   );
 }

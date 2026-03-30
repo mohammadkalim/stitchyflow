@@ -28,19 +28,16 @@ function Login() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      bgcolor: '#ffffff',
-      position: 'relative'
+      bgcolor: '#ffffff'
     }}>
-      <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 1 }}>
-        <Paper elevation={24} sx={{
-          p: 5,
-          borderRadius: 4,
+      <Container maxWidth="xs">
+        <Paper elevation={3} sx={{
+          p: 4,
+          borderRadius: 2,
           bgcolor: '#ffffff',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e0e0e0',
-          backdropFilter: 'blur(10px)'
+          border: '1px solid #e0e0e0'
         }}>
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Box sx={{
               width: 80,
               height: 80,
@@ -56,15 +53,14 @@ function Login() {
                 S
               </Typography>
             </Box>
-            <Typography variant="h4" sx={{ 
-              fontWeight: 700, 
-              color: '#1976d2',
-              mb: 1,
-              letterSpacing: '-0.5px'
+            <Typography variant="h5" sx={{ 
+              fontWeight: 600, 
+              color: '#2196F3',
+              mb: 1
             }}>
               StitchyFlow Login
             </Typography>
-            <Typography variant="body2" sx={{ color: '#64B5F6', fontSize: '0.95rem' }}>
+            <Typography variant="body2" sx={{ color: '#64B5F6', fontSize: '0.875rem' }}>
               Welcome back! Please login to your account
             </Typography>
           </Box>
@@ -72,7 +68,7 @@ function Login() {
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              placeholder="Enter your email"
+              placeholder="Email"
               type="email"
               required
               value={formData.email}
@@ -80,44 +76,30 @@ function Login() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <EmailIcon sx={{ color: '#64B5F6' }} />
+                    <EmailIcon sx={{ color: '#2196F3' }} />
                   </InputAdornment>
                 ),
               }}
               sx={{
-                mb: 3,
+                mb: 2,
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  bgcolor: '#F5F5F5',
-                  transition: 'all 0.3s ease',
+                  borderRadius: 1,
                   '& fieldset': {
-                    borderColor: 'transparent'
+                    borderColor: '#e0e0e0'
                   },
-                  '&:hover': {
-                    bgcolor: '#ffffff',
-                    '& fieldset': {
-                      borderColor: '#90CAF9'
-                    }
+                  '&:hover fieldset': {
+                    borderColor: '#2196F3'
                   },
-                  '&.Mui-focused': {
-                    bgcolor: '#ffffff',
-                    boxShadow: '0 0 0 3px rgba(33, 150, 243, 0.1)',
-                    '& fieldset': {
-                      borderColor: '#2196F3',
-                      borderWidth: '2px'
-                    }
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2196F3'
                   }
-                },
-                '& .MuiOutlinedInput-input': {
-                  padding: '16px 14px',
-                  fontSize: '0.95rem'
                 }
               }}
             />
 
             <TextField
               fullWidth
-              placeholder="Enter your password"
+              placeholder="Password"
               type={showPassword ? 'text' : 'password'}
               required
               value={formData.password}
@@ -125,7 +107,7 @@ function Login() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockIcon sx={{ color: '#64B5F6' }} />
+                    <LockIcon sx={{ color: '#2196F3' }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -133,7 +115,7 @@ function Login() {
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
-                      sx={{ color: '#64B5F6' }}
+                      sx={{ color: '#2196F3' }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -143,30 +125,16 @@ function Login() {
               sx={{
                 mb: 2,
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  bgcolor: '#F5F5F5',
-                  transition: 'all 0.3s ease',
+                  borderRadius: 1,
                   '& fieldset': {
-                    borderColor: 'transparent'
+                    borderColor: '#e0e0e0'
                   },
-                  '&:hover': {
-                    bgcolor: '#ffffff',
-                    '& fieldset': {
-                      borderColor: '#90CAF9'
-                    }
+                  '&:hover fieldset': {
+                    borderColor: '#2196F3'
                   },
-                  '&.Mui-focused': {
-                    bgcolor: '#ffffff',
-                    boxShadow: '0 0 0 3px rgba(33, 150, 243, 0.1)',
-                    '& fieldset': {
-                      borderColor: '#2196F3',
-                      borderWidth: '2px'
-                    }
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2196F3'
                   }
-                },
-                '& .MuiOutlinedInput-input': {
-                  padding: '16px 14px',
-                  fontSize: '0.95rem'
                 }
               }}
             />
@@ -174,9 +142,9 @@ function Login() {
             {error && (
               <Box sx={{
                 mb: 2,
-                p: 2,
+                p: 1.5,
                 bgcolor: '#FFEBEE',
-                borderRadius: 2,
+                borderRadius: 1,
                 border: '1px solid #FFCDD2'
               }}>
                 <Typography sx={{ color: '#D32F2F', fontSize: '0.875rem', textAlign: 'center' }}>
@@ -190,18 +158,12 @@ function Login() {
               variant="contained"
               type="submit"
               sx={{
-                mt: 2,
-                py: 1.8,
-                background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)',
-                borderRadius: 2,
-                fontSize: '1rem',
-                fontWeight: 700,
-                letterSpacing: '0.5px',
-                textTransform: 'uppercase',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                py: 1.5,
+                background: '#2196F3',
+                borderRadius: 1,
+                fontWeight: 600,
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.2)'
+                  background: '#1976d2'
                 }
               }}
             >
@@ -209,21 +171,14 @@ function Login() {
             </Button>
           </form>
 
-          <Box sx={{ mt: 4, textAlign: 'center' }}>
-            <Typography variant="caption" sx={{ color: '#90A4AE', fontSize: '0.75rem' }}>
+          <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Typography variant="caption" sx={{ color: '#999', fontSize: '0.75rem' }}>
               © 2026 StitchyFlow. All rights reserved.{' '}
               <a 
                 href="https://logixinventor.com/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                style={{ 
-                  color: '#2196F3', 
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  transition: 'color 0.3s ease'
-                }}
-                onMouseEnter={(e) => e.target.style.color = '#1976d2'}
-                onMouseLeave={(e) => e.target.style.color = '#2196F3'}
+                style={{ color: '#2196F3', textDecoration: 'none', fontWeight: 600 }}
               >
                 LOGIXINVENTOR PVT LTD
               </a>
@@ -231,21 +186,14 @@ function Login() {
           </Box>
         </Paper>
 
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#90A4AE', fontSize: '0.8rem' }}>
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#999', fontSize: '0.75rem' }}>
             Developed By{' '}
             <a 
               href="https://markinventor.com/" 
               target="_blank" 
               rel="noopener noreferrer"
-              style={{ 
-                color: '#2196F3', 
-                textDecoration: 'none',
-                fontWeight: 600,
-                transition: 'color 0.3s ease'
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#1976d2'}
-              onMouseLeave={(e) => e.target.style.color = '#2196F3'}
+              style={{ color: '#2196F3', textDecoration: 'none', fontWeight: 600 }}
             >
               MARKINVENTOR
             </a>

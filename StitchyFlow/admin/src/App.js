@@ -8,6 +8,9 @@ import Users from './pages/Users';
 import Orders from './pages/Orders';
 import Tailors from './pages/Tailors';
 import Measurements from './pages/Measurements';
+import AirDam from './pages/AirDam';
+import AirCoats from './pages/AirCoats';
+import FlowerBand from './pages/FlowerBand';
 import Payments from './pages/Payments';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
@@ -41,6 +44,9 @@ function App() {
           <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
           <Route path="/tailors" element={<PrivateRoute><Tailors /></PrivateRoute>} />
           <Route path="/measurements" element={<PrivateRoute><Measurements /></PrivateRoute>} />
+          <Route path="/air-dam" element={<PrivateRoute><AirDam /></PrivateRoute>} />
+          <Route path="/air-coats" element={<PrivateRoute><AirCoats /></PrivateRoute>} />
+          <Route path="/flower-band" element={<PrivateRoute><FlowerBand /></PrivateRoute>} />
           <Route path="/payments" element={<PrivateRoute><Payments /></PrivateRoute>} />
           <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
           <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />

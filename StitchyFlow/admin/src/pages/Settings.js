@@ -16,11 +16,25 @@ function Settings() {
   };
 
   return (
-    <Layout title="Settings">
-      <Paper sx={{ p: 4, bgcolor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: 2 }}>
-        <Typography variant="h6" sx={{ mb: 3, color: '#2196F3', fontWeight: 600 }}>
-          General Settings
-        </Typography>
+    <Layout title="Dashboard - Settings">
+      <Paper sx={{ 
+        p: 4, 
+        bgcolor: '#ffffff', 
+        border: '1px solid rgba(0,0,0,0.05)', 
+        borderRadius: '16px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 4 }}>
+          <Box sx={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            bgcolor: '#2196F3'
+          }} />
+          <Typography variant="h6" sx={{ color: '#1a1a2e', fontWeight: 600 }}>
+            General Settings
+          </Typography>
+        </Box>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
@@ -31,7 +45,8 @@ function Settings() {
                 onChange={(e) => setSettings({...settings, site_name: e.target.value})}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '&.Mui-focused fieldset': { borderColor: '#2196F3' }
+                    borderRadius: '12px',
+                    '&.Mui-focused fieldset': { borderColor: '#2196F3', borderWidth: 2 }
                   },
                   '& .MuiInputLabel-root.Mui-focused': { color: '#2196F3' }
                 }}
@@ -46,7 +61,8 @@ function Settings() {
                 onChange={(e) => setSettings({...settings, admin_email: e.target.value})}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '&.Mui-focused fieldset': { borderColor: '#2196F3' }
+                    borderRadius: '12px',
+                    '&.Mui-focused fieldset': { borderColor: '#2196F3', borderWidth: 2 }
                   },
                   '& .MuiInputLabel-root.Mui-focused': { color: '#2196F3' }
                 }}
@@ -61,7 +77,8 @@ function Settings() {
                 onChange={(e) => setSettings({...settings, support_email: e.target.value})}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '&.Mui-focused fieldset': { borderColor: '#2196F3' }
+                    borderRadius: '12px',
+                    '&.Mui-focused fieldset': { borderColor: '#2196F3', borderWidth: 2 }
                   },
                   '& .MuiInputLabel-root.Mui-focused': { color: '#2196F3' }
                 }}
@@ -75,7 +92,8 @@ function Settings() {
                 onChange={(e) => setSettings({...settings, phone: e.target.value})}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '&.Mui-focused fieldset': { borderColor: '#2196F3' }
+                    borderRadius: '12px',
+                    '&.Mui-focused fieldset': { borderColor: '#2196F3', borderWidth: 2 }
                   },
                   '& .MuiInputLabel-root.Mui-focused': { color: '#2196F3' }
                 }}
@@ -86,10 +104,14 @@ function Settings() {
             type="submit"
             variant="contained"
             sx={{
-              mt: 3,
+              mt: 4,
               bgcolor: '#2196F3',
-              '&:hover': { bgcolor: '#1976d2' },
-              px: 4
+              borderRadius: '12px',
+              px: 4,
+              py: 1.5,
+              fontWeight: 600,
+              boxShadow: '0 4px 14px rgba(33, 150, 243, 0.3)',
+              '&:hover': { bgcolor: '#1976d2', boxShadow: '0 6px 20px rgba(33, 150, 243, 0.4)' }
             }}
           >
             Save Settings
