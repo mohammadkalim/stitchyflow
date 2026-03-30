@@ -50,61 +50,54 @@ function Dashboard() {
 
   return (
     <Layout title="Dashboard">
-      <Grid container spacing={3}>
-        {widgets.map((widget, index) => (
-          <Grid item xs={6} sm={4} md={3} key={index}>
-            <Card sx={{ 
-              borderRadius: '16px', 
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              border: '1px solid rgba(0,0,0,0.05)',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
-              }
-            }}>
-              <CardContent sx={{ p: 2.5 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '12px',
-                    background: widget.gradient,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    '& svg': { fontSize: 24 }
-                  }}>
-                    {widget.icon}
-                  </Box>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 0.5,
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: '8px',
-                    bgcolor: widget.trend.startsWith('+') ? '#e8f5e9' : '#ffebee',
-                    color: widget.trend.startsWith('+') ? '#2e7d32' : '#c62828',
-                    fontSize: '0.75rem',
-                    fontWeight: 600
-                  }}>
-                    {widget.trend.startsWith('+') ? <ArrowUpIcon sx={{ fontSize: 14 }} /> : <ArrowDownIcon sx={{ fontSize: 14 }} />}
-                    {widget.trend}
-                  </Box>
+      <Paper sx={{ 
+        p: 3, 
+        bgcolor: '#ffffff', 
+        borderRadius: '16px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+        border: '1px solid rgba(0,0,0,0.05)'
+      }}>
+        <Grid container spacing={2}>
+          {widgets.map((widget, index) => (
+            <Grid item xs={3} key={index}>
+              <Box sx={{
+                p: 1.5,
+                borderRadius: '10px',
+                bgcolor: '#f8f9fa',
+                textAlign: 'center',
+                height: '100%',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: '#f0f7ff',
+                  transform: 'scale(1.02)'
+                }
+              }}>
+                <Box sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  background: widget.gradient,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  mx: 'auto',
+                  mb: 0.5,
+                  '& svg': { fontSize: 16 }
+                }}>
+                  {widget.icon}
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5, letterSpacing: '-1px' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1rem' }}>
                   {widget.value}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#666', fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ color: '#666', fontSize: '0.65rem', fontWeight: 500 }}>
                   {widget.title}
                 </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+      </Paper>
 
       <Box sx={{ mt: 4 }}>
         <Typography variant="h6" sx={{ mb: 3, fontWeight: 700, color: '#1a1a2e', letterSpacing: '-0.5px' }}>
@@ -205,6 +198,82 @@ function Dashboard() {
                   <TrendingUpIcon sx={{ color: '#E91E63', fontSize: 28 }} />
                 </Box>
               </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h6" sx={{ mb: 3, fontWeight: 700, color: '#1a1a2e', letterSpacing: '-0.5px' }}>
+          Analytics
+        </Typography>
+        <Grid container spacing={3}>
+          <Grid item xs={3}>
+            <Paper sx={{ 
+              p: 3, 
+              borderRadius: '16px', 
+              textAlign: 'center', 
+              border: '1px solid rgba(0,0,0,0.05)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              transition: 'transform 0.2s ease',
+              '&:hover': { transform: 'translateY(-2px)' }
+            }}>
+              <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: '#E3F2FD', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+                <OrdersIcon sx={{ color: '#2196F3', fontSize: 24 }} />
+              </Box>
+              <Typography sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.75rem', letterSpacing: '-0.5px' }}>{analytics.total_orders}</Typography>
+              <Typography sx={{ color: '#666', fontSize: '0.8rem', fontWeight: 500, mt: 0.5 }}>Total Orders</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={3}>
+            <Paper sx={{ 
+              p: 3, 
+              borderRadius: '16px', 
+              textAlign: 'center', 
+              border: '1px solid rgba(0,0,0,0.05)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              transition: 'transform 0.2s ease',
+              '&:hover': { transform: 'translateY(-2px)' }
+            }}>
+              <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: '#FCE4EC', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+                <TrendingUpIcon sx={{ color: '#E91E63', fontSize: 24 }} />
+              </Box>
+              <Typography sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.75rem', letterSpacing: '-0.5px' }}>${analytics.total_revenue || 0}</Typography>
+              <Typography sx={{ color: '#666', fontSize: '0.8rem', fontWeight: 500, mt: 0.5 }}>Total Revenue</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={3}>
+            <Paper sx={{ 
+              p: 3, 
+              borderRadius: '16px', 
+              textAlign: 'center', 
+              border: '1px solid rgba(0,0,0,0.05)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              transition: 'transform 0.2s ease',
+              '&:hover': { transform: 'translateY(-2px)' }
+            }}>
+              <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+                <PaymentIcon sx={{ color: '#4CAF50', fontSize: 24 }} />
+              </Box>
+              <Typography sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.75rem', letterSpacing: '-0.5px' }}>{analytics.total_payments}</Typography>
+              <Typography sx={{ color: '#666', fontSize: '0.8rem', fontWeight: 500, mt: 0.5 }}>Total Payments</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={3}>
+            <Paper sx={{ 
+              p: 3, 
+              borderRadius: '16px', 
+              textAlign: 'center', 
+              border: '1px solid rgba(0,0,0,0.05)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              transition: 'transform 0.2s ease',
+              '&:hover': { transform: 'translateY(-2px)' }
+            }}>
+              <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: '#E8EAF6', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+                <ShippingIcon sx={{ color: '#3F51B5', fontSize: 24 }} />
+              </Box>
+              <Typography sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1.75rem', letterSpacing: '-0.5px' }}>{analytics.in_progress_orders}</Typography>
+              <Typography sx={{ color: '#666', fontSize: '0.8rem', fontWeight: 500, mt: 0.5 }}>In Progress</Typography>
             </Paper>
           </Grid>
         </Grid>

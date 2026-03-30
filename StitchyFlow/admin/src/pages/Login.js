@@ -28,47 +28,48 @@ function Login() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      bgcolor: '#ffffff'
+      bgcolor: '#f0f2f5',
+      backgroundImage: 'linear-gradient(135deg, #f0f2f5 0%, #e8eaed 100%)'
     }}>
       <Container maxWidth="xs">
-        <Paper elevation={3} sx={{
-          p: 4,
-          borderRadius: 2,
+        <Paper elevation={0} sx={{
+          p: 5,
+          borderRadius: '24px',
           bgcolor: '#ffffff',
-          border: '1px solid #e0e0e0'
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
+          border: '1px solid rgba(0, 0, 0, 0.04)'
         }}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Box sx={{
-              width: 80,
-              height: 80,
-              margin: '0 auto 20px',
-              background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)',
+              width: 72,
+              height: 72,
+              margin: '0 auto 24px',
+              background: 'linear-gradient(135deg, #2196F3 0%, #1565C0 100%)',
               borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)'
+              boxShadow: '0 12px 32px rgba(33, 150, 243, 0.35)'
             }}>
-              <Typography sx={{ fontSize: 48, color: '#ffffff', fontWeight: 700 }}>
-                S
-              </Typography>
+              <Typography sx={{ fontSize: 36, color: '#ffffff', fontWeight: 700 }}>S</Typography>
             </Box>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 600, 
-              color: '#2196F3',
-              mb: 1
+            <Typography variant="h4" sx={{ 
+              fontWeight: 700, 
+              color: '#1a1a2e',
+              mb: 1,
+              letterSpacing: '-0.5px'
             }}>
-              StitchyFlow Login
+              StitchyFlow
             </Typography>
-            <Typography variant="body2" sx={{ color: '#64B5F6', fontSize: '0.875rem' }}>
-              Welcome back! Please login to your account
+            <Typography variant="body1" sx={{ color: '#666', fontSize: '0.95rem' }}>
+              Sign in to your admin account
             </Typography>
           </Box>
 
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              placeholder="Email"
+              placeholder="Email Address"
               type="email"
               required
               value={formData.email}
@@ -81,17 +82,19 @@ function Login() {
                 ),
               }}
               sx={{
-                mb: 2,
+                mb: 2.5,
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 1,
+                  borderRadius: '14px',
                   '& fieldset': {
-                    borderColor: '#e0e0e0'
+                    borderColor: '#e0e0e0',
+                    borderWidth: '1.5px'
                   },
                   '&:hover fieldset': {
                     borderColor: '#2196F3'
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#2196F3'
+                    borderColor: '#2196F3',
+                    borderWidth: '2px'
                   }
                 }
               }}
@@ -115,7 +118,7 @@ function Login() {
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
-                      sx={{ color: '#2196F3' }}
+                      sx={{ color: '#999', '&:hover': { color: '#2196F3' } }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -123,17 +126,19 @@ function Login() {
                 ),
               }}
               sx={{
-                mb: 2,
+                mb: 2.5,
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 1,
+                  borderRadius: '14px',
                   '& fieldset': {
-                    borderColor: '#e0e0e0'
+                    borderColor: '#e0e0e0',
+                    borderWidth: '1.5px'
                   },
                   '&:hover fieldset': {
                     borderColor: '#2196F3'
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#2196F3'
+                    borderColor: '#2196F3',
+                    borderWidth: '2px'
                   }
                 }
               }}
@@ -141,13 +146,13 @@ function Login() {
 
             {error && (
               <Box sx={{
-                mb: 2,
-                p: 1.5,
-                bgcolor: '#FFEBEE',
-                borderRadius: 1,
+                mb: 2.5,
+                p: 2,
+                bgcolor: '#FFF5F5',
+                borderRadius: '12px',
                 border: '1px solid #FFCDD2'
               }}>
-                <Typography sx={{ color: '#D32F2F', fontSize: '0.875rem', textAlign: 'center' }}>
+                <Typography sx={{ color: '#D32F2F', fontSize: '0.875rem', textAlign: 'center', fontWeight: 500 }}>
                   {error}
                 </Typography>
               </Box>
@@ -158,21 +163,26 @@ function Login() {
               variant="contained"
               type="submit"
               sx={{
-                py: 1.5,
-                background: '#2196F3',
-                borderRadius: 1,
+                py: 1.8,
+                background: 'linear-gradient(135deg, #2196F3 0%, #1565C0 100%)',
+                borderRadius: '14px',
                 fontWeight: 600,
+                fontSize: '1rem',
+                boxShadow: '0 8px 24px rgba(33, 150, 243, 0.35)',
                 '&:hover': {
-                  background: '#1976d2'
-                }
+                  background: 'linear-gradient(135deg, #1976D2 0%, #0D47A1 100%)',
+                  boxShadow: '0 12px 32px rgba(33, 150, 243, 0.45)',
+                  transform: 'translateY(-1px)'
+                },
+                transition: 'all 0.2s ease'
               }}
             >
-              Login
+              Sign In
             </Button>
           </form>
 
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Typography variant="caption" sx={{ color: '#999', fontSize: '0.75rem' }}>
+          <Box sx={{ mt: 4, textAlign: 'center', pt: 3, borderTop: '1px solid #f0f0f0' }}>
+            <Typography variant="caption" sx={{ color: '#999', fontSize: '0.8rem' }}>
               © 2026 StitchyFlow. All rights reserved.{' '}
               <a 
                 href="https://logixinventor.com/" 
@@ -186,8 +196,8 @@ function Login() {
           </Box>
         </Paper>
 
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#999', fontSize: '0.75rem' }}>
+        <Box sx={{ mt: 3, textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#999', fontSize: '0.8rem' }}>
             Developed By{' '}
             <a 
               href="https://markinventor.com/" 
