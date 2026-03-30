@@ -44,7 +44,7 @@ function SplashScreen() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(-45deg, #410093, #7f00ff, #00bfff, #410093)',
+        background: 'linear-gradient(-45deg, #29B6F6, #4FC3F7, #00bfff, #29B6F6)',
         backgroundSize: '400% 400%',
         animation: `${gradientMove} 8s ease infinite`,
       }}

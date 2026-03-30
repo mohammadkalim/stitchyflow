@@ -9,8 +9,8 @@ import SplashScreen from './pages/SplashScreen';
 
 const theme = createTheme({
   palette: {
-    primary: { main: '#410093' },
-    secondary: { main: '#7f00ff' }
+    primary: { main: '#29B6F6' },
+    secondary: { main: '#4FC3F7' }
   }
 });
 

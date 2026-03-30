@@ -42,7 +42,7 @@ function Header() {
               onClick={() => navigate('/home')}
               sx={{ 
                 fontWeight: 700, 
-                color: '#410093',
+                color: '#29B6F6',
                 cursor: 'pointer',
                 letterSpacing: '1px',
               }}
@@ -56,7 +56,7 @@ function Header() {
                 sx={{ 
                   color: '#333', 
                   fontWeight: 500,
-                  '&:hover': { backgroundColor: 'rgba(65, 0, 147, 0.05)' }
+                  '&:hover': { backgroundColor: 'rgba(41, 182, 246, 0.05)' }
                 }}
               >
                 Home
@@ -65,7 +65,7 @@ function Header() {
                 sx={{ 
                   color: '#333', 
                   fontWeight: 500,
-                  '&:hover': { backgroundColor: 'rgba(65, 0, 147, 0.05)' }
+                  '&:hover': { backgroundColor: 'rgba(41, 182, 246, 0.05)' }
                 }}
               >
                 Services
@@ -74,7 +74,7 @@ function Header() {
                 sx={{ 
                   color: '#333', 
                   fontWeight: 500,
-                  '&:hover': { backgroundColor: 'rgba(65, 0, 147, 0.05)' }
+                  '&:hover': { backgroundColor: 'rgba(41, 182, 246, 0.05)' }
                 }}
               >
                 About
@@ -83,7 +83,7 @@ function Header() {
                 sx={{ 
                   color: '#333', 
                   fontWeight: 500,
-                  '&:hover': { backgroundColor: 'rgba(65, 0, 147, 0.05)' }
+                  '&:hover': { backgroundColor: 'rgba(41, 182, 246, 0.05)' }
                 }}
               >
                 Contact
@@ -95,14 +95,14 @@ function Header() {
                 variant="outlined"
                 onClick={() => navigate('/login')}
                 sx={{ 
-                  borderColor: '#410093',
-                  color: '#410093',
+                  borderColor: '#29B6F6',
+                  color: '#29B6F6',
                   fontWeight: 600,
                   borderRadius: '8px',
                   px: 2.5,
                   '&:hover': { 
-                    borderColor: '#7f00ff',
-                    backgroundColor: 'rgba(65, 0, 147, 0.05)'
+                    borderColor: '#4FC3F7',
+                    backgroundColor: 'rgba(41, 182, 246, 0.05)'
                   }
                 }}
               >
@@ -112,14 +112,14 @@ function Header() {
                 variant="contained"
                 onClick={() => navigate('/register')}
                 sx={{ 
-                  backgroundColor: '#410093',
+                  backgroundColor: '#29B6F6',
                   fontWeight: 600,
                   borderRadius: '8px',
                   px: 2.5,
-                  boxShadow: '0 4px 15px rgba(65, 0, 147, 0.3)',
+                  boxShadow: '0 4px 15px rgba(41, 182, 246, 0.3)',
                   '&:hover': { 
-                    backgroundColor: '#7f00ff',
-                    boxShadow: '0 6px 20px rgba(65, 0, 147, 0.4)'
+                    backgroundColor: '#4FC3F7',
+                    boxShadow: '0 6px 20px rgba(41, 182, 246, 0.4)'
                   }
                 }}
               >

@@ -57,7 +57,9 @@ function Login() {
                 transform: 'rotate(0deg) scale(1.05)'
               }
             }}>
-              <LockIcon sx={{ fontSize: 40, color: '#ffffff' }} />
+              <Typography sx={{ fontSize: 48, color: '#ffffff', fontWeight: 700 }}>
+                S
+              </Typography>
             </Box>
             <Typography variant="h4" sx={{ 
               fontWeight: 700, 

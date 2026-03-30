@@ -124,7 +124,7 @@ function Home() {
                 left: 0,
                 width: '100%',
                 height: '100%',
-                background: `linear-gradient(135deg, rgba(144, 238, 144, 0.85) 0%, rgba(0, 191, 255, 0.85) 100%)`,
+                background: `linear-gradient(135deg, rgba(144, 238, 144, 0.9) 0%, rgba(0, 100, 200, 0.95) 50%, rgba(144, 238, 144, 0.9) 100%)`,
                 zIndex: 1,
               }}
             />
@@ -183,17 +183,17 @@ function Home() {
                   endIcon={<ArrowForwardIcon />}
                   onClick={() => navigate('/register')}
                   sx={{
-                    backgroundColor: '#410093',
+                    backgroundColor: '#29B6F6',
                     fontWeight: 600,
                     borderRadius: '10px',
                     px: 4,
                     py: 1.5,
                     fontSize: '1rem',
-                    boxShadow: '0 4px 20px rgba(65, 0, 147, 0.4)',
+                    boxShadow: '0 4px 20px rgba(41, 182, 246, 0.4)',
                     '&:hover': {
-                      backgroundColor: '#7f00ff',
+                      backgroundColor: '#4FC3F7',
                       transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 25px rgba(65, 0, 147, 0.5)',
+                      boxShadow: '0 6px 25px rgba(41, 182, 246, 0.5)',
                     },
                     transition: 'all 0.3s ease',
                   }}
@@ -233,7 +233,7 @@ function Home() {
                     cursor: 'pointer',
                     '&:hover': {
                       transform: 'translateY(-8px)',
-                      boxShadow: '0 12px 40px rgba(65, 0, 147, 0.15)',
+                      boxShadow: '0 12px 40px rgba(41, 182, 246, 0.15)',
                     },
                   }}
                 >
@@ -267,13 +267,13 @@ function Home() {
               variant="outlined"
               endIcon={<ArrowForwardIcon />}
               sx={{
-                borderColor: '#410093',
-                color: '#410093',
+                borderColor: '#29B6F6',
+                color: '#29B6F6',
                 fontWeight: 600,
                 borderRadius: '10px',
                 '&:hover': {
-                  borderColor: '#7f00ff',
-                  backgroundColor: 'rgba(65, 0, 147, 0.05)',
+                  borderColor: '#4FC3F7',
+                  backgroundColor: 'rgba(41, 182, 246, 0.05)',
                 },
               }}
             >
@@ -292,7 +292,7 @@ function Home() {
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       transform: 'translateY(-5px)',
-                      boxShadow: '0 12px 40px rgba(65, 0, 147, 0.12)',
+                      boxShadow: '0 12px 40px rgba(41, 182, 246, 0.12)',
                     },
                   }}
                 >
@@ -336,7 +336,7 @@ function Home() {
       <Box 
         sx={{ 
           py: 8, 
-          background: 'linear-gradient(135deg, #410093 0%, #7f00ff 100%)',
+          background: 'linear-gradient(135deg, #29B6F6 0%, #4FC3F7 100%)',
         }}
       >
         <Container maxWidth="md" sx={{ textAlign: 'center' }}>
@@ -353,7 +353,7 @@ function Home() {
               onClick={() => navigate('/register')}
               sx={{
                 bgcolor: '#fff',
-                color: '#410093',
+                color: '#29B6F6',
                 fontWeight: 700,
                 borderRadius: '10px',
                 px: 4,

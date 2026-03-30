@@ -33,7 +33,7 @@ function Login() {
           sx={{ 
             p: 4, 
             borderRadius: '16px',
-            boxShadow: '0 8px 40px rgba(65, 0, 147, 0.12)',
+            boxShadow: '0 8px 40px rgba(41, 182, 246, 0.12)',
           }}
         >
           <Box sx={{ textAlign: 'center', mb: 3 }}>
@@ -41,7 +41,7 @@ function Login() {
               variant="h4" 
               sx={{ 
                 fontWeight: 700, 
-                color: '#410093',
+                color: '#29B6F6',
                 mb: 1
               }}
             >
@@ -64,14 +64,14 @@ function Login() {
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '10px',
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#410093',
+                    borderColor: '#29B6F6',
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#410093',
+                    borderColor: '#29B6F6',
                   },
                 },
                 '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#410093',
+                  color: '#29B6F6',
                 },
               }}
             />
@@ -96,14 +96,14 @@ function Login() {
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '10px',
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#410093',
+                    borderColor: '#29B6F6',
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#410093',
+                    borderColor: '#29B6F6',
                   },
                 },
                 '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#410093',
+                  color: '#29B6F6',
                 },
               }}
             />
@@ -114,14 +114,14 @@ function Login() {
               sx={{ 
                 mt: 3,
                 py: 1.5,
-                backgroundColor: '#410093',
+                backgroundColor: '#29B6F6',
                 fontWeight: 600,
                 borderRadius: '10px',
                 fontSize: '1rem',
-                boxShadow: '0 4px 15px rgba(65, 0, 147, 0.3)',
+                boxShadow: '0 4px 15px rgba(41, 182, 246, 0.3)',
                 '&:hover': {
-                  backgroundColor: '#7f00ff',
-                  boxShadow: '0 6px 20px rgba(65, 0, 147, 0.4)',
+                  backgroundColor: '#4FC3F7',
+                  boxShadow: '0 6px 20px rgba(41, 182, 246, 0.4)',
                 },
               }}
             >
@@ -133,7 +133,7 @@ function Login() {
                 <Button 
                   onClick={() => navigate('/register')} 
                   sx={{ 
-                    color: '#410093',
+                    color: '#29B6F6',
                     fontWeight: 600,
                     textTransform: 'none',
                     '&:hover': {
