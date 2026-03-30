@@ -124,7 +124,7 @@ function Home() {
                 left: 0,
                 width: '100%',
                 height: '100%',
-                background: `linear-gradient(135deg, rgba(144, 238, 144, 0.9) 0%, rgba(0, 100, 200, 0.95) 50%, rgba(144, 238, 144, 0.9) 100%)`,
+                background: `linear-gradient(90deg, rgba(144, 238, 144, 0.95) 0%, rgba(0, 80, 180, 0.98) 45%, rgba(0, 80, 180, 0.98) 55%, rgba(144, 238, 144, 0.95) 100%)`,
                 zIndex: 1,
               }}
             />

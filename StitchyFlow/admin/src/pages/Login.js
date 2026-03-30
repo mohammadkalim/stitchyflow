@@ -220,7 +220,22 @@ function Login() {
 
           <Box sx={{ mt: 4, textAlign: 'center' }}>
             <Typography variant="caption" sx={{ color: '#90A4AE', fontSize: '0.75rem' }}>
-              © 2026 StitchyFlow. All rights reserved.
+              © 2026 StitchyFlow. All rights reserved.{' '}
+              <a 
+                href="https://logixinventor.com/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ 
+                  color: '#2196F3', 
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  transition: 'color 0.3s ease'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#1976d2'}
+                onMouseLeave={(e) => e.target.style.color = '#2196F3'}
+              >
+                LOGIXINVENTOR PVT LTD
+              </a>
             </Typography>
           </Box>
         </Paper>
