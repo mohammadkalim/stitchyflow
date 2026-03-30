@@ -710,9 +710,9 @@ DELIMITER ;
 -- SECTION 8: SAMPLE DATA (OPTIONAL)
 -- =====================================================
 
--- Insert default admin user (password: admin123 - hashed with bcrypt)
+-- Insert default admin user (password: Admin@123 - hashed with bcrypt)
 INSERT INTO users (email, password_hash, first_name, last_name, role, status, email_verified)
-VALUES ('admin@stitchyflow.com', '$2b$10$YourHashedPasswordHere', 'Admin', 'User', 'admin', 'active', TRUE);
+VALUES ('admin@stitchyflow.com', '$2b$10$MfOVb6DbgAJOOYRwexleU.lzqzHMrCnChkfIHqQ1QcjUhVY2zc.Cm', 'Admin', 'StitchyFlow', 'admin', 'active', TRUE);
 
 -- =====================================================
 -- DATABASE SETUP COMPLETE

@@ -124,7 +124,7 @@ function Home() {
                 left: 0,
                 width: '100%',
                 height: '100%',
-                background: `linear-gradient(90deg, rgba(144, 238, 144, 0.95) 0%, rgba(0, 80, 180, 0.98) 45%, rgba(0, 80, 180, 0.98) 55%, rgba(144, 238, 144, 0.95) 100%)`,
+                background: `linear-gradient(90deg, rgba(0, 100, 0, 0.95) 0%, rgba(0, 80, 180, 0.98) 45%, rgba(0, 80, 180, 0.98) 55%, rgba(0, 100, 0, 0.95) 100%)`,
                 zIndex: 1,
               }}
             />
@@ -183,18 +183,18 @@ function Home() {
                   endIcon={<ArrowForwardIcon />}
                   onClick={() => navigate('/register')}
                   sx={{
-                    backgroundColor: '#29B6F6',
+                    backgroundColor: '#FF9800',
                     fontWeight: 600,
                     borderRadius: '10px',
-                    px: 6,
-                    py: 2,
+                    px: 8,
+                    py: 2.5,
                     fontSize: '1.1rem',
                     mt: 4,
-                    boxShadow: '0 4px 20px rgba(41, 182, 246, 0.4)',
+                    boxShadow: '0 4px 20px rgba(255, 152, 0, 0.4)',
                     '&:hover': {
-                      backgroundColor: '#4FC3F7',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 25px rgba(41, 182, 246, 0.5)',
+                      backgroundColor: '#F57C00',
+                      transform: 'translateY(4px)',
+                      boxShadow: '0 2px 15px rgba(255, 152, 0, 0.6)',
                     },
                     transition: 'all 0.3s ease',
                   }}
