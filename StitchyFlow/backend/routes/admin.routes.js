@@ -51,6 +51,169 @@ router.get('/users', authenticateToken, async (req, res) => {
   }
 });
 
+// Get Single User by ID
+router.get('/users/:id', authenticateToken, async (req, res) => {
+  try {
+    const [users] = await db.query(
+      'SELECT user_id, full_name, email, phone_number, role, is_active, created_at, updated_at FROM users WHERE user_id = ?',
+      [req.params.id]
+    );
+    
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } });
+    }
+    
+    res.json({ success: true, data: users[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Create New User
+router.post('/users', authenticateToken, async (req, res) => {
+  try {
+    const { full_name, email, phone_number, role, is_active, password } = req.body;
+    
+    // Validate required fields
+    if (!full_name || !email || !role) {
+      return res.status(400).json({ 
+        success: false, 
+        error: { message: 'Full name, email, and role are required' } 
+      });
+    }
+    
+    // Check if email already exists
+    const [existingUsers] = await db.query('SELECT user_id FROM users WHERE email = ?', [email]);
+    if (existingUsers.length > 0) {
+      return res.status(409).json({ 
+        success: false, 
+        error: { message: 'Email already exists' } 
+      });
+    }
+    
+    // Hash password
+    const bcrypt = require('bcrypt');
+    const passwordHash = await bcrypt.hash(password || 'User@123', 10);
+    
+    // Insert user - split full_name into first_name and last_name
+    const nameParts = full_name.trim().split(' ');
+    const first_name = nameParts[0] || '';
+    const last_name = nameParts.slice(1).join(' ') || '';
+    
+    const [result] = await db.query(
+      'INSERT INTO users (first_name, last_name, email, phone, role, status, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [first_name, last_name, email, phone_number || null, role, is_active ? 'active' : 'inactive', passwordHash]
+    );
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'User created successfully',
+      data: { user_id: result.insertId }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Update User
+router.put('/users/:id', authenticateToken, async (req, res) => {
+  try {
+    const { full_name, email, phone_number, role, is_active } = req.body;
+    const userId = req.params.id;
+    
+    // Check if user exists
+    const [existingUsers] = await db.query('SELECT user_id FROM users WHERE user_id = ?', [userId]);
+    if (existingUsers.length === 0) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } });
+    }
+    
+    // Check if email is being changed and if new email already exists
+    if (email) {
+      const [emailCheck] = await db.query(
+        'SELECT user_id FROM users WHERE email = ? AND user_id != ?', 
+        [email, userId]
+      );
+      if (emailCheck.length > 0) {
+        return res.status(409).json({ 
+          success: false, 
+          error: { message: 'Email already exists' } 
+        });
+      }
+    }
+    
+    // Build update query dynamically
+    const updates = [];
+    const values = [];
+    
+    if (full_name) {
+      const nameParts = full_name.trim().split(' ');
+      updates.push('first_name = ?', 'last_name = ?');
+      values.push(nameParts[0] || '', nameParts.slice(1).join(' ') || '');
+    }
+    if (email) {
+      updates.push('email = ?');
+      values.push(email);
+    }
+    if (phone_number !== undefined) {
+      updates.push('phone = ?');
+      values.push(phone_number);
+    }
+    if (role) {
+      updates.push('role = ?');
+      values.push(role);
+    }
+    if (is_active !== undefined) {
+      updates.push('status = ?');
+      values.push(is_active ? 'active' : 'inactive');
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, error: { message: 'No fields to update' } });
+    }
+    
+    values.push(userId);
+    
+    await db.query(
+      `UPDATE users SET ${updates.join(', ')} WHERE user_id = ?`,
+      values
+    );
+    
+    res.json({ success: true, message: 'User updated successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Delete User
+router.delete('/users/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // Check if user exists
+    const [existingUsers] = await db.query('SELECT user_id FROM users WHERE user_id = ?', [userId]);
+    if (existingUsers.length === 0) {
+      return res.status(404).json({ success: false, error: { message: 'User not found' } });
+    }
+    
+    // Prevent deleting the last admin
+    const [adminCount] = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'admin'");
+    const [userToDelete] = await db.query("SELECT role FROM users WHERE user_id = ?", [userId]);
+    
+    if (userToDelete[0].role === 'admin' && adminCount[0].count <= 1) {
+      return res.status(403).json({ 
+        success: false, 
+        error: { message: 'Cannot delete the last admin user' } 
+      });
+    }
+    
+    await db.query('DELETE FROM users WHERE user_id = ?', [userId]);
+    
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
 // Get All Orders
 router.get('/orders', authenticateToken, async (req, res) => {
   try {
