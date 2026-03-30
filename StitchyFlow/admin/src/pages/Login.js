@@ -51,10 +51,9 @@ function Login() {
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
-              transform: 'rotate(-5deg)',
               transition: 'transform 0.3s ease',
               '&:hover': {
-                transform: 'rotate(0deg) scale(1.05)'
+                transform: 'scale(1.05)'
               }
             }}>
               <Typography sx={{ fontSize: 48, color: '#ffffff', fontWeight: 700 }}>
