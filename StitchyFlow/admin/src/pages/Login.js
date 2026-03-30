@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Container, Paper, TextField, Button, Typography, Box } from '@mui/material';
+import { Container, Paper, TextField, Button, Typography, Box, InputAdornment, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { Email as EmailIcon, Lock as LockIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import axios from 'axios';
 
 function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,72 +28,210 @@ function Login() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      bgcolor: '#ffffff'
+      background: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%)',
+      position: 'relative',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'radial-gradient(circle at 20% 50%, rgba(33, 150, 243, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(33, 150, 243, 0.1) 0%, transparent 50%)',
+        pointerEvents: 'none'
+      }
     }}>
-      <Container maxWidth="sm">
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography variant="h3" sx={{ fontWeight: 700, color: '#2196F3', mb: 1 }}>
-            StitchyFlow Login
-          </Typography>
-        </Box>
-        <Paper elevation={3} sx={{
+      <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 1 }}>
+        <Paper elevation={24} sx={{
           p: 5,
-          borderRadius: 2,
+          borderRadius: 4,
           bgcolor: '#ffffff',
-          border: '1px solid #e0e0e0'
+          boxShadow: '0 20px 60px rgba(33, 150, 243, 0.3)',
+          border: '1px solid rgba(33, 150, 243, 0.1)',
+          backdropFilter: 'blur(10px)'
         }}>
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box sx={{
+              width: 80,
+              height: 80,
+              margin: '0 auto 20px',
+              background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(33, 150, 243, 0.4)',
+              transform: 'rotate(-5deg)',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'rotate(0deg) scale(1.05)'
+              }
+            }}>
+              <LockIcon sx={{ fontSize: 40, color: '#ffffff' }} />
+            </Box>
+            <Typography variant="h4" sx={{ 
+              fontWeight: 700, 
+              color: '#1976d2',
+              mb: 1,
+              letterSpacing: '-0.5px'
+            }}>
+              StitchyFlow Login
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64B5F6', fontSize: '0.95rem' }}>
+              Welcome back! Please login to your account
+            </Typography>
+          </Box>
+
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Email"
-              margin="normal"
+              placeholder="Enter your email"
               type="email"
               required
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailIcon sx={{ color: '#64B5F6' }} />
+                  </InputAdornment>
+                ),
+              }}
               sx={{
+                mb: 3,
                 '& .MuiOutlinedInput-root': {
-                  '&.Mui-focused fieldset': { borderColor: '#2196F3' }
+                  borderRadius: 2,
+                  bgcolor: '#F5F5F5',
+                  transition: 'all 0.3s ease',
+                  '& fieldset': {
+                    borderColor: 'transparent'
+                  },
+                  '&:hover': {
+                    bgcolor: '#ffffff',
+                    '& fieldset': {
+                      borderColor: '#90CAF9'
+                    }
+                  },
+                  '&.Mui-focused': {
+                    bgcolor: '#ffffff',
+                    boxShadow: '0 0 0 3px rgba(33, 150, 243, 0.1)',
+                    '& fieldset': {
+                      borderColor: '#2196F3',
+                      borderWidth: '2px'
+                    }
+                  }
                 },
-                '& .MuiInputLabel-root.Mui-focused': { color: '#2196F3' }
+                '& .MuiOutlinedInput-input': {
+                  padding: '16px 14px',
+                  fontSize: '0.95rem'
+                }
               }}
             />
+
             <TextField
               fullWidth
-              label="Password"
-              margin="normal"
-              type="password"
+              placeholder="Enter your password"
+              type={showPassword ? 'text' : 'password'}
               required
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon sx={{ color: '#64B5F6' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      sx={{ color: '#64B5F6' }}
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
               sx={{
+                mb: 2,
                 '& .MuiOutlinedInput-root': {
-                  '&.Mui-focused fieldset': { borderColor: '#2196F3' }
+                  borderRadius: 2,
+                  bgcolor: '#F5F5F5',
+                  transition: 'all 0.3s ease',
+                  '& fieldset': {
+                    borderColor: 'transparent'
+                  },
+                  '&:hover': {
+                    bgcolor: '#ffffff',
+                    '& fieldset': {
+                      borderColor: '#90CAF9'
+                    }
+                  },
+                  '&.Mui-focused': {
+                    bgcolor: '#ffffff',
+                    boxShadow: '0 0 0 3px rgba(33, 150, 243, 0.1)',
+                    '& fieldset': {
+                      borderColor: '#2196F3',
+                      borderWidth: '2px'
+                    }
+                  }
                 },
-                '& .MuiInputLabel-root.Mui-focused': { color: '#2196F3' }
+                '& .MuiOutlinedInput-input': {
+                  padding: '16px 14px',
+                  fontSize: '0.95rem'
+                }
               }}
             />
+
             {error && (
-              <Typography color="error" sx={{ mt: 2, textAlign: 'center' }}>
-                {error}
-              </Typography>
+              <Box sx={{
+                mb: 2,
+                p: 2,
+                bgcolor: '#FFEBEE',
+                borderRadius: 2,
+                border: '1px solid #FFCDD2'
+              }}>
+                <Typography sx={{ color: '#D32F2F', fontSize: '0.875rem', textAlign: 'center' }}>
+                  {error}
+                </Typography>
+              </Box>
             )}
+
             <Button
               fullWidth
               variant="contained"
               type="submit"
               sx={{
-                mt: 3,
-                py: 1.5,
-                bgcolor: '#2196F3',
-                '&:hover': { bgcolor: '#1976d2' },
+                mt: 2,
+                py: 1.8,
+                background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)',
+                borderRadius: 2,
                 fontSize: '1rem',
-                fontWeight: 600
+                fontWeight: 700,
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                boxShadow: '0 8px 24px rgba(33, 150, 243, 0.4)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                  boxShadow: '0 12px 32px rgba(33, 150, 243, 0.5)',
+                  transform: 'translateY(-2px)'
+                },
+                '&:active': {
+                  transform: 'translateY(0px)'
+                }
               }}
             >
               Login
             </Button>
           </form>
+
+          <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Typography variant="caption" sx={{ color: '#90A4AE', fontSize: '0.75rem' }}>
+              © 2026 StitchyFlow. All rights reserved.
+            </Typography>
+          </Box>
         </Paper>
       </Container>
     </Box>
