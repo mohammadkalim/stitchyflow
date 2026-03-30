@@ -28,18 +28,8 @@ function Login() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%)',
-      position: 'relative',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'radial-gradient(circle at 20% 50%, rgba(33, 150, 243, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(33, 150, 243, 0.1) 0%, transparent 50%)',
-        pointerEvents: 'none'
-      }
+      bgcolor: '#ffffff',
+      position: 'relative'
     }}>
       <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 1 }}>
         <Paper elevation={24} sx={{
