@@ -239,6 +239,27 @@ function Login() {
             </Typography>
           </Box>
         </Paper>
+
+        <Box sx={{ mt: 3, textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: '#90A4AE', fontSize: '0.8rem' }}>
+            Developed By{' '}
+            <a 
+              href="https://markinventor.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ 
+                color: '#2196F3', 
+                textDecoration: 'none',
+                fontWeight: 600,
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = '#1976d2'}
+              onMouseLeave={(e) => e.target.style.color = '#2196F3'}
+            >
+              MARKINVENTOR
+            </a>
+          </Typography>
+        </Box>
       </Container>
     </Box>
   );
