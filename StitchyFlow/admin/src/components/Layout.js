@@ -18,7 +18,8 @@ import {
   Search as SearchIcon,
   Email as SMTPIcon,
   Language as SiteSettingsIcon,
-  Build as MaintenanceIcon
+  Build as MaintenanceIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -73,6 +74,16 @@ function Layout({ children, title }) {
   const handleLogoutClick = () => {
     handleMenuClose();
     handleLogout();
+  };
+
+  const handleProfileClick = () => {
+    handleMenuClose();
+    navigate('/profile');
+  };
+
+  const handleSettingsClick = () => {
+    handleMenuClose();
+    navigate('/settings');
   };
 
   return (
@@ -160,18 +171,86 @@ function Layout({ children, title }) {
                 mt: 1.5,
                 borderRadius: '12px',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                minWidth: '200px'
+                minWidth: '220px',
+                border: '1px solid #e8eaed'
               }
             }}
           >
-            <MenuItem onClick={handleLogoutClick} sx={{ py: 1.5, px: 2 }}>
-              <ListItemIcon>
-                <LogoutIcon sx={{ color: '#f44336', fontSize: 20 }} />
-              </ListItemIcon>
-              <Typography sx={{ color: '#f44336', fontWeight: 500, fontSize: '0.875rem' }}>
-                Logout
-              </Typography>
-            </MenuItem>
+            {/* User Info Header */}
+            <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid #e8eaed' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Avatar sx={{ width: 40, height: 40, bgcolor: '#1976d2', fontSize: '1rem', fontWeight: 600 }}>
+                  A
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#333', fontSize: '0.875rem', lineHeight: 1.3 }}>
+                    Admin User
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#999', fontSize: '0.75rem' }}>
+                    admin@stitchyflow.com
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Menu Items */}
+            <Box sx={{ py: 1 }}>
+              <MenuItem 
+                onClick={handleProfileClick} 
+                sx={{ 
+                  py: 1.5, 
+                  px: 2.5,
+                  '&:hover': {
+                    bgcolor: '#f5f5f5'
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <PersonIcon sx={{ color: '#666', fontSize: 20 }} />
+                </ListItemIcon>
+                <Typography sx={{ color: '#333', fontWeight: 500, fontSize: '0.875rem' }}>
+                  Profile
+                </Typography>
+              </MenuItem>
+
+              <MenuItem 
+                onClick={handleSettingsClick} 
+                sx={{ 
+                  py: 1.5, 
+                  px: 2.5,
+                  '&:hover': {
+                    bgcolor: '#f5f5f5'
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <SettingsIcon sx={{ color: '#666', fontSize: 20 }} />
+                </ListItemIcon>
+                <Typography sx={{ color: '#333', fontWeight: 500, fontSize: '0.875rem' }}>
+                  Settings
+                </Typography>
+              </MenuItem>
+
+              <Box sx={{ borderTop: '1px solid #e8eaed', mt: 1, pt: 1 }}>
+                <MenuItem 
+                  onClick={handleLogoutClick} 
+                  sx={{ 
+                    py: 1.5, 
+                    px: 2.5,
+                    '&:hover': {
+                      bgcolor: '#ffebee'
+                    }
+                  }}
+                >
+                  <ListItemIcon>
+                    <LogoutIcon sx={{ color: '#f44336', fontSize: 20 }} />
+                  </ListItemIcon>
+                  <Typography sx={{ color: '#f44336', fontWeight: 500, fontSize: '0.875rem' }}>
+                    Sign out
+                  </Typography>
+                </MenuItem>
+              </Box>
+            </Box>
           </Menu>
         </Toolbar>
       </AppBar>
