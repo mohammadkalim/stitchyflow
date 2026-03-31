@@ -14,6 +14,8 @@ function Reports() {
   });
 
   useEffect(() => {
+    // API call commented out - uncomment when backend is ready
+    /*
     const fetchReports = async () => {
       try {
         const token = localStorage.getItem('adminToken');
@@ -26,6 +28,7 @@ function Reports() {
       }
     };
     fetchReports();
+    */
   }, []);
 
   const reportCards = [

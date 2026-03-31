@@ -2,69 +2,60 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, IconButton,
-  ListItem, ListItemButton, ListItemIcon, ListItemText, Avatar, Collapse,
-  Menu, MenuItem
+  ListItem, ListItemButton, ListItemIcon, ListItemText, Avatar,
+  Menu, MenuItem, Chip, Collapse
 } from '@mui/material';
 import {
-  Menu as MenuIcon, Dashboard as DashboardIcon, People as PeopleIcon,
+  Dashboard as DashboardIcon, People as PeopleIcon,
   ShoppingCart as OrdersIcon, ContentCut as TailorsIcon,
   Straighten as MeasurementsIcon, Payment as PaymentIcon,
   Assessment as ReportsIcon, Settings as SettingsIcon,
-  ExitToApp as LogoutIcon, Air as AirDamIcon, Checkroom as AirCoatsIcon, LocalFlorist as FlowerBandIcon,
-  CheckCircle as ActiveIcon, Delete as DeletedIcon, Block as SuspendedIcon, Info as DetailsIcon, Person as InfoIcon,
-  ExpandMore, ExpandLess, ChevronLeft, ChevronRight,
-  Email as SMTPIcon, AdminPanelSettings as AdminSettingsIcon, Language as SiteSettingsIcon, Build as MaintenanceIcon, AddCircle as AddIcon
+  ExitToApp as LogoutIcon,
+  Checkroom as AirCoatsIcon,
+  ExpandMore, ExpandLess,
+  AdminPanelSettings as AdminSettingsIcon,
+  Notifications as NotificationsIcon,
+  Search as SearchIcon,
+  Email as SMTPIcon,
+  Language as SiteSettingsIcon,
+  Build as MaintenanceIcon
 } from '@mui/icons-material';
 
-const drawerWidth = 300;
+const drawerWidth = 240;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Orders', icon: <OrdersIcon />, path: '/orders' },
-  { text: 'Tailors', icon: <TailorsIcon />, path: '/tailors' },
-  { text: 'Measurements', icon: <MeasurementsIcon />, path: '/measurements' },
-  { text: 'Air Dam', icon: <AirDamIcon />, path: '/air-dam' },
-  { text: 'Air Coats', icon: <AirCoatsIcon />, path: '/air-coats' },
-  { text: 'Flower Band', icon: <FlowerBandIcon />, path: '/flower-band' },
-  { text: 'Payments', icon: <PaymentIcon />, path: '/payments' }
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' }
 ];
 
 const userSubItems = [
-  { text: 'Users', icon: <PeopleIcon />, path: '/users' },
-  { text: 'Active Users', icon: <ActiveIcon />, path: '/active-users' },
-  { text: 'Deleted Users', icon: <DeletedIcon />, path: '/deleted-users' },
-  { text: 'Suspended Users', icon: <SuspendedIcon />, path: '/suspended-users' },
-  { text: 'Users Details', icon: <DetailsIcon />, path: '/users-details' },
-  { text: 'User Information', icon: <InfoIcon />, path: '/user-information' }
+  { text: 'All Users', icon: <PeopleIcon />, path: '/users' },
+  { text: 'Active Users', icon: <PeopleIcon />, path: '/active-users' },
+  { text: 'Deleted Users', icon: <PeopleIcon />, path: '/deleted-users' },
+  { text: 'Suspended Users', icon: <PeopleIcon />, path: '/suspended-users' }
+];
+
+const otherMenuItems = [
+  { text: 'Orders', icon: <OrdersIcon />, path: '/orders' },
+  { text: 'Tailors', icon: <TailorsIcon />, path: '/tailors' },
+  { text: 'Measurements', icon: <MeasurementsIcon />, path: '/measurements', badge: 'NEW' },
+  { text: 'Payments', icon: <PaymentIcon />, path: '/payments' },
+  { text: 'Reports', icon: <ReportsIcon />, path: '/reports' },
+  { text: 'Fabric Inventory', icon: <AirCoatsIcon />, path: '/air-coats' }
 ];
 
 const adminSubItems = [
   { text: 'SMTP Settings', icon: <SMTPIcon />, path: '/smtp-settings' },
   { text: 'Admin Settings', icon: <AdminSettingsIcon />, path: '/admin-settings' },
   { text: 'Site Settings', icon: <SiteSettingsIcon />, path: '/site-settings' },
-  { text: 'Site Maintenance', icon: <MaintenanceIcon />, path: '/site-maintenance' },
-  { text: 'Add More SMTP', icon: <AddIcon />, path: '/add-more-smtp' }
+  { text: 'Site Maintenance', icon: <MaintenanceIcon />, path: '/site-maintenance' }
 ];
 
 function Layout({ children, title }) {
-  const [open, setOpen] = useState(true);
-  const [usersOpen, setUsersOpen] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [usersOpen, setUsersOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const handleDrawerToggle = () => {
-    setOpen(!open);
-  };
-
-  const handleUsersToggle = () => {
-    setUsersOpen(!usersOpen);
-  };
-
-  const handleAdminToggle = () => {
-    setAdminOpen(!adminOpen);
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
@@ -84,41 +75,80 @@ function Layout({ children, title }) {
     handleLogout();
   };
 
-  const isUserPage = userSubItems.some(item => location.pathname === item.path);
-  const isAdminPage = adminSubItems.some(item => location.pathname === item.path);
-
   return (
-    <Box sx={{ display: 'flex', bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-      <AppBar position="fixed" sx={{ 
-        zIndex: (theme) => theme.zIndex.drawer + 1, 
-        bgcolor: '#ffffff', 
-        color: '#1a1a2e', 
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        borderBottom: 'none'
-      }}>
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ 
-                width: 36, 
-                height: 36, 
-                borderRadius: '10px', 
-                background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem' }}>S</Typography>
-              </Box>
-              <Typography variant="h6" noWrap sx={{ fontWeight: 700, color: '#1a1a2e', letterSpacing: '-0.5px' }}>
+    <Box sx={{ display: 'flex', bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+      {/* Top AppBar */}
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          zIndex: (theme) => theme.zIndex.drawer + 1, 
+          bgcolor: '#ffffff', 
+          color: '#1a1a2e', 
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          borderBottom: '1px solid #e8eaed'
+        }}
+      >
+        <Toolbar sx={{ justifyContent: 'space-between', minHeight: '64px !important' }}>
+          {/* Left: Logo and Brand */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ 
+              width: 40, 
+              height: 40, 
+              borderRadius: '10px', 
+              background: '#1976d2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '1.2rem' }}>S</Typography>
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1rem', lineHeight: 1.2 }}>
                 StitchyFlow
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#999', fontSize: '0.7rem' }}>
+                Admin Panel
               </Typography>
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer' }} onClick={handleAvatarClick}>
-            <Typography variant="body2" sx={{ color: '#666', fontWeight: 500 }}>Admin</Typography>
-            <Avatar sx={{ width: 36, height: 36, bgcolor: '#2196F3', fontSize: '0.9rem', fontWeight: 600 }}>A</Avatar>
+
+          {/* Right: Search, Notifications, Profile */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <IconButton sx={{ color: '#666' }}>
+              <SearchIcon />
+            </IconButton>
+            <IconButton sx={{ color: '#666' }}>
+              <Box sx={{ position: 'relative' }}>
+                <NotificationsIcon />
+                <Box sx={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: '#f44336'
+                }} />
+              </Box>
+            </IconButton>
+            <Box 
+              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} 
+              onClick={handleAvatarClick}
+            >
+              <Avatar sx={{ width: 36, height: 36, bgcolor: '#1976d2', fontSize: '0.9rem', fontWeight: 600 }}>
+                A
+              </Avatar>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#333', fontSize: '0.875rem', lineHeight: 1.2 }}>
+                  Admin User
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#999', fontSize: '0.7rem' }}>
+                  admin@stitchyflow.com
+                </Typography>
+              </Box>
+            </Box>
           </Box>
+
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
@@ -128,427 +158,354 @@ function Layout({ children, title }) {
             PaperProps={{
               sx: {
                 mt: 1.5,
-                borderRadius: '16px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                minWidth: '280px',
-                overflow: 'hidden'
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                minWidth: '200px'
               }
             }}
           >
-            <Box sx={{ 
-              p: 3, 
-              background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)',
-              textAlign: 'center'
-            }}>
-              <Avatar sx={{ 
-                width: 64, 
-                height: 64, 
-                bgcolor: '#ffffff', 
-                color: '#2196F3',
-                fontSize: '1.5rem', 
-                fontWeight: 700,
-                mx: 'auto',
-                mb: 2,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-              }}>A</Avatar>
-              <Typography sx={{ color: '#ffffff', fontWeight: 700, fontSize: '1.1rem', mb: 0.5 }}>
-                Admin
+            <MenuItem onClick={handleLogoutClick} sx={{ py: 1.5, px: 2 }}>
+              <ListItemIcon>
+                <LogoutIcon sx={{ color: '#f44336', fontSize: 20 }} />
+              </ListItemIcon>
+              <Typography sx={{ color: '#f44336', fontWeight: 500, fontSize: '0.875rem' }}>
+                Logout
               </Typography>
-              <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.875rem' }}>
-                admin@stitchyflow.com
-              </Typography>
-            </Box>
-            <Box sx={{ p: 2 }}>
-              <MenuItem sx={{ py: 1.5, px: 2, borderRadius: '10px', mb: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Box sx={{ 
-                    width: 36, 
-                    height: 36, 
-                    borderRadius: '10px', 
-                    bgcolor: '#E3F2FD',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Typography sx={{ color: '#2196F3', fontWeight: 700, fontSize: '0.9rem' }}>@</Typography>
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontWeight: 600, color: '#1a1a2e', fontSize: '0.9rem' }}>Username</Typography>
-                    <Typography sx={{ color: '#666', fontSize: '0.8rem' }}>Admin</Typography>
-                  </Box>
-                </Box>
-              </MenuItem>
-              <MenuItem 
-                onClick={handleLogoutClick} 
-                sx={{ 
-                  py: 1.5, 
-                  px: 2, 
-                  borderRadius: '10px',
-                  '&:hover': { bgcolor: '#FFEBEE' }
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Box sx={{ 
-                    width: 36, 
-                    height: 36, 
-                    borderRadius: '10px', 
-                    bgcolor: '#FFEBEE',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <LogoutIcon sx={{ color: '#F44336', fontSize: 20 }} />
-                  </Box>
-                  <Typography sx={{ color: '#F44336', fontWeight: 600, fontSize: '0.95rem' }}>
-                    Logout
-                  </Typography>
-                </Box>
-              </MenuItem>
-            </Box>
+            </MenuItem>
           </Menu>
         </Toolbar>
       </AppBar>
 
+      {/* Sidebar Drawer */}
       <Drawer
         variant="permanent"
-        open={open}
         sx={{
-          width: open ? drawerWidth : 72,
+          width: drawerWidth,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: open ? drawerWidth : 72,
+            width: drawerWidth,
             boxSizing: 'border-box',
             bgcolor: '#ffffff',
-            borderRight: '1px solid #e8e8e8',
-            transition: 'width 0.25s ease',
-            overflowX: 'hidden'
+            borderRight: '1px solid #e8eaed',
+            boxShadow: 'none'
           }
         }}
       >
         <Toolbar />
-        <Box sx={{ px: 2, py: 1.5, display: 'flex', justifyContent: open ? 'flex-end' : 'center' }}>
-          <IconButton 
-            onClick={handleDrawerToggle}
-            sx={{ 
-              bgcolor: '#f0f7ff',
-              '&:hover': { bgcolor: '#e3f2fd' },
-              width: 36,
-              height: 36,
-              transform: open ? 'rotate(0deg)' : 'rotate(180deg)',
-              transition: 'transform 0.3s ease'
-            }}
-          >
-            <ChevronLeft sx={{ color: '#2196F3', fontSize: 24 }} />
-          </IconButton>
-        </Box>
-        <Box sx={{ overflow: 'auto', py: 1 }}>
-          <List sx={{ px: 1 }}>
-            {menuItems.map((item) => (
-              <ListItem key={item.text} disablePadding sx={{ display: 'block', mb: 0.5 }}>
+        <Box sx={{ overflow: 'auto', py: 2 }}>
+          <List sx={{ px: 2 }}>
+            {menuItems.map((item, index) => (
+              <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
                 <ListItemButton
-                  onClick={() => { navigate(item.path); setOpen(true); }}
+                  onClick={() => navigate(item.path)}
                   sx={{
-                    minHeight: 50,
-                    justifyContent: open ? 'initial' : 'center',
-                    px: 2.5,
-                    py: 1,
+                    minHeight: 44,
                     borderRadius: '8px',
-                    mx: 0.5,
-                    bgcolor: location.pathname === item.path ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                    background: location.pathname === item.path ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                    color: location.pathname === item.path ? '#ffffff' : '#4a4a6a',
+                    px: 2,
+                    py: 1,
+                    bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                    color: location.pathname === item.path ? '#1976d2' : '#666',
                     '&:hover': {
-                      bgcolor: location.pathname === item.path ? 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' : '#f0f7ff'
-                    },
-                    transition: 'all 0.2s ease'
+                      bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5'
+                    }
                   }}
                 >
                   <ListItemIcon sx={{
-                    minWidth: 0,
-                    mr: open ? 2.5 : 'auto',
-                    justifyContent: 'center',
-                    color: location.pathname === item.path ? '#ffffff' : '#1a1a2e',
-                    '& svg': { fontSize: 22 }
+                    minWidth: 36,
+                    color: location.pathname === item.path ? '#1976d2' : '#999',
+                    '& svg': { fontSize: 20 }
                   }}>
                     {item.icon}
                   </ListItemIcon>
                   <ListItemText 
                     primary={item.text} 
                     sx={{ 
-                          opacity: open ? 1 : 0, 
-                          '& .MuiTypography-root': { 
-                            fontSize: '0.95rem', 
-                            fontWeight: location.pathname === item.path ? 600 : 500 
-                          } 
-                        }} 
-                      />
+                      '& .MuiTypography-root': { 
+                        fontSize: '0.875rem', 
+                        fontWeight: location.pathname === item.path ? 600 : 500
+                      } 
+                    }} 
+                  />
+                  {item.badge && (
+                    <Chip 
+                      label={item.badge} 
+                      size="small"
+                      sx={{ 
+                        height: 20,
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        bgcolor: item.badge === 'NEW' ? '#4CAF50' : '#f5f5f5',
+                        color: item.badge === 'NEW' ? '#fff' : '#666'
+                      }}
+                    />
+                  )}
                 </ListItemButton>
               </ListItem>
             ))}
 
-            <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
+            {/* Users with Submenu */}
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
-                onClick={handleUsersToggle}
+                onClick={() => setUsersOpen(!usersOpen)}
                 sx={{
-                  minHeight: 56,
-                  justifyContent: open ? 'initial' : 'center',
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: '10px',
-                  mx: 0.5,
-                  bgcolor: isUserPage ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                  background: isUserPage ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                  color: isUserPage ? '#ffffff' : '#4a4a6a',
+                  minHeight: 44,
+                  borderRadius: '8px',
+                  px: 2,
+                  py: 1,
+                  bgcolor: userSubItems.some(item => location.pathname === item.path) ? '#E3F2FD' : 'transparent',
+                  color: userSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#666',
                   '&:hover': {
-                    bgcolor: isUserPage ? 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' : '#f0f7ff'
-                  },
-                  transition: 'all 0.2s ease'
+                    bgcolor: '#f5f5f5'
+                  }
                 }}
               >
                 <ListItemIcon sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : 'auto',
-                  justifyContent: 'center',
-                  color: isUserPage ? '#ffffff' : '#1a1a2e',
-                  '& svg': { fontSize: 26 }
+                  minWidth: 36,
+                  color: userSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#999',
+                  '& svg': { fontSize: 20 }
                 }}>
                   <PeopleIcon />
                 </ListItemIcon>
                 <ListItemText 
                   primary="Users" 
                   sx={{ 
-                        opacity: open ? 1 : 0, 
-                        '& .MuiTypography-root': { 
-                          fontSize: '1.1rem', 
-                          fontWeight: isUserPage ? 700 : 600 
-                        } 
-                      }} 
+                    '& .MuiTypography-root': { 
+                      fontSize: '0.875rem', 
+                      fontWeight: userSubItems.some(item => location.pathname === item.path) ? 600 : 500
+                    } 
+                  }} 
                 />
-                {open && (usersOpen ? <ExpandLess /> : <ExpandMore />)}
+                <Chip 
+                  label="1" 
+                  size="small"
+                  sx={{ 
+                    height: 20,
+                    fontSize: '0.65rem',
+                    fontWeight: 600,
+                    bgcolor: '#f5f5f5',
+                    color: '#666',
+                    mr: 1
+                  }}
+                />
+                {usersOpen ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
               </ListItemButton>
-              <Collapse in={usersOpen && open} timeout="auto" unmountOnExit>
-                <List disablePadding sx={{ pl: 2 }}>
-                  {userSubItems.map((item) => (
-                    <ListItem key={item.text} disablePadding sx={{ display: 'block', mb: 1 }}>
-                      <ListItemButton
-                        onClick={() => { navigate(item.path); setOpen(true); }}
-                        sx={{
-                          minHeight: 54,
-                          justifyContent: open ? 'initial' : 'center',
-                          px: 3,
-                          py: 1.25,
-                          borderRadius: '10px',
-                          mx: 0.5,
-                          bgcolor: location.pathname === item.path ? '#2196F3' : 'transparent',
-                          color: location.pathname === item.path ? '#ffffff' : '#666',
-                          '&:hover': {
-                            bgcolor: location.pathname === item.path ? '#1976d2' : '#e3f2fd'
-                          }
-                        }}
-                      >
-                        <ListItemIcon sx={{
-                          minWidth: 0,
-                          mr: open ? 3 : 'auto',
-                          justifyContent: 'center',
-                          color: location.pathname === item.path ? '#ffffff' : '#1a1a2e',
-                          '& svg': { fontSize: 24 }
-                        }}>
-                          {item.icon}
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary={item.text} 
-                          sx={{ 
-                                opacity: open ? 1 : 0, 
-                                '& .MuiTypography-root': { 
-                                  fontSize: '1rem', 
-                                  fontWeight: location.pathname === item.path ? 600 : 500 
-                                } 
-                              }} 
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-                </List>
-              </Collapse>
             </ListItem>
 
-            <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
+            <Collapse in={usersOpen} timeout="auto" unmountOnExit>
+              <List disablePadding sx={{ pl: 2 }}>
+                {userSubItems.map((item) => (
+                  <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => navigate(item.path)}
+                      sx={{
+                        minHeight: 40,
+                        borderRadius: '8px',
+                        px: 2,
+                        py: 0.75,
+                        bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                        color: location.pathname === item.path ? '#1976d2' : '#666',
+                        '&:hover': {
+                          bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5'
+                        }
+                      }}
+                    >
+                      <ListItemIcon sx={{
+                        minWidth: 32,
+                        color: location.pathname === item.path ? '#1976d2' : '#999',
+                        '& svg': { fontSize: 18 }
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={item.text} 
+                        sx={{ 
+                          '& .MuiTypography-root': { 
+                            fontSize: '0.8125rem', 
+                            fontWeight: location.pathname === item.path ? 600 : 500
+                          } 
+                        }} 
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+
+            {/* Other Menu Items */}
+            {otherMenuItems.map((item, index) => (
+              <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton
+                  onClick={() => navigate(item.path)}
+                  sx={{
+                    minHeight: 44,
+                    borderRadius: '8px',
+                    px: 2,
+                    py: 1,
+                    bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                    color: location.pathname === item.path ? '#1976d2' : '#666',
+                    '&:hover': {
+                      bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5'
+                    }
+                  }}
+                >
+                  <ListItemIcon sx={{
+                    minWidth: 36,
+                    color: location.pathname === item.path ? '#1976d2' : '#999',
+                    '& svg': { fontSize: 20 }
+                  }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={item.text} 
+                    sx={{ 
+                      '& .MuiTypography-root': { 
+                        fontSize: '0.875rem', 
+                        fontWeight: location.pathname === item.path ? 600 : 500
+                      } 
+                    }} 
+                  />
+                  {item.badge && (
+                    <Chip 
+                      label={item.badge} 
+                      size="small"
+                      sx={{ 
+                        height: 20,
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        bgcolor: item.badge === 'NEW' ? '#4CAF50' : '#f5f5f5',
+                        color: item.badge === 'NEW' ? '#fff' : '#666'
+                      }}
+                    />
+                  )}
+                </ListItemButton>
+              </ListItem>
+            ))}
+
+            {/* Administration with Submenu */}
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
-                onClick={handleAdminToggle}
+                onClick={() => setAdminOpen(!adminOpen)}
                 sx={{
-                  minHeight: 56,
-                  justifyContent: open ? 'initial' : 'center',
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: '10px',
-                  mx: 0.5,
-                  bgcolor: isAdminPage ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                  background: isAdminPage ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                  color: isAdminPage ? '#ffffff' : '#4a4a6a',
+                  minHeight: 44,
+                  borderRadius: '8px',
+                  px: 2,
+                  py: 1,
+                  bgcolor: adminSubItems.some(item => location.pathname === item.path) ? '#E3F2FD' : 'transparent',
+                  color: adminSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#666',
                   '&:hover': {
-                    bgcolor: isAdminPage ? 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' : '#f0f7ff'
-                  },
-                  transition: 'all 0.2s ease'
+                    bgcolor: '#f5f5f5'
+                  }
                 }}
               >
                 <ListItemIcon sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : 'auto',
-                  justifyContent: 'center',
-                  color: isAdminPage ? '#ffffff' : '#1a1a2e',
-                  '& svg': { fontSize: 26 }
+                  minWidth: 36,
+                  color: adminSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#999',
+                  '& svg': { fontSize: 20 }
                 }}>
                   <AdminSettingsIcon />
                 </ListItemIcon>
                 <ListItemText 
                   primary="Administration" 
                   sx={{ 
-                        opacity: open ? 1 : 0, 
-                        '& .MuiTypography-root': { 
-                          fontSize: '1.1rem', 
-                          fontWeight: isAdminPage ? 700 : 600 
-                        } 
-                      }} 
+                    '& .MuiTypography-root': { 
+                      fontSize: '0.875rem', 
+                      fontWeight: adminSubItems.some(item => location.pathname === item.path) ? 600 : 500
+                    } 
+                  }} 
                 />
-                {open && (adminOpen ? <ExpandLess /> : <ExpandMore />)}
-              </ListItemButton>
-              <Collapse in={adminOpen && open} timeout="auto" unmountOnExit>
-                <List disablePadding sx={{ pl: 2 }}>
-                  {adminSubItems.map((item) => (
-                    <ListItem key={item.text} disablePadding sx={{ display: 'block', mb: 1 }}>
-                      <ListItemButton
-                        onClick={() => { navigate(item.path); setOpen(true); }}
-                        sx={{
-                          minHeight: 54,
-                          justifyContent: open ? 'initial' : 'center',
-                          px: 3,
-                          py: 1.25,
-                          borderRadius: '10px',
-                          mx: 0.5,
-                          bgcolor: location.pathname === item.path ? '#2196F3' : 'transparent',
-                          color: location.pathname === item.path ? '#ffffff' : '#666',
-                          '&:hover': {
-                            bgcolor: location.pathname === item.path ? '#1976d2' : '#e3f2fd'
-                          }
-                        }}
-                      >
-                        <ListItemIcon sx={{
-                          minWidth: 0,
-                          mr: open ? 3 : 'auto',
-                          justifyContent: 'center',
-                          color: location.pathname === item.path ? '#ffffff' : '#1a1a2e',
-                          '& svg': { fontSize: 24 }
-                        }}>
-                          {item.icon}
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary={item.text} 
-                          sx={{ 
-                                opacity: open ? 1 : 0, 
-                                '& .MuiTypography-root': { 
-                                  fontSize: '1rem', 
-                                  fontWeight: location.pathname === item.path ? 600 : 500 
-                                } 
-                              }} 
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-                </List>
-              </Collapse>
-            </ListItem>
-
-            <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
-              <ListItemButton
-                onClick={() => { navigate('/reports'); setOpen(true); }}
-                sx={{
-                  minHeight: 50,
-                  justifyContent: open ? 'initial' : 'center',
-                  px: 2.5,
-                  py: 1,
-                  borderRadius: '8px',
-                  mx: 0.5,
-                  bgcolor: location.pathname === '/reports' ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                  background: location.pathname === '/reports' ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                  color: location.pathname === '/reports' ? '#ffffff' : '#4a4a6a',
-                  '&:hover': {
-                    bgcolor: location.pathname === '/reports' ? 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' : '#f0f7ff'
-                  },
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <ListItemIcon sx={{
-                  minWidth: 0,
-                  mr: open ? 2.5 : 'auto',
-                  justifyContent: 'center',
-                  color: location.pathname === '/reports' ? '#ffffff' : '#1a1a2e',
-                  '& svg': { fontSize: 22 }
-                }}>
-                  <ReportsIcon />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Reports" 
-                  sx={{ 
-                        opacity: open ? 1 : 0, 
-                        '& .MuiTypography-root': { 
-                          fontSize: '0.95rem', 
-                          fontWeight: location.pathname === '/reports' ? 600 : 500 
-                        } 
-                      }} 
-                />
+                {adminOpen ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
               </ListItemButton>
             </ListItem>
 
-            <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
+            <Collapse in={adminOpen} timeout="auto" unmountOnExit>
+              <List disablePadding sx={{ pl: 2 }}>
+                {adminSubItems.map((item) => (
+                  <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => navigate(item.path)}
+                      sx={{
+                        minHeight: 40,
+                        borderRadius: '8px',
+                        px: 2,
+                        py: 0.75,
+                        bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                        color: location.pathname === item.path ? '#1976d2' : '#666',
+                        '&:hover': {
+                          bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5'
+                        }
+                      }}
+                    >
+                      <ListItemIcon sx={{
+                        minWidth: 32,
+                        color: location.pathname === item.path ? '#1976d2' : '#999',
+                        '& svg': { fontSize: 18 }
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={item.text} 
+                        sx={{ 
+                          '& .MuiTypography-root': { 
+                            fontSize: '0.8125rem', 
+                            fontWeight: location.pathname === item.path ? 600 : 500
+                          } 
+                        }} 
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+
+            {/* Settings */}
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
-                onClick={() => { navigate('/settings'); setOpen(true); }}
+                onClick={() => navigate('/settings')}
                 sx={{
-                  minHeight: 50,
-                  justifyContent: open ? 'initial' : 'center',
-                  px: 2.5,
-                  py: 1,
+                  minHeight: 44,
                   borderRadius: '8px',
-                  mx: 0.5,
-                  bgcolor: location.pathname === '/settings' ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                  background: location.pathname === '/settings' ? 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)' : 'transparent',
-                  color: location.pathname === '/settings' ? '#ffffff' : '#4a4a6a',
+                  px: 2,
+                  py: 1,
+                  bgcolor: location.pathname === '/settings' ? '#E3F2FD' : 'transparent',
+                  color: location.pathname === '/settings' ? '#1976d2' : '#666',
                   '&:hover': {
-                    bgcolor: location.pathname === '/settings' ? 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)' : '#f0f7ff'
-                  },
-                  transition: 'all 0.2s ease'
+                    bgcolor: location.pathname === '/settings' ? '#E3F2FD' : '#f5f5f5'
+                  }
                 }}
               >
                 <ListItemIcon sx={{
-                  minWidth: 0,
-                  mr: open ? 2.5 : 'auto',
-                  justifyContent: 'center',
-                  color: location.pathname === '/settings' ? '#ffffff' : '#1a1a2e',
-                  '& svg': { fontSize: 22 }
+                  minWidth: 36,
+                  color: location.pathname === '/settings' ? '#1976d2' : '#999',
+                  '& svg': { fontSize: 20 }
                 }}>
                   <SettingsIcon />
                 </ListItemIcon>
                 <ListItemText 
                   primary="Settings" 
                   sx={{ 
-                        opacity: open ? 1 : 0, 
-                        '& .MuiTypography-root': { 
-                          fontSize: '0.95rem', 
-                          fontWeight: location.pathname === '/settings' ? 600 : 500 
-                        } 
-                      }} 
+                    '& .MuiTypography-root': { 
+                      fontSize: '0.875rem', 
+                      fontWeight: location.pathname === '/settings' ? 600 : 500
+                    } 
+                  }} 
                 />
               </ListItemButton>
             </ListItem>
           </List>
+
+          {/* Need Help Section */}
+          <Box sx={{ px: 3, mt: 4 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#333', fontSize: '0.875rem' }}>
+              Need Help?
+            </Typography>
+          </Box>
         </Box>
       </Drawer>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, bgcolor: '#f8f9fa', minHeight: '100vh' }}>
+      {/* Main Content */}
+      <Box component="main" sx={{ flexGrow: 1, p: 3, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
         <Toolbar />
         <Box sx={{ maxWidth: '1600px', mx: 'auto' }}>
-          <Typography variant="h5" sx={{ mb: 3, fontWeight: 700, color: '#1a1a2e', letterSpacing: '-0.5px' }}>
-            {title}
-          </Typography>
           {children}
         </Box>
       </Box>

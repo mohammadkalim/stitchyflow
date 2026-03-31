@@ -11,12 +11,13 @@ router.post('/register', async (req, res) => {
     
     const hashedPassword = await bcrypt.hash(password, 10);
     
+    // Direct query instead of stored procedure
     const [result] = await db.query(
-      'CALL sp_create_user(?, ?, ?, ?, ?, ?, @user_id)',
-      [email, hashedPassword, firstName, lastName, phone, role || 'customer']
+      'INSERT INTO users (email, password_hash, first_name, last_name, phone, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [email, hashedPassword, firstName, lastName, phone, role || 'customer', 'active']
     );
     
-    const [[{ '@user_id': userId }]] = await db.query('SELECT @user_id');
+    const userId = result.insertId;
     
     res.status(201).json({
       success: true,
@@ -33,18 +34,25 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    const [users] = await db.query('CALL sp_authenticate_user(?)', [email]);
+    // Direct query instead of stored procedure
+    const [users] = await db.query(
+      "SELECT user_id, email, password_hash, first_name, last_name, role, status FROM users WHERE email = ? AND status = 'active'",
+      [email]
+    );
     
-    if (!users[0] || users[0].length === 0) {
+    if (!users || users.length === 0) {
       return res.status(401).json({ success: false, error: { message: 'Invalid credentials' } });
     }
     
-    const user = users[0][0];
+    const user = users[0];
     const validPassword = await bcrypt.compare(password, user.password_hash);
     
     if (!validPassword) {
       return res.status(401).json({ success: false, error: { message: 'Invalid credentials' } });
     }
+    
+    // Update last login
+    await db.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?', [user.user_id]);
     
     const accessToken = jwt.sign(
       { userId: user.user_id, email: user.email, role: user.role },
@@ -73,7 +81,8 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: { message: error.message } });
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, error: { message: error.message, code: error.code } });
   }
 });
 

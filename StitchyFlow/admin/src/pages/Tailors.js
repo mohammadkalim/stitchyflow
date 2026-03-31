@@ -7,6 +7,8 @@ function Tailors() {
   const [tailors, setTailors] = useState([]);
 
   useEffect(() => {
+    // API call commented out - uncomment when backend is ready
+    /*
     const fetchTailors = async () => {
       try {
         const token = localStorage.getItem('adminToken');
@@ -19,6 +21,7 @@ function Tailors() {
       }
     };
     fetchTailors();
+    */
   }, []);
 
   return (

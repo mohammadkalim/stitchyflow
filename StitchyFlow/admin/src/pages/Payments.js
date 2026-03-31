@@ -7,6 +7,8 @@ function Payments() {
   const [payments, setPayments] = useState([]);
 
   useEffect(() => {
+    // API call commented out - uncomment when backend is ready
+    /*
     const fetchPayments = async () => {
       try {
         const token = localStorage.getItem('adminToken');
@@ -19,6 +21,7 @@ function Payments() {
       }
     };
     fetchPayments();
+    */
   }, []);
 
   return (

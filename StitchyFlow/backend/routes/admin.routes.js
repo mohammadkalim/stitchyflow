@@ -44,7 +44,9 @@ router.get('/analytics', authenticateToken, async (req, res) => {
 // Get All Users
 router.get('/users', authenticateToken, async (req, res) => {
   try {
-    const [users] = await db.query('SELECT user_id, full_name, email, phone_number, role, is_active, created_at FROM users ORDER BY created_at DESC');
+    const [users] = await db.query(
+      "SELECT user_id, CONCAT(first_name, ' ', last_name) as full_name, email, phone as phone_number, role, status = 'active' as is_active, last_login, created_at FROM users ORDER BY created_at DESC"
+    );
     res.json({ success: true, data: users });
   } catch (error) {
     res.status(500).json({ success: false, error: { message: error.message } });
@@ -55,7 +57,7 @@ router.get('/users', authenticateToken, async (req, res) => {
 router.get('/users/:id', authenticateToken, async (req, res) => {
   try {
     const [users] = await db.query(
-      'SELECT user_id, full_name, email, phone_number, role, is_active, created_at, updated_at FROM users WHERE user_id = ?',
+      "SELECT user_id, CONCAT(first_name, ' ', last_name) as full_name, email, phone as phone_number, role, status = 'active' as is_active, created_at, updated_at FROM users WHERE user_id = ?",
       [req.params.id]
     );
     
@@ -100,9 +102,11 @@ router.post('/users', authenticateToken, async (req, res) => {
     const first_name = nameParts[0] || '';
     const last_name = nameParts.slice(1).join(' ') || '';
     
+    const status = is_active ? 'active' : 'inactive';
+    
     const [result] = await db.query(
       'INSERT INTO users (first_name, last_name, email, phone, role, status, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [first_name, last_name, email, phone_number || null, role, is_active ? 'active' : 'inactive', passwordHash]
+      [first_name, last_name, email, phone_number || null, role, status, passwordHash]
     );
     
     res.status(201).json({ 
@@ -184,32 +188,33 @@ router.put('/users/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Delete User
+// Delete User (Soft Delete - Set status to inactive)
 router.delete('/users/:id', authenticateToken, async (req, res) => {
   try {
     const userId = req.params.id;
     
     // Check if user exists
-    const [existingUsers] = await db.query('SELECT user_id FROM users WHERE user_id = ?', [userId]);
+    const [existingUsers] = await db.query('SELECT user_id, role FROM users WHERE user_id = ?', [userId]);
     if (existingUsers.length === 0) {
       return res.status(404).json({ success: false, error: { message: 'User not found' } });
     }
     
     // Prevent deleting the last admin
-    const [adminCount] = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'admin'");
-    const [userToDelete] = await db.query("SELECT role FROM users WHERE user_id = ?", [userId]);
+    const [adminCount] = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'admin' AND status = 'active'");
     
-    if (userToDelete[0].role === 'admin' && adminCount[0].count <= 1) {
+    if (existingUsers[0].role === 'admin' && adminCount[0].count <= 1) {
       return res.status(403).json({ 
         success: false, 
         error: { message: 'Cannot delete the last admin user' } 
       });
     }
     
-    await db.query('DELETE FROM users WHERE user_id = ?', [userId]);
+    // Soft delete - set status to inactive instead of actually deleting
+    await db.query('UPDATE users SET status = ? WHERE user_id = ?', ['inactive', userId]);
     
     res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
+    console.error('Delete user error:', error);
     res.status(500).json({ success: false, error: { message: error.message } });
   }
 });

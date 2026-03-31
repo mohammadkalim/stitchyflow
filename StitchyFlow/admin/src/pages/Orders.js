@@ -7,6 +7,8 @@ function Orders() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
+    // API call commented out - uncomment when backend is ready
+    /*
     const fetchOrders = async () => {
       try {
         const token = localStorage.getItem('adminToken');
@@ -19,6 +21,7 @@ function Orders() {
       }
     };
     fetchOrders();
+    */
   }, []);
 
   const getStatusColor = (status) => {
