@@ -23,7 +23,7 @@ INSERT INTO smtp_settings (server_address, username, password, port, encryption,
 VALUES (
     'smtp.gmail.com',
     'mkbytecoder14@gmail.com',
-    'rmxd crjy kiqj ulfs',
+    'rmxdcrjykiqjulfs',
     465,
     'SSL',
     TRUE,

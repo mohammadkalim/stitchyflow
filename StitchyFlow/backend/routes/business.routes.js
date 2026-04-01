@@ -14,7 +14,7 @@ const RESOURCES = {
     table: 'business_tailor_shops',
     id: 'shop_id',
     required: ['shop_name', 'owner_name'],
-    allowed: ['shop_name', 'owner_name', 'city', 'address', 'contact_number', 'business_type_id', 'specialization_id', 'shop_status']
+    allowed: ['shop_name', 'owner_name', 'city', 'address', 'contact_number', 'business_type_id', 'specialization_id', 'shop_status', 'shop_image']
   },
   settings: {
     table: 'business_settings',
@@ -81,6 +81,9 @@ async function initBusinessTables() {
       address TEXT,
       contact_number VARCHAR(30),
       shop_status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+      shop_image VARCHAR(500) DEFAULT NULL,
+      business_type_id INT DEFAULT NULL,
+      specialization_id INT DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`,
@@ -191,6 +194,26 @@ async function writeLog(req, { pageName, actionType, entityId = null, descriptio
 function getResourceConfig(resourceName) {
   return RESOURCES[resourceName];
 }
+
+// ── PUBLIC: Active shops for frontend slider (no auth required) ───────────────
+router.get('/public/shops', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT shop_id, shop_name, owner_name, city, shop_image,
+             bt.type_name AS business_type_name,
+             sp.specialization_name
+      FROM business_tailor_shops s
+      LEFT JOIN business_type_management bt ON s.business_type_id = bt.type_id
+      LEFT JOIN specialization_management sp ON s.specialization_id = sp.specialization_id
+      WHERE s.shop_status = 'active'
+      ORDER BY s.shop_id DESC
+      LIMIT 12
+    `);
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
 
 router.use(authenticateToken);
 router.use(ensureInitialized);

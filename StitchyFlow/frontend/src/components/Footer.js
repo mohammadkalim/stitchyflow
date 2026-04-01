@@ -1,99 +1,171 @@
 import React from 'react';
-import { Box, Typography, Grid, IconButton, Link } from '@mui/material';
+import { Box, Typography, Grid, IconButton, Container, Divider } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import FacebookIcon from '@mui/icons-material/Facebook';
-import TwitterIcon from '@mui/icons-material/Twitter';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+import TwitterIcon from '@mui/icons-material/Twitter';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ContentCutIcon from '@mui/icons-material/ContentCut';
+
+const linkSx = {
+  color: 'rgba(255,255,255,0.55)',
+  fontSize: '0.82rem',
+  display: 'block',
+  mb: 1,
+  cursor: 'pointer',
+  transition: 'color 0.2s',
+  '&:hover': { color: '#fff' },
+};
 
 function Footer() {
+  const navigate = useNavigate();
   return (
-    <Box
-      component="footer"
-      sx={{
-        backgroundColor: '#0a1929',
-        color: '#fff',
-        pt: 4,
-        pb: 3,
-        px: { xs: 2, md: 6 },
-      }}
-    >
-      <Grid container spacing={3}>
-        <Grid item xs={12} sm={4}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#fff' }}>
-            StitchyFlow
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 2, fontSize: '0.85rem' }}>
-            Professional Tailoring Marketplace connecting customers with skilled tailors for custom clothing solutions.
-          </Typography>
-          <Box>
-            <IconButton size="small" sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#00bfff' } }}>
-              <FacebookIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#00bfff' } }}>
-              <TwitterIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#00bfff' } }}>
-              <InstagramIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: '#00bfff' } }}>
-              <LinkedInIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </Grid>
+    <Box component="footer" sx={{ bgcolor: '#0d1b2a', color: '#fff' }}>
+      <Container maxWidth="lg" sx={{ pt: 6, pb: 4 }}>
+        <Grid container spacing={4}>
 
-        <Grid item xs={12} sm={4}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#fff', fontSize: '1rem' }}>
-            Quick Links
+          {/* Col 1 — Brand */}
+          <Grid item xs={12} md={3}>
+            {/* Logo */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 2 }}>
+              <Box sx={{
+                width: 36, height: 36, borderRadius: '8px',
+                bgcolor: '#2563eb',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <ContentCutIcon sx={{ color: '#fff', fontSize: 18 }} />
+              </Box>
+              <Box>
+                <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: '#fff', lineHeight: 1.1 }}>
+                  StitchyFlow
+                </Typography>
+                <Typography sx={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Enterprise Edition
+                </Typography>
+              </Box>
+            </Box>
+
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', lineHeight: 1.7, mb: 3, maxWidth: 220 }}>
+              Pakistan's leading tailoring marketplace. We connect customers with verified tailors through our secure, automated marketplace infrastructure.
+            </Typography>
+
+            {/* Social Icons */}
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {[
+                { icon: <FacebookIcon fontSize="small" />, href: '#' },
+                { icon: <InstagramIcon fontSize="small" />, href: '#' },
+                { icon: <LinkedInIcon fontSize="small" />, href: '#' },
+                { icon: <TwitterIcon fontSize="small" />, href: '#' },
+              ].map((s, i) => (
+                <IconButton key={i} size="small" href={s.href}
+                  sx={{
+                    color: 'rgba(255,255,255,0.5)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '6px', p: 0.6,
+                    '&:hover': { color: '#fff', borderColor: 'rgba(255,255,255,0.4)', bgcolor: 'rgba(255,255,255,0.06)' },
+                  }}>
+                  {s.icon}
+                </IconButton>
+              ))}
+            </Box>
+          </Grid>
+
+          {/* Col 2 — Marketplace */}
+          <Grid item xs={6} md={3}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', mb: 2 }}>
+              Marketplace
+            </Typography>
+            {[
+              { label: 'Custom Dresses',  path: '/marketplace/custom-dresses' },
+              { label: 'Suits & Blazers', path: '/marketplace/suits-blazers' },
+              { label: 'Bridal Wear',     path: '/marketplace/bridal-wear' },
+              { label: 'Traditional Wear',path: '/marketplace/traditional-wear' },
+              { label: 'Alterations',     path: '/marketplace/alterations' },
+              { label: 'Fabric Selection',path: '/marketplace/fabric-selection' },
+            ].map((item) => (
+              <Box key={item.label} onClick={() => navigate(item.path)} sx={linkSx}>· {item.label}</Box>
+            ))}
+          </Grid>
+
+          {/* Col 3 — Company */}
+          <Grid item xs={6} md={3}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', mb: 2 }}>
+              Company
+            </Typography>
+            {[
+              { label: 'About StitchyFlow', path: '/about' },
+              { label: 'How It Works',      path: '/how-it-works' },
+              { label: 'Careers',           path: '/careers' },
+              { label: 'Press & Media',     path: '/press-media' },
+              { label: 'Industry Blog',     path: '/blog' },
+            ].map((item) => (
+              <Box key={item.label} onClick={() => navigate(item.path)} sx={linkSx}>{item.label}</Box>
+            ))}
+          </Grid>
+
+          {/* Col 4 — Contact */}
+          <Grid item xs={12} md={3}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', mb: 2 }}>
+              Contact
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <PhoneIcon sx={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', mt: 0.2 }} />
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem' }}>
+                  +92 333 3836851
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <EmailIcon sx={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', mt: 0.2 }} />
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem' }}>
+                  info@logixinventor.com
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <LocationOnIcon sx={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', mt: 0.2 }} />
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', lineHeight: 1.5 }}>
+                  DHA Phase 6,<br />Karachi, Sindh, Pakistan
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+
+        </Grid>
+      </Container>
+
+      {/* Bottom Bar */}
+      <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+      <Container maxWidth="lg">
+        <Box sx={{
+          py: 2,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 1,
+        }}>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>
+            © 2026 LogixInventor (PVT) Ltd.
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {['Home', 'Services', 'About Us', 'Contact'].map((item) => (
-              <Link
-                key={item}
-                href="#"
-                underline="none"
-                sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', '&:hover': { color: '#fff' } }}
-              >
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+            <CheckCircleIcon sx={{ fontSize: 13, color: '#16a34a' }} />
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
+              Secure Platform
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {['Privacy', 'Terms', 'Sitemap'].map((item) => (
+              <Box key={item} onClick={() => {}}
+                sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', cursor: 'pointer', '&:hover': { color: '#fff' } }}>
                 {item}
-              </Link>
+              </Box>
             ))}
           </Box>
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#fff', fontSize: '1rem' }}>
-            Contact Us
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <LocationOnIcon sx={{ fontSize: 18, color: 'rgba(255,255,255,0.7)' }} />
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
-                123 Fashion Street, Karachi, Pakistan
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <PhoneIcon sx={{ fontSize: 18, color: 'rgba(255,255,255,0.7)' }} />
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
-                +92 333 3836851
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <EmailIcon sx={{ fontSize: 18, color: 'rgba(255,255,255,0.7)' }} />
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
-                info@logixinventor.com
-              </Typography>
-            </Box>
-          </Box>
-        </Grid>
-      </Grid>
-
-      <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.1)', mt: 3, pt: 2, textAlign: 'center' }}>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem' }}>
-          © 2026 StitchyFlow. All rights reserved. Powered by LogixInventor (PVT) Ltd.
-        </Typography>
-      </Box>
+        </Box>
+      </Container>
     </Box>
   );
 }

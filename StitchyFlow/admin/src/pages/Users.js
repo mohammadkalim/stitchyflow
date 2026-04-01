@@ -1297,105 +1297,265 @@ function Users() {
       </Dialog>
 
 
-      {/* Edit User Dialog */}
-      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '20px' } }}>
-        <DialogTitle sx={{ pb: 2, pt: 3, px: 3, borderBottom: '1px solid #E2E8F0' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Avatar sx={{ bgcolor: '#FEF3C7', color: '#F59E0B' }}><EditIcon /></Avatar>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#1E293B' }}>Edit User</Typography>
+      {/* Edit User Dialog — Professional Large */}
+      <Dialog
+        open={openEditDialog}
+        onClose={() => setOpenEditDialog(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '24px',
+            overflow: 'hidden',
+            boxShadow: '0 40px 100px rgba(0,0,0,0.22)'
+          }
+        }}
+      >
+        {/* Header */}
+        <Box sx={{
+          background: 'linear-gradient(135deg, #1E293B 0%, #334155 100%)',
+          px: 4, py: 3,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{
+              width: 48, height: 48, borderRadius: '14px',
+              background: 'linear-gradient(135deg,#2563EB,#1D4ED8)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 16px rgba(37,99,235,0.45)'
+            }}>
+              <EditIcon sx={{ color: '#fff', fontSize: 24 }} />
             </Box>
-            <IconButton onClick={() => setOpenEditDialog(false)} size="small"><CloseIcon /></IconButton>
+            <Box>
+              <Typography sx={{ fontWeight: 800, color: '#fff', fontSize: '1.2rem', lineHeight: 1.2 }}>
+                Edit User
+              </Typography>
+              <Typography sx={{ fontSize: '0.78rem', color: '#94A3B8', mt: 0.3 }}>
+                Update user information and permissions
+              </Typography>
+            </Box>
           </Box>
-        </DialogTitle>
-        <DialogContent sx={{ px: 3, pt: 3 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-            <TextField
-              label="Full Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              fullWidth
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PeopleIcon sx={{ color: '#94A3B8' }} />
-                  </InputAdornment>
-                )
-              }}
-            />
-            <TextField
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              fullWidth
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon sx={{ color: '#94A3B8' }} />
-                  </InputAdornment>
-                )
-              }}
-            />
-            <TextField
-              label="Phone"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PhoneIcon sx={{ color: '#94A3B8' }} />
-                  </InputAdornment>
-                )
-              }}
-            />
-            <FormControl fullWidth>
-              <Typography variant="body2" sx={{ mb: 1, color: '#64748B', fontWeight: 500 }}>Role</Typography>
-              <Select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                sx={{ borderRadius: '12px' }}
-              >
-                <MenuItem value="Admin">Admin</MenuItem>
-                <MenuItem value="User">User</MenuItem>
-                <MenuItem value="Vendor">Vendor</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth>
-              <Typography variant="body2" sx={{ mb: 1, color: '#64748B', fontWeight: 500 }}>Type</Typography>
-              <Select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                sx={{ borderRadius: '12px' }}
-              >
-                <MenuItem value="customer">Customer</MenuItem>
-                <MenuItem value="tailor">Tailor</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth>
-              <Typography variant="body2" sx={{ mb: 1, color: '#64748B', fontWeight: 500 }}>Status</Typography>
-              <Select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                sx={{ borderRadius: '12px' }}
-              >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </Select>
-            </FormControl>
+          <IconButton
+            onClick={() => setOpenEditDialog(false)}
+            sx={{ color: '#94A3B8', bgcolor: 'rgba(255,255,255,0.08)', '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' } }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        <DialogContent sx={{ p: 0, bgcolor: '#F8FAFC' }}>
+          {/* User Avatar Strip */}
+          {selectedUser && (
+            <Box sx={{
+              px: 4, py: 2.5,
+              bgcolor: '#fff',
+              borderBottom: '1px solid #E2E8F0',
+              display: 'flex', alignItems: 'center', gap: 2
+            }}>
+              <Avatar sx={{
+                width: 52, height: 52,
+                bgcolor: '#EFF6FF', color: '#2563EB',
+                fontWeight: 800, fontSize: '1.2rem',
+                border: '2px solid #BFDBFE'
+              }}>
+                {selectedUser.avatar}
+              </Avatar>
+              <Box>
+                <Typography sx={{ fontWeight: 700, color: '#1E293B', fontSize: '0.95rem' }}>
+                  {selectedUser.name}
+                </Typography>
+                <Typography sx={{ fontSize: '0.78rem', color: '#64748B' }}>
+                  ID: #{selectedUser.userId} · {selectedUser.email}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          <Box sx={{ p: 4 }}>
+            {/* Section: Personal Info */}
+            <Typography sx={{
+              fontSize: '0.7rem', fontWeight: 800, color: '#6366F1',
+              textTransform: 'uppercase', letterSpacing: '0.08em', mb: 2,
+              display: 'flex', alignItems: 'center', gap: 0.5
+            }}>
+              <PeopleIcon sx={{ fontSize: 14 }} /> Personal Information
+            </Typography>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2.5, mb: 3.5 }}>
+              <TextField
+                label="Full Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                fullWidth
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PeopleIcon sx={{ color: '#94A3B8', fontSize: 20 }} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff', fontSize: '0.95rem' } }}
+              />
+              <TextField
+                label="Email Address"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                fullWidth
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={{ color: '#94A3B8', fontSize: 20 }} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff', fontSize: '0.95rem' } }}
+              />
+              <TextField
+                label="Phone Number"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PhoneIcon sx={{ color: '#94A3B8', fontSize: 20 }} />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff', fontSize: '0.95rem' } }}
+              />
+            </Box>
+
+            {/* Divider */}
+            <Box sx={{ borderTop: '1px dashed #E2E8F0', mb: 3.5 }} />
+
+            {/* Section: Account Settings */}
+            <Typography sx={{
+              fontSize: '0.7rem', fontWeight: 800, color: '#6366F1',
+              textTransform: 'uppercase', letterSpacing: '0.08em', mb: 2,
+              display: 'flex', alignItems: 'center', gap: 0.5
+            }}>
+              <LockIcon sx={{ fontSize: 14 }} /> Account Settings
+            </Typography>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2.5 }}>
+              {/* Role */}
+              <Box>
+                <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', mb: 1 }}>Role</Typography>
+                <Select
+                  fullWidth
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  sx={{
+                    borderRadius: '12px', bgcolor: '#fff', fontSize: '0.9rem',
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#6366F1' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366F1' }
+                  }}
+                >
+                  <MenuItem value="Admin">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#EF4444' }} />Admin
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="User">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#2563EB' }} />User
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="Tailor Shop">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#F59E0B' }} />Tailor Shop
+                    </Box>
+                  </MenuItem>
+                </Select>
+              </Box>
+
+              {/* Type */}
+              <Box>
+                <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', mb: 1 }}>Type</Typography>
+                <Select
+                  fullWidth
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  sx={{
+                    borderRadius: '12px', bgcolor: '#fff', fontSize: '0.9rem',
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#6366F1' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366F1' }
+                  }}
+                >
+                  <MenuItem value="customer">Customer</MenuItem>
+                  <MenuItem value="tailor">Tailor</MenuItem>
+                </Select>
+              </Box>
+
+              {/* Status */}
+              <Box>
+                <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', mb: 1 }}>Status</Typography>
+                <Select
+                  fullWidth
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  sx={{
+                    borderRadius: '12px', bgcolor: '#fff', fontSize: '0.9rem',
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#6366F1' },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#6366F1' }
+                  }}
+                >
+                  <MenuItem value="active">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#22C55E' }} />Active
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="inactive">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#94A3B8' }} />Inactive
+                    </Box>
+                  </MenuItem>
+                </Select>
+              </Box>
+            </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3, pt: 2, borderTop: '1px solid #E2E8F0' }}>
-          <Button onClick={() => setOpenEditDialog(false)} variant="outlined" sx={{ borderRadius: '10px', textTransform: 'none', px: 3 }}>
+
+        {/* Footer */}
+        <Box sx={{
+          px: 4, py: 2.5,
+          bgcolor: '#fff',
+          borderTop: '1px solid #E2E8F0',
+          display: 'flex', justifyContent: 'flex-end', gap: 1.5
+        }}>
+          <Button
+            onClick={() => setOpenEditDialog(false)}
+            sx={{
+              textTransform: 'none', fontWeight: 700, color: '#64748B',
+              bgcolor: '#F1F5F9', borderRadius: '12px', px: 4, py: 1.25,
+              fontSize: '0.95rem',
+              '&:hover': { bgcolor: '#E2E8F0' }
+            }}
+          >
             Cancel
           </Button>
-          <Button onClick={handleEditUser} variant="contained" sx={{ bgcolor: '#2563EB', borderRadius: '10px', textTransform: 'none', px: 3, '&:hover': { bgcolor: '#1D4ED8' } }}>
+          <Button
+            onClick={handleEditUser}
+            variant="contained"
+            startIcon={<EditIcon />}
+            sx={{
+              textTransform: 'none', fontWeight: 700, borderRadius: '12px',
+              px: 4, py: 1.25, fontSize: '0.95rem',
+              background: 'linear-gradient(135deg,#2563EB,#1D4ED8)',
+              boxShadow: '0 4px 14px rgba(37,99,235,0.35)',
+              '&:hover': { background: 'linear-gradient(135deg,#1D4ED8,#1E40AF)' }
+            }}
+          >
             Update User
           </Button>
-        </DialogActions>
+        </Box>
       </Dialog>
 
       {/* View User Dialog */}

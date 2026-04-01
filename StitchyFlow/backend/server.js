@@ -25,6 +25,8 @@ app.use('/api/v1/admin', require('./routes/admin.routes'));
 app.use('/api/v1/smtp', require('./routes/smtp.routes'));
 app.use('/api/v1/business', require('./routes/business.routes'));
 app.use('/api/v1/ai-errors', require('./routes/ai_errors.routes'));
+app.use('/api/v1/verification', require('./routes/verification.routes'));
+app.use('/api/v1/password', require('./routes/password.routes'));
 
 // Health check
 app.get('/health', (req, res) => {

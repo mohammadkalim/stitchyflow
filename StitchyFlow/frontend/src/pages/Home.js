@@ -1,33 +1,68 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Container, Grid, Card, CardContent, Avatar, Rating, IconButton, Paper } from '@mui/material';
+import {
+  Box, Typography, Button, Container, Grid, Card, CardContent,
+  Avatar, Rating, TextField, Select, MenuItem, InputAdornment, Paper
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import StarIcon from '@mui/icons-material/Star';
+import TuneIcon from '@mui/icons-material/Tune';
+import SearchIcon from '@mui/icons-material/Search';
+import NearMeIcon from '@mui/icons-material/NearMe';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import PeopleIcon from '@mui/icons-material/People';
+import StarOutlineIcon from '@mui/icons-material/StarOutline';
+import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import SecurityIcon from '@mui/icons-material/Security';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-const sliderData = [
-  {
-    title: 'Professional Tailoring Services',
-    subtitle: 'Get custom-fit clothing from expert tailors',
-    description: 'Connect with skilled tailors for perfectly tailored outfits',
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200',
-  },
-  {
-    title: 'Custom Dress Making',
-    subtitle: 'Design your dream outfit',
-    description: 'Bring your fashion ideas to life with our expert tailors',
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=1200',
-  },
-  {
-    title: 'Quality Alterations',
-    subtitle: 'Perfect fit, every time',
-    description: 'Professional alterations to make your clothes fit perfectly',
-    image: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=1200',
-  },
-];
+const btnStyles = `
+  @keyframes shimmer {
+    0%   { left: -100%; }
+    100% { left: 160%; }
+  }
+  @keyframes pulseGreen {
+    0%, 100% { box-shadow: 0 4px 14px rgba(22,163,74,0.45); }
+    50%       { box-shadow: 0 4px 28px rgba(22,163,74,0.85), 0 0 0 6px rgba(22,163,74,0.15); }
+  }
+  @keyframes pulseBlue {
+    0%, 100% { box-shadow: 0 4px 14px rgba(37,99,235,0.45); }
+  50%        { box-shadow: 0 4px 28px rgba(37,99,235,0.85), 0 0 0 6px rgba(37,99,235,0.15); }
+  }
+  .btn-green {
+    position: relative; overflow: hidden;
+    animation: pulseGreen 2.4s ease-in-out infinite;
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s ease !important;
+  }
+  .btn-green::after {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+    transform: skewX(-20deg);
+  }
+  .btn-green:hover { transform: translateY(-4px) scale(1.04) !important; }
+  .btn-green:hover::after { animation: shimmer 0.65s ease forwards; }
+  .btn-green:active { transform: translateY(1px) scale(0.97) !important; }
 
+  .btn-blue {
+    position: relative; overflow: hidden;
+    animation: pulseBlue 2.4s ease-in-out infinite;
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s ease !important;
+  }
+  .btn-blue::after {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+    transform: skewX(-20deg);
+  }
+  .btn-blue:hover { transform: translateY(-4px) scale(1.04) !important; }
+  .btn-blue:hover::after { animation: shimmer 0.65s ease forwards; }
+  .btn-blue:active { transform: translateY(1px) scale(0.97) !important; }
+`;
 const reviewsData = [
   {
     id: 1,
@@ -63,266 +98,396 @@ const reviewsData = [
   },
 ];
 
-const services = [
-  {
-    title: 'Custom Dresses',
-    description: 'Get perfectly tailored dresses designed exactly to your preferences',
-    icon: '👗',
-  },
-  {
-    title: 'Suits & Blazers',
-    description: 'Professional suits and blazers with perfect fit and finish',
-    icon: '👔',
-  },
-  {
-    title: 'Traditional Wear',
-    description: 'Authentic traditional outfits including shalwar kameez and more',
-    icon: '🥻',
-  },
-  {
-    title: 'Alterations',
-    description: 'Expert alterations to give your existing clothes a new life',
-    icon: '✂️',
-  },
-];
 
 function Home() {
   const navigate = useNavigate();
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % sliderData.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + sliderData.length) % sliderData.length);
-  };
+  const [category, setCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
+      <style>{btnStyles}</style>
       <Header />
       
       {/* Hero Slider */}
-      <Box sx={{ position: 'relative', height: { xs: '60vh', md: '80vh' }, overflow: 'hidden', mt: '64px' }}>
-        {sliderData.map((slide, index) => (
-          <Box
-            key={index}
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              opacity: index === currentSlide ? 1 : 0,
-              transition: 'opacity 0.8s ease-in-out',
-            }}
-          >
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: `linear-gradient(90deg, rgba(0, 100, 0, 0.95) 0%, rgba(0, 80, 180, 0.98) 45%, rgba(0, 80, 180, 0.98) 55%, rgba(0, 100, 0, 0.95) 100%)`,
-                zIndex: 1,
-              }}
-            />
-            <Box
-              component="img"
-              src={slide.image}
-              alt={slide.title}
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                mixBlendMode: 'overlay',
-              }}
-            />
-            <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Box sx={{ maxWidth: 600, textAlign: 'center' }}>
-                <Typography 
-                  variant="h2" 
-                  sx={{ 
-                    fontWeight: 700, 
-                    color: '#fff',
-                    fontSize: { xs: '2rem', md: '3.5rem' },
-                    textShadow: '0 2px 10px rgba(0,0,0,0.3)',
-                    mb: 1
+      <Box sx={{
+        position: 'relative',
+        background: 'linear-gradient(135deg, #1a3a8f 0%, #1e4db7 30%, #1565c0 55%, #0d7a6e 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mt: '64px',
+        overflow: 'hidden',
+        py: { xs: 8, md: 12 },
+        minHeight: { xs: 'auto', md: '88vh' },
+      }}>
+        <Container maxWidth="md" sx={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
+          {/* Main Heading */}
+          <Typography variant="h3" sx={{
+            fontWeight: 800,
+            color: '#fff',
+            fontSize: { xs: '2rem', md: '3rem' },
+            mb: 2,
+            mt: { xs: 2, md: 4 },
+            lineHeight: 1.2,
+          }}>
+            Your Perfect Tailor with{' '}
+            <Box component="span" sx={{ color: '#f59e0b' }}>StitchyFlow</Box>
+          </Typography>
+
+          {/* Subtitle */}
+          <Typography variant="body1" sx={{
+            color: 'rgba(255,255,255,0.85)',
+            fontSize: { xs: '0.95rem', md: '1.1rem' },
+            mb: 5,
+            maxWidth: 520,
+            mx: 'auto',
+            lineHeight: 1.7,
+          }}>
+            Connect with skilled tailors, book custom stitching services, and get perfectly fitted outfits for weddings, formal wear, and everyday fashion.
+          </Typography>
+
+          {/* Search Card */}
+          <Paper elevation={0} sx={{
+            borderRadius: '20px',
+            p: { xs: 3, md: 4 },
+            bgcolor: '#fff',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            maxWidth: 780,
+            width: '100%',
+            mx: 'auto',
+          }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5, fontSize: { xs: '1.2rem', md: '1.4rem' } }}>
+              Find Your Perfect Tailoring Service
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#6b7280', mb: 3, fontSize: '0.9rem' }}>
+              Search from hundreds of verified tailors across Pakistan
+            </Typography>
+
+            {/* Fields Row */}
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', mb: 0.8 }}>
+                  Category
+                </Typography>
+                <Select
+                  fullWidth
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  displayEmpty
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <TuneIcon sx={{ color: '#8b5cf6', fontSize: 20 }} />
+                    </InputAdornment>
+                  }
+                  sx={{
+                    borderRadius: '10px',
+                    fontSize: '0.95rem',
+                    '& .MuiSelect-select': { py: 1.4 },
                   }}
                 >
-                  {slide.title}
+                  <MenuItem value="">All Categories</MenuItem>
+                  <MenuItem value="dresses">Custom Dresses</MenuItem>
+                  <MenuItem value="suits">Suits & Blazers</MenuItem>
+                  <MenuItem value="traditional">Traditional Wear</MenuItem>
+                  <MenuItem value="alterations">Alterations</MenuItem>
+                  <MenuItem value="bridal">Bridal Wear</MenuItem>
+                </Select>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', mb: 0.8 }}>
+                  Search
                 </Typography>
-                <Typography 
-                  variant="h5" 
-                  sx={{ 
-                    color: '#fff',
-                    fontWeight: 500,
-                    mb: 2,
-                    textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                <TextField
+                  fullWidth
+                  placeholder="Search tailors, services..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
                   }}
-                >
-                  {slide.subtitle}
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    color: 'rgba(255,255,255,0.9)',
-                    mb: 3,
-                    fontSize: { xs: '1rem', md: '1.2rem' },
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '10px',
+                      fontSize: '0.95rem',
+                      '& input': { py: 1.4 },
+                    },
                   }}
-                >
-                  {slide.description}
-                </Typography>
-                <Button
-                  variant="contained"
-                  size="large"
-                  endIcon={<ArrowForwardIcon />}
+                />
+              </Grid>
+            </Grid>
+
+            {/* Buttons Row */}
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Button fullWidth variant="contained"
+                  startIcon={<NearMeIcon />}
+                  className="btn-green"
                   onClick={() => navigate('/register')}
                   sx={{
-                    backgroundColor: '#FF9800',
-                    fontWeight: 600,
+                    bgcolor: '#16a34a',
+                    fontWeight: 700,
                     borderRadius: '10px',
-                    px: 8,
-                    py: 2.5,
-                    fontSize: '1.1rem',
-                    mt: 4,
-                    boxShadow: '0 4px 20px rgba(255, 152, 0, 0.4)',
-                    '&:hover': {
-                      backgroundColor: '#F57C00',
-                      transform: 'translateY(4px)',
-                      boxShadow: '0 2px 15px rgba(255, 152, 0, 0.6)',
-                    },
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  Get Started
+                    py: 1.6,
+                    fontSize: '1rem',
+                    textTransform: 'none',
+                  }}>
+                  Find Near Me
                 </Button>
-              </Box>
-            </Container>
-          </Box>
-        ))}
-        
-        {/* Slider Controls */}
-        
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Button fullWidth variant="contained"
+                  startIcon={<SearchIcon />}
+                  className="btn-blue"
+                  onClick={() => navigate('/register')}
+                  sx={{
+                    bgcolor: '#2563eb',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    py: 1.6,
+                    fontSize: '1rem',
+                    textTransform: 'none',
+                  }}>
+                  Search Tailors
+                </Button>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Container>
       </Box>
 
-      {/* Services Section */}
-      <Box sx={{ py: 8, bgcolor: '#f8f9fa' }}>
+      {/* How It Works Section */}
+      <Box sx={{ py: 8, bgcolor: '#f0f4ff' }}>
         <Container maxWidth="lg">
-          <Typography variant="h4" sx={{ fontWeight: 700, textAlign: 'center', mb: 2, color: '#333' }}>
-            Our Services
+          <Typography variant="h4" sx={{ fontWeight: 800, textAlign: 'center', mb: 1, color: '#1a1a2e' }}>
+            How It{' '}
+            <Box component="span" sx={{ color: '#2563eb' }}>Works</Box>
           </Typography>
-          <Typography variant="body1" sx={{ textAlign: 'center', color: '#666', mb: 6, maxWidth: 600, mx: 'auto' }}>
-            Professional tailoring services tailored to your needs
+          <Typography variant="body1" sx={{ textAlign: 'center', color: '#6b7280', mb: 6, maxWidth: 500, mx: 'auto', lineHeight: 1.7 }}>
+            We've streamlined the tailoring process into three simple, transparent steps.
           </Typography>
-          <Grid container spacing={4}>
-            {services.map((service, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Card 
-                  sx={{ 
-                    height: '100%',
-                    textAlign: 'center',
-                    py: 4,
-                    px: 2,
-                    borderRadius: '16px',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 12px 40px rgba(41, 182, 246, 0.15)',
-                    },
-                  }}
-                >
-                  <Typography sx={{ fontSize: '3rem', mb: 2 }}>{service.icon}</Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: '#333' }}>
-                    {service.title}
+
+          <Grid container spacing={3}>
+            {[
+              {
+                icon: <SearchIcon sx={{ color: '#2563eb', fontSize: 28 }} />,
+                num: '1',
+                title: 'Browse Tailors',
+                desc: 'Discover curated, verified tailors tailored to your needs. Compare reviews, pricing, and portfolios effortlessly.',
+              },
+              {
+                icon: <NearMeIcon sx={{ color: '#2563eb', fontSize: 28 }} />,
+                num: '2',
+                title: 'Book Instantly',
+                desc: 'Select your ideal date, customize your service package, and secure your booking with our protected payment system.',
+              },
+              {
+                icon: <CheckCircleOutlineIcon sx={{ color: '#2563eb', fontSize: 28 }} />,
+                num: '3',
+                title: 'Get Perfect Fit',
+                desc: 'Relax and enjoy. We coordinate the details with your tailor to ensure your outfit delivers flawlessly.',
+              },
+            ].map((step) => (
+              <Grid item xs={12} md={4} key={step.num}>
+                <Paper elevation={0} sx={{
+                  borderRadius: '16px',
+                  p: 4,
+                  bgcolor: '#fff',
+                  boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+                  height: '100%',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}>
+                  {/* Big number watermark */}
+                  <Typography sx={{
+                    position: 'absolute', top: 16, right: 24,
+                    fontSize: '5rem', fontWeight: 900,
+                    color: 'rgba(37,99,235,0.08)', lineHeight: 1,
+                    userSelect: 'none',
+                  }}>
+                    {step.num}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    {service.description}
+
+                  {/* Icon box */}
+                  <Box sx={{
+                    width: 56, height: 56,
+                    borderRadius: '14px',
+                    bgcolor: '#eff6ff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    mb: 3,
+                  }}>
+                    {step.icon}
+                  </Box>
+
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 1.5 }}>
+                    {step.title}
                   </Typography>
-                </Card>
+                  <Typography variant="body2" sx={{ color: '#6b7280', lineHeight: 1.7 }}>
+                    {step.desc}
+                  </Typography>
+                </Paper>
               </Grid>
             ))}
           </Grid>
         </Container>
       </Box>
 
-      {/* Reviews Section */}
-      <Box sx={{ py: 8, bgcolor: '#fff' }}>
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 6, flexWrap: 'wrap', gap: 2 }}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#333' }}>
-                Customer Reviews
-              </Typography>
-              <Typography variant="body1" sx={{ color: '#666', mt: 1 }}>
-                See what our customers say about us
-              </Typography>
-            </Box>
+      {/* Trusted by Thousands Section */}
+      <Box sx={{ py: 6, bgcolor: '#f0f4ff' }}>
+        <Container maxWidth="md">
+          <Paper elevation={0} sx={{
+            borderRadius: '20px',
+            p: { xs: 4, md: 5 },
+            bgcolor: '#fff',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
+            textAlign: 'center',
+          }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#1a1a2e', mb: 1 }}>
+              Trusted by Thousands
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#6b7280', mb: 5 }}>
+              Powering Pakistan's largest and most vibrant tailoring community.
+            </Typography>
+
+            <Grid container spacing={0}>
+              {[
+                { icon: <PeopleIcon sx={{ fontSize: 32, color: '#2563eb' }} />, value: '500+', label: 'TRUSTED TAILORS',    color: '#2563eb' },
+                { icon: <CheckCircleOutlineIcon sx={{ fontSize: 32, color: '#16a34a' }} />, value: '10K+', label: 'ORDERS COMPLETED', color: '#16a34a' },
+                { icon: <LocationOnOutlinedIcon sx={{ fontSize: 32, color: '#7c3aed' }} />, value: '50+',  label: 'CITIES COVERED',   color: '#7c3aed' },
+                { icon: <StarOutlineIcon sx={{ fontSize: 32, color: '#ea580c' }} />,        value: '4.9',  label: 'AVERAGE RATING',   color: '#ea580c' },
+              ].map((stat, idx, arr) => (
+                <Grid item xs={6} md={3} key={stat.label} sx={{
+                  borderRight: idx < arr.length - 1 ? { md: '1px solid #e5e7eb' } : 'none',
+                  py: 1,
+                }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                    {stat.icon}
+                    <Typography sx={{ fontSize: '2.4rem', fontWeight: 800, color: stat.color, lineHeight: 1.1, mt: 0.5 }}>
+                      {stat.value}
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#9ca3af', letterSpacing: '0.08em', fontSize: '0.7rem' }}>
+                      {stat.label}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        </Container>
+      </Box>
+
+      {/* List Your Business CTA */}
+      <Box sx={{
+        py: { xs: 7, md: 9 },
+        background: 'linear-gradient(135deg, #1a3a8f 0%, #1e4db7 40%, #1565c0 65%, #0d7a6e 100%)',
+        textAlign: 'center',
+      }}>
+        <Container maxWidth="md">
+          <Typography variant="h3" sx={{
+            fontWeight: 800, color: '#fff',
+            fontSize: { xs: '1.8rem', md: '2.6rem' },
+            mb: 2,
+          }}>
+            List Your Business on StitchyFlow
+          </Typography>
+          <Typography variant="body1" sx={{
+            color: 'rgba(255,255,255,0.8)',
+            mb: 5, maxWidth: 520, mx: 'auto', lineHeight: 1.7,
+          }}>
+            Join thousands of premier tailors who trust StitchyFlow to expand their reach and grow their business exponentially.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/register')}
+              sx={{
+                bgcolor: '#fff', color: '#1e4db7',
+                fontWeight: 700, borderRadius: '10px',
+                px: 4, py: 1.5, fontSize: '0.95rem',
+                textTransform: 'none',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' },
+              }}>
+              List Your Business +
+            </Button>
             <Button
               variant="outlined"
-              endIcon={<ArrowForwardIcon />}
+              onClick={() => navigate('/login')}
               sx={{
-                borderColor: '#29B6F6',
-                color: '#29B6F6',
-                fontWeight: 600,
-                borderRadius: '10px',
-                '&:hover': {
-                  borderColor: '#4FC3F7',
-                  backgroundColor: 'rgba(41, 182, 246, 0.05)',
-                },
-              }}
-            >
-              View All Reviews
+                borderColor: 'rgba(255,255,255,0.6)', color: '#fff',
+                fontWeight: 700, borderRadius: '10px',
+                px: 4, py: 1.5, fontSize: '0.95rem',
+                textTransform: 'none',
+                backdropFilter: 'blur(4px)',
+                bgcolor: 'rgba(255,255,255,0.1)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.2)', borderColor: '#fff' },
+              }}>
+              Vendor Login
             </Button>
           </Box>
-          
-          <Grid container spacing={4}>
+        </Container>
+      </Box>
+
+      {/* Trust Badges Bar */}
+      <Box sx={{ py: 3, bgcolor: '#fff', borderBottom: '1px solid #f3f4f6' }}>
+        <Container maxWidth="md">
+          <Grid container spacing={2} justifyContent="center" alignItems="center">
+            {[
+              { icon: <SecurityIcon sx={{ color: '#16a34a', fontSize: 28 }} />, title: 'Secure Payments', sub: 'SSL encrypted transactions' },
+              { icon: <VerifiedIcon sx={{ color: '#2563eb', fontSize: 28 }} />,  title: 'Verified Tailors',  sub: 'Background checked professionals' },
+              { icon: <AccessTimeIcon sx={{ color: '#0d9488', fontSize: 28 }} />, title: '24/7 Support',     sub: 'Always here to help' },
+            ].map((item) => (
+              <Grid item xs={12} md={4} key={item.title}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, justifyContent: { xs: 'center', md: 'center' } }}>
+                  {item.icon}
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#1a1a2e' }}>{item.title}</Typography>
+                    <Typography variant="caption" sx={{ color: '#6b7280' }}>{item.sub}</Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* What Our Customers Say */}
+      <Box sx={{ py: 8, bgcolor: '#f0f4ff' }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: 5 }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#1a1a2e', mb: 1 }}>
+              What Our Customers Say
+            </Typography>
+            <Typography variant="body1" sx={{ color: '#6b7280', maxWidth: 480, mx: 'auto', lineHeight: 1.7 }}>
+              Real stories from real customers who trusted StitchyFlow for their special moments.
+            </Typography>
+          </Box>
+
+          <Grid container spacing={3}>
             {reviewsData.map((review) => (
               <Grid item xs={12} sm={6} md={3} key={review.id}>
-                <Card 
-                  sx={{ 
-                    height: '100%',
-                    borderRadius: '16px',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                      boxShadow: '0 12px 40px rgba(41, 182, 246, 0.12)',
-                    },
-                  }}
-                >
+                <Card sx={{
+                  height: '100%', borderRadius: '16px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
+                  border: '1px solid #e5e7eb',
+                  transition: 'all 0.3s ease',
+                  '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 12px 32px rgba(37,99,235,0.12)' },
+                }}>
                   <CardContent sx={{ p: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar 
-                        src={review.image} 
-                        alt={review.name}
-                        sx={{ width: 50, height: 50, mr: 2 }}
-                      />
+                      <Avatar src={review.image} alt={review.name} sx={{ width: 46, height: 46, mr: 1.5 }} />
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333' }}>
-                          {review.name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#999' }}>
-                          {review.date}
-                        </Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1a1a2e' }}>{review.name}</Typography>
+                        <Typography variant="caption" sx={{ color: '#9ca3af' }}>{review.date}</Typography>
                       </Box>
                     </Box>
-                    <Rating 
-                      value={review.rating} 
-                      readOnly 
-                      size="small"
-                      sx={{ 
-                        mb: 1,
-                        '& .MuiRating-iconFilled': { color: '#ffc107' },
-                      }}
-                    />
-                    <Typography variant="body2" sx={{ color: '#666', fontStyle: 'italic' }}>
+                    <Rating value={review.rating} readOnly size="small"
+                      sx={{ mb: 1.5, '& .MuiRating-iconFilled': { color: '#f59e0b' } }} />
+                    <Typography variant="body2" sx={{ color: '#6b7280', fontStyle: 'italic', lineHeight: 1.6 }}>
                       "{review.comment}"
                     </Typography>
                   </CardContent>
@@ -330,59 +495,11 @@ function Home() {
               </Grid>
             ))}
           </Grid>
-        </Container>
-      </Box>
 
-      {/* CTA Section */}
-      <Box 
-        sx={{ 
-          py: 8, 
-          background: 'linear-gradient(135deg, #29B6F6 0%, #4FC3F7 100%)',
-        }}
-      >
-        <Container maxWidth="md" sx={{ textAlign: 'center' }}>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#fff', mb: 2 }}>
-            Ready to Get Started?
-          </Typography>
-          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', mb: 4, fontSize: '1.1rem' }}>
-            Join thousands of satisfied customers and get your perfect fit today
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate('/register')}
-              sx={{
-                bgcolor: '#fff',
-                color: '#29B6F6',
-                fontWeight: 700,
-                borderRadius: '10px',
-                px: 4,
-                py: 1.5,
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.9)',
-                },
-              }}
-            >
-              Sign Up Now
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              sx={{
-                borderColor: '#fff',
-                color: '#fff',
-                fontWeight: 600,
-                borderRadius: '10px',
-                px: 4,
-                py: 1.5,
-                '&:hover': {
-                  borderColor: 'rgba(255,255,255,0.8)',
-                  bgcolor: 'rgba(255,255,255,0.1)',
-                },
-              }}
-            >
-              Learn More
+          <Box sx={{ textAlign: 'center', mt: 5 }}>
+            <Button variant="text" endIcon={<ArrowForwardIcon />}
+              sx={{ color: '#2563eb', fontWeight: 600, textTransform: 'none', fontSize: '0.95rem' }}>
+              View all reviews
             </Button>
           </Box>
         </Container>

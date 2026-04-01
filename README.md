@@ -99,6 +99,7 @@ Docs/                 # Complete documentation
 - Secure login with JWT authentication
 
 ### Customer Features
+- **Entry splash:** On each browser load or refresh, a full-screen splash displays first (duration configurable via `REACT_APP_SPLASH_DURATION_MS` in `frontend/.env`, default 5 seconds), then the requested route; visiting `/` redirects to `/home` after the splash.
 - User authentication (Admin, Business Owner, Tailor, Customer)
 - Order management system
 - Payment processing

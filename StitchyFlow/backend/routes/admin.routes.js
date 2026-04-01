@@ -305,4 +305,51 @@ router.get('/reports', authenticateToken, async (req, res) => {
   }
 });
 
+// Get Verification Expire Setting (public for frontend, auth for admin)
+router.get('/settings/verification-expire', async (req, res) => {
+  try {
+    const [settings] = await db.query(
+      "SELECT setting_value FROM system_settings WHERE setting_key = 'verification_code_expire_minutes'"
+    );
+    const minutes = settings.length > 0 ? parseInt(settings[0].setting_value) : 10;
+    res.json({
+      success: true,
+      data: { expireMinutes: minutes }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Update Verification Expire Setting (admin only)
+router.put('/settings/verification-expire', authenticateToken, async (req, res) => {
+  try {
+    const { expireMinutes } = req.body;
+    
+    if (!expireMinutes || expireMinutes < 1 || expireMinutes > 60) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Expire minutes must be between 1 and 60' }
+      });
+    }
+    
+    await db.query(
+      `INSERT INTO system_settings (setting_key, setting_value, setting_type, description) 
+       VALUES ('verification_code_expire_minutes', ?, 'integer', 'Email verification code expiration time in minutes')
+       ON DUPLICATE KEY UPDATE 
+       setting_value = ?,
+       updated_at = CURRENT_TIMESTAMP`,
+      [expireMinutes.toString(), expireMinutes.toString()]
+    );
+    
+    res.json({
+      success: true,
+      message: 'Verification code expire time updated successfully',
+      data: { expireMinutes }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
 module.exports = router;
