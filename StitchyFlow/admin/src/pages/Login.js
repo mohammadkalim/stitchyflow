@@ -3,6 +3,7 @@ import { Container, Paper, TextField, Button, Typography, Box, Checkbox, FormCon
 import { useNavigate } from 'react-router-dom';
 import { ContentCut as ScissorsIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import axios from 'axios';
+import API_BASE_URL from '../utils/api';
 
 function Login() {
   const navigate = useNavigate();
@@ -15,11 +16,15 @@ function Login() {
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/auth/login', formData);
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, formData);
       localStorage.setItem('adminToken', response.data.data.accessToken);
       navigate('/');
     } catch (error) {
-      setError(error.response?.data?.error?.message || 'Login failed');
+      if (!error.response) {
+        setError('Backend API is not reachable. Please run backend on localhost:5000 and try again.');
+      } else {
+        setError(error.response?.data?.error?.message || 'Login failed');
+      }
     }
   };
 

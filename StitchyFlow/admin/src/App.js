@@ -24,6 +24,17 @@ import AdminSettings from './pages/AdminSettings';
 import SiteSettings from './pages/SiteSettings';
 import SiteMaintenanceMode from './pages/SiteMaintenanceMode';
 import AddMoreSMTP from './pages/AddMoreSMTP';
+import Business from './pages/Business';
+import TailerVerifications from './pages/TailerVerifications';
+import TailorsShops from './pages/business/TailorsShops';
+import BusinessSettings from './pages/BusinessSettings';
+import BusinessTailerOrders from './pages/BusinessTailerOrders';
+import BusinessTailorLogs from './pages/BusinessTailorLogs';
+import BusinessTailorsStatus from './pages/BusinessTailorsStatus';
+import BusinessTailorInformation from './pages/BusinessTailorInformation';
+import BusinessTypeManagement from './pages/business/BusinessTypeManagement';
+import SpecializationManagement from './pages/business/SpecializationManagement';
+import AIErrorHandling from './pages/AIErrorHandling';
 
 const theme = createTheme({
   palette: {
@@ -71,6 +82,17 @@ function App() {
           <Route path="/site-settings" element={<PrivateRoute><SiteSettings /></PrivateRoute>} />
           <Route path="/site-maintenance" element={<PrivateRoute><SiteMaintenanceMode /></PrivateRoute>} />
           <Route path="/add-more-smtp" element={<PrivateRoute><AddMoreSMTP /></PrivateRoute>} />
+          <Route path="/business" element={<PrivateRoute><Business /></PrivateRoute>} />
+          <Route path="/business/tailer-verifications" element={<PrivateRoute><TailerVerifications /></PrivateRoute>} />
+          <Route path="/business/tailors-shops" element={<PrivateRoute><TailorsShops /></PrivateRoute>} />
+          <Route path="/business/settings" element={<PrivateRoute><BusinessSettings /></PrivateRoute>} />
+          <Route path="/business/tailer-orders" element={<PrivateRoute><BusinessTailerOrders /></PrivateRoute>} />
+          <Route path="/business/tailor-logs" element={<PrivateRoute><BusinessTailorLogs /></PrivateRoute>} />
+          <Route path="/business/tailors-status" element={<PrivateRoute><BusinessTailorsStatus /></PrivateRoute>} />
+          <Route path="/business/tailor-information" element={<PrivateRoute><BusinessTailorInformation /></PrivateRoute>} />
+          <Route path="/business/business-types" element={<PrivateRoute><BusinessTypeManagement /></PrivateRoute>} />
+          <Route path="/business/specializations" element={<PrivateRoute><SpecializationManagement /></PrivateRoute>} />
+          <Route path="/ai-error-handling" element={<PrivateRoute><AIErrorHandling /></PrivateRoute>} />
         </Routes>
       </Router>
     </ThemeProvider>

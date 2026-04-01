@@ -19,7 +19,18 @@ import {
   Email as SMTPIcon,
   Language as SiteSettingsIcon,
   Build as MaintenanceIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Business as BusinessIcon,
+  VerifiedUser as VerificationIcon,
+  Store as StoreIcon,
+  BusinessCenter as BusinessSettingsIcon,
+  Receipt as OrdersBusinessIcon,
+  History as LogsIcon,
+  CheckCircle as StatusIcon,
+  Info as InfoIcon,
+  Category as CategoryIcon,
+  Stars as SpecializationIcon,
+  Psychology as AIErrorIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -37,24 +48,37 @@ const userSubItems = [
 
 const otherMenuItems = [
   { text: 'Orders', icon: <OrdersIcon />, path: '/orders' },
-  { text: 'Tailors', icon: <TailorsIcon />, path: '/tailors' },
   { text: 'Measurements', icon: <MeasurementsIcon />, path: '/measurements', badge: 'NEW' },
   { text: 'Payments', icon: <PaymentIcon />, path: '/payments' },
   { text: 'Reports', icon: <ReportsIcon />, path: '/reports' },
   { text: 'Fabric Inventory', icon: <AirCoatsIcon />, path: '/air-coats' }
 ];
 
+const businessSubItems = [
+  { text: 'Tailer Verifications', icon: <VerificationIcon />, path: '/business/tailer-verifications' },
+  { text: 'Tailors Shops', icon: <StoreIcon />, path: '/business/tailors-shops' },
+  { text: 'Business Settings', icon: <BusinessSettingsIcon />, path: '/business/settings' },
+  { text: 'Business Tailer Orders', icon: <OrdersBusinessIcon />, path: '/business/tailer-orders' },
+  { text: 'Business Tailor Logs', icon: <LogsIcon />, path: '/business/tailor-logs' },
+  { text: 'Business Tailors Status', icon: <StatusIcon />, path: '/business/tailors-status' },
+  { text: 'Business Tailor Information/IP', icon: <InfoIcon />, path: '/business/tailor-information' },
+  { text: 'Business Type Management', icon: <CategoryIcon />, path: '/business/business-types' },
+  { text: 'Specialization Management', icon: <SpecializationIcon />, path: '/business/specializations' }
+];
+
 const adminSubItems = [
   { text: 'SMTP Settings', icon: <SMTPIcon />, path: '/smtp-settings' },
   { text: 'Admin Settings', icon: <AdminSettingsIcon />, path: '/admin-settings' },
   { text: 'Site Settings', icon: <SiteSettingsIcon />, path: '/site-settings' },
-  { text: 'Site Maintenance', icon: <MaintenanceIcon />, path: '/site-maintenance' }
+  { text: 'Site Maintenance', icon: <MaintenanceIcon />, path: '/site-maintenance' },
+  { text: 'AI Error Handling', icon: <AIErrorIcon />, path: '/ai-error-handling', badge: 'AI' }
 ];
 
 function Layout({ children, title }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [adminOpen, setAdminOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
+  const [businessOpen, setBusinessOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -313,8 +337,8 @@ function Layout({ children, title }) {
                         height: 20,
                         fontSize: '0.65rem',
                         fontWeight: 600,
-                        bgcolor: item.badge === 'NEW' ? '#4CAF50' : '#f5f5f5',
-                        color: item.badge === 'NEW' ? '#fff' : '#666'
+                        bgcolor: item.badge === 'NEW' ? '#4CAF50' : item.badge === 'AI' ? '#6366F1' : '#f5f5f5',
+                        color: item.badge === 'NEW' || item.badge === 'AI' ? '#fff' : '#666'
                       }}
                     />
                   )}
@@ -460,6 +484,82 @@ function Layout({ children, title }) {
               </ListItem>
             ))}
 
+            {/* Business with Submenu */}
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => setBusinessOpen(!businessOpen)}
+                sx={{
+                  minHeight: 44,
+                  borderRadius: '8px',
+                  px: 2,
+                  py: 1,
+                  bgcolor: businessSubItems.some(item => location.pathname === item.path) ? '#E3F2FD' : 'transparent',
+                  color: businessSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#666',
+                  '&:hover': {
+                    bgcolor: '#f5f5f5'
+                  }
+                }}
+              >
+                <ListItemIcon sx={{
+                  minWidth: 36,
+                  color: businessSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#999',
+                  '& svg': { fontSize: 20 }
+                }}>
+                  <BusinessIcon />
+                </ListItemIcon>
+                <ListItemText 
+                  primary="Business" 
+                  sx={{ 
+                    '& .MuiTypography-root': { 
+                      fontSize: '0.875rem', 
+                      fontWeight: businessSubItems.some(item => location.pathname === item.path) ? 600 : 500
+                    } 
+                  }} 
+                />
+                {businessOpen ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+              </ListItemButton>
+            </ListItem>
+
+            <Collapse in={businessOpen} timeout="auto" unmountOnExit>
+              <List disablePadding sx={{ pl: 2 }}>
+                {businessSubItems.map((item) => (
+                  <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => navigate(item.path)}
+                      sx={{
+                        minHeight: 40,
+                        borderRadius: '8px',
+                        px: 2,
+                        py: 0.75,
+                        bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                        color: location.pathname === item.path ? '#1976d2' : '#666',
+                        '&:hover': {
+                          bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5'
+                        }
+                      }}
+                    >
+                      <ListItemIcon sx={{
+                        minWidth: 32,
+                        color: location.pathname === item.path ? '#1976d2' : '#999',
+                        '& svg': { fontSize: 18 }
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={item.text} 
+                        sx={{ 
+                          '& .MuiTypography-root': { 
+                            fontSize: '0.8125rem', 
+                            fontWeight: location.pathname === item.path ? 600 : 500
+                          } 
+                        }} 
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+
             {/* Administration with Submenu */}
             <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
@@ -530,6 +630,19 @@ function Layout({ children, title }) {
                           } 
                         }} 
                       />
+                      {item.badge && (
+                        <Chip
+                          label={item.badge}
+                          size="small"
+                          sx={{
+                            height: 18,
+                            fontSize: '0.6rem',
+                            fontWeight: 700,
+                            bgcolor: item.badge === 'AI' ? '#6366F1' : '#4CAF50',
+                            color: '#fff'
+                          }}
+                        />
+                      )}
                     </ListItemButton>
                   </ListItem>
                 ))}

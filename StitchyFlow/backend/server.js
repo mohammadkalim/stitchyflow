@@ -23,6 +23,8 @@ app.use('/api/v1/users', require('./routes/users.routes'));
 app.use('/api/v1/orders', require('./routes/orders.routes'));
 app.use('/api/v1/admin', require('./routes/admin.routes'));
 app.use('/api/v1/smtp', require('./routes/smtp.routes'));
+app.use('/api/v1/business', require('./routes/business.routes'));
+app.use('/api/v1/ai-errors', require('./routes/ai_errors.routes'));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -38,9 +40,32 @@ app.get('/', (req, res) => {
   });
 });
 
-// Error handler
+// Global error handler — auto-captures backend errors into AI Error System
 app.use((err, req, res, next) => {
   console.error(err.stack);
+
+  // Auto-capture into AI error log (fire-and-forget)
+  try {
+    const db = require('./config/database');
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || null;
+    db.query(
+      `INSERT INTO ai_error_logs
+        (source, error_type, message, stack_trace, url, user_agent, ip_address, status_code,
+         category, severity, ai_suggestion, fix_steps, auto_fixable)
+       VALUES ('backend', ?, ?, ?, ?, ?, ?, 500, 'Server Error', 'critical',
+         'Unhandled backend exception. Check stack trace and fix the root cause.',
+         '["Review stack trace","Fix the throwing function","Restart backend after fix"]', 0)`,
+      [
+        err.name || 'Error',
+        err.message || 'Unknown error',
+        err.stack || null,
+        req.originalUrl || null,
+        req.headers['user-agent'] || null,
+        ip
+      ]
+    ).catch(() => {}); // never block the response
+  } catch (_) {}
+
   res.status(500).json({ success: false, error: { message: 'Internal server error' } });
 });
 
