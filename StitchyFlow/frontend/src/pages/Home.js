@@ -277,20 +277,20 @@ function Home() {
               {
                 icon: <SearchIcon sx={{ color: '#2563eb', fontSize: 28 }} />,
                 num: '1',
-                title: 'Browse Tailors',
-                desc: 'Discover curated, verified tailors tailored to your needs. Compare reviews, pricing, and portfolios effortlessly.',
+                title: 'Tailor Dhundein',
+                desc: 'Apne qareeb ke verified aur professional tailors browse karein. Reviews, pricing aur portfolio compare karein aasani se.',
               },
               {
                 icon: <NearMeIcon sx={{ color: '#2563eb', fontSize: 28 }} />,
                 num: '2',
-                title: 'Book Instantly',
-                desc: 'Select your ideal date, customize your service package, and secure your booking with our protected payment system.',
+                title: 'Booking Karein',
+                desc: 'Apni pasand ki date chunein, service customize karein aur hamare secure payment system se booking confirm karein.',
               },
               {
                 icon: <CheckCircleOutlineIcon sx={{ color: '#2563eb', fontSize: 28 }} />,
                 num: '3',
-                title: 'Get Perfect Fit',
-                desc: 'Relax and enjoy. We coordinate the details with your tailor to ensure your outfit delivers flawlessly.',
+                title: 'Perfect Fit Paein',
+                desc: 'Aap aaraam karein — hum aapke tailor se saari details coordinate karein ge taake aapka outfit bilkul perfect ho.',
               },
             ].map((step) => (
               <Grid item xs={12} md={4} key={step.num}>
@@ -426,7 +426,7 @@ function Home() {
                 bgcolor: 'rgba(255,255,255,0.1)',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.2)', borderColor: '#fff' },
               }}>
-              Vendor Login
+              Tailer Shop Login
             </Button>
           </Box>
         </Container>

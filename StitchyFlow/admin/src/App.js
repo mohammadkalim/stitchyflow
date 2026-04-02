@@ -35,6 +35,9 @@ import BusinessTailorInformation from './pages/BusinessTailorInformation';
 import BusinessTypeManagement from './pages/business/BusinessTypeManagement';
 import SpecializationManagement from './pages/business/SpecializationManagement';
 import AIErrorHandling from './pages/AIErrorHandling';
+import GoogleAuthSettings from './pages/GoogleAuthSettings';
+import Logs from './pages/logs/Logs';
+import AuditLogs from './pages/logs/AuditLogs';
 
 const theme = createTheme({
   palette: {
@@ -93,6 +96,9 @@ function App() {
           <Route path="/business/business-types" element={<PrivateRoute><BusinessTypeManagement /></PrivateRoute>} />
           <Route path="/business/specializations" element={<PrivateRoute><SpecializationManagement /></PrivateRoute>} />
           <Route path="/ai-error-handling" element={<PrivateRoute><AIErrorHandling /></PrivateRoute>} />
+          <Route path="/google-auth" element={<PrivateRoute><GoogleAuthSettings /></PrivateRoute>} />
+          <Route path="/logs/system" element={<PrivateRoute><Logs /></PrivateRoute>} />
+          <Route path="/logs/audit"  element={<PrivateRoute><AuditLogs /></PrivateRoute>} />
         </Routes>
       </Router>
     </ThemeProvider>

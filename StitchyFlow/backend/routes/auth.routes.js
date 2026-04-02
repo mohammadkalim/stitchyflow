@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
+const { auditLog, systemLog } = require('../utils/logger');
 
 // Register
 router.post('/register', async (req, res) => {
@@ -53,6 +54,18 @@ router.post('/login', async (req, res) => {
     
     // Update last login
     await db.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?', [user.user_id]);
+
+    // Audit log
+    await auditLog({
+      userId: user.user_id,
+      userName: `${user.first_name} ${user.last_name}`,
+      action: 'login',
+      tableName: 'users',
+      recordId: user.user_id,
+      description: `${user.role} logged in`,
+      ipAddress: req.ip || req.headers['x-forwarded-for'],
+      userAgent: req.headers['user-agent'],
+    });
     
     const accessToken = jwt.sign(
       { userId: user.user_id, email: user.email, role: user.role },

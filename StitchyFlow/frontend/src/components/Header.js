@@ -26,10 +26,8 @@ const NAV_LINKS = [
 const SERVICES_MENU = [
   { icon: <CheckroomIcon sx={{ color: '#2563eb', fontSize: 22 }} />,         label: 'Custom Dresses',   path: '/marketplace/custom-dresses',   desc: 'Tailored to your exact measurements' },
   { icon: <StraightenIcon sx={{ color: '#7c3aed', fontSize: 22 }} />,        label: 'Suits & Blazers',  path: '/marketplace/suits-blazers',    desc: 'Sharp formal & corporate wear' },
-  { icon: <FavoriteIcon sx={{ color: '#e11d48', fontSize: 22 }} />,          label: 'Bridal Wear',      path: '/marketplace/bridal-wear',      desc: 'Stunning outfits for your big day' },
   { icon: <AutoAwesomeIcon sx={{ color: '#f59e0b', fontSize: 22 }} />,       label: 'Traditional Wear', path: '/marketplace/traditional-wear', desc: 'Authentic Pakistani heritage styles' },
   { icon: <ContentCutOutlinedIcon sx={{ color: '#10b981', fontSize: 22 }} />,label: 'Alterations',      path: '/marketplace/alterations',      desc: 'Perfect fit for existing clothes' },
-  { icon: <ColorLensIcon sx={{ color: '#0ea5e9', fontSize: 22 }} />,         label: 'Fabric Selection', path: '/marketplace/fabric-selection', desc: 'Premium fabrics from top suppliers' },
 ];
 
 function Header() {
@@ -354,7 +352,7 @@ function Header() {
           }}
           onMouseLeave={() => setMegaOpen(false)}
         >
-          <Container maxWidth="xl" sx={{ py: 3 }}>
+          <Container maxWidth="xl" sx={{ pt: 4, pb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
                 Tailor Services
@@ -365,7 +363,7 @@ function Header() {
             </Box>
             <Grid container spacing={2}>
               {SERVICES_MENU.map((item) => (
-                <Grid item xs={12} sm={6} md={4} key={item.label}>
+                <Grid item xs={12} sm={6} md={6} key={item.label}>
                   <Paper elevation={0} onClick={() => { setMegaOpen(false); navigate(item.path); }}
                     sx={{
                       display: 'flex', alignItems: 'center', gap: 2,

@@ -213,6 +213,7 @@ function Login() {
             bgcolor: '#fff',
             '&:hover': { bgcolor: '#f9fafb', borderColor: '#d1d5db' },
           }}
+            onClick={() => window.location.href = 'http://localhost:5000/api/v1/auth/google'}
             startIcon={
               <Box component="img"
                 src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"

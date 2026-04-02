@@ -30,7 +30,10 @@ import {
   Info as InfoIcon,
   Category as CategoryIcon,
   Stars as SpecializationIcon,
-  Psychology as AIErrorIcon
+  Psychology as AIErrorIcon,
+  Google as GoogleAuthIcon,
+  ManageSearch as LogsManagementIcon,
+  GppGood as AuditLogsIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -71,7 +74,13 @@ const adminSubItems = [
   { text: 'Admin Settings', icon: <AdminSettingsIcon />, path: '/admin-settings' },
   { text: 'Site Settings', icon: <SiteSettingsIcon />, path: '/site-settings' },
   { text: 'Site Maintenance', icon: <MaintenanceIcon />, path: '/site-maintenance' },
-  { text: 'AI Error Handling', icon: <AIErrorIcon />, path: '/ai-error-handling', badge: 'AI' }
+  { text: 'AI Error Handling', icon: <AIErrorIcon />, path: '/ai-error-handling', badge: 'AI' },
+  { text: 'Google Login Auth', icon: <GoogleAuthIcon />, path: '/google-auth', badge: 'NEW' },
+];
+
+const logsSubItems = [
+  { text: 'Logs',       icon: <LogsIcon />,       path: '/logs/system' },
+  { text: 'Audit Logs', icon: <AuditLogsIcon />,  path: '/logs/audit' },
 ];
 
 function Layout({ children, title }) {
@@ -79,6 +88,7 @@ function Layout({ children, title }) {
   const [adminOpen, setAdminOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
   const [businessOpen, setBusinessOpen] = useState(false);
+  const [logsOpen, setLogsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -434,56 +444,6 @@ function Layout({ children, title }) {
               </List>
             </Collapse>
 
-            {/* Other Menu Items */}
-            {otherMenuItems.map((item, index) => (
-              <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-                <ListItemButton
-                  onClick={() => navigate(item.path)}
-                  sx={{
-                    minHeight: 44,
-                    borderRadius: '8px',
-                    px: 2,
-                    py: 1,
-                    bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
-                    color: location.pathname === item.path ? '#1976d2' : '#666',
-                    '&:hover': {
-                      bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5'
-                    }
-                  }}
-                >
-                  <ListItemIcon sx={{
-                    minWidth: 36,
-                    color: location.pathname === item.path ? '#1976d2' : '#999',
-                    '& svg': { fontSize: 20 }
-                  }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
-                    sx={{ 
-                      '& .MuiTypography-root': { 
-                        fontSize: '0.875rem', 
-                        fontWeight: location.pathname === item.path ? 600 : 500
-                      } 
-                    }} 
-                  />
-                  {item.badge && (
-                    <Chip 
-                      label={item.badge} 
-                      size="small"
-                      sx={{ 
-                        height: 20,
-                        fontSize: '0.65rem',
-                        fontWeight: 600,
-                        bgcolor: item.badge === 'NEW' ? '#4CAF50' : '#f5f5f5',
-                        color: item.badge === 'NEW' ? '#fff' : '#666'
-                      }}
-                    />
-                  )}
-                </ListItemButton>
-              </ListItem>
-            ))}
-
             {/* Business with Submenu */}
             <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
@@ -559,6 +519,56 @@ function Layout({ children, title }) {
                 ))}
               </List>
             </Collapse>
+
+            {/* Other Menu Items */}
+            {otherMenuItems.map((item, index) => (
+              <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton
+                  onClick={() => navigate(item.path)}
+                  sx={{
+                    minHeight: 44,
+                    borderRadius: '8px',
+                    px: 2,
+                    py: 1,
+                    bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                    color: location.pathname === item.path ? '#1976d2' : '#666',
+                    '&:hover': {
+                      bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5'
+                    }
+                  }}
+                >
+                  <ListItemIcon sx={{
+                    minWidth: 36,
+                    color: location.pathname === item.path ? '#1976d2' : '#999',
+                    '& svg': { fontSize: 20 }
+                  }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={item.text} 
+                    sx={{ 
+                      '& .MuiTypography-root': { 
+                        fontSize: '0.875rem', 
+                        fontWeight: location.pathname === item.path ? 600 : 500
+                      } 
+                    }} 
+                  />
+                  {item.badge && (
+                    <Chip 
+                      label={item.badge} 
+                      size="small"
+                      sx={{ 
+                        height: 20,
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        bgcolor: item.badge === 'NEW' ? '#4CAF50' : '#f5f5f5',
+                        color: item.badge === 'NEW' ? '#fff' : '#666'
+                      }}
+                    />
+                  )}
+                </ListItemButton>
+              </ListItem>
+            ))}
 
             {/* Administration with Submenu */}
             <ListItem disablePadding sx={{ mb: 0.5 }}>
@@ -643,6 +653,62 @@ function Layout({ children, title }) {
                           }}
                         />
                       )}
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+
+            {/* Logs Management with Submenu */}
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => setLogsOpen(!logsOpen)}
+                sx={{
+                  minHeight: 44, borderRadius: '8px', px: 2, py: 1,
+                  bgcolor: logsSubItems.some(item => location.pathname === item.path) ? '#E3F2FD' : 'transparent',
+                  color: logsSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#666',
+                  '&:hover': { bgcolor: '#f5f5f5' }
+                }}
+              >
+                <ListItemIcon sx={{
+                  minWidth: 36,
+                  color: logsSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#999',
+                  '& svg': { fontSize: 20 }
+                }}>
+                  <LogsManagementIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Logs Management"
+                  sx={{ '& .MuiTypography-root': { fontSize: '0.875rem', fontWeight: logsSubItems.some(item => location.pathname === item.path) ? 600 : 500 } }}
+                />
+                {logsOpen ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+              </ListItemButton>
+            </ListItem>
+
+            <Collapse in={logsOpen} timeout="auto" unmountOnExit>
+              <List disablePadding sx={{ pl: 2 }}>
+                {logsSubItems.map((item) => (
+                  <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => navigate(item.path)}
+                      sx={{
+                        minHeight: 40, borderRadius: '8px', px: 2, py: 0.75,
+                        bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                        color: location.pathname === item.path ? '#1976d2' : '#666',
+                        '&:hover': { bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5' }
+                      }}
+                    >
+                      <ListItemIcon sx={{
+                        minWidth: 32,
+                        color: location.pathname === item.path ? '#1976d2' : '#999',
+                        '& svg': { fontSize: 18 }
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        sx={{ '& .MuiTypography-root': { fontSize: '0.8125rem', fontWeight: location.pathname === item.path ? 600 : 500 } }}
+                      />
                     </ListItemButton>
                   </ListItem>
                 ))}

@@ -30,29 +30,11 @@ import Footer from '../components/Footer';
 const DRAWER_WIDTH = 240;
 
 const NAV_ITEMS = [
-  { label: 'Overview',        icon: <DashboardOutlinedIcon fontSize="small" />,    key: 'overview' },
-  { label: 'My Bookings',     icon: <ShoppingBagOutlinedIcon fontSize="small" />,  key: 'bookings' },
-  { label: 'Favorites',       icon: <FavoriteBorderIcon fontSize="small" />,       key: 'favorites' },
-  { label: 'Profile',         icon: <PersonOutlineIcon fontSize="small" />,        key: 'profile' },
-  { label: 'Messages',        icon: <MessageOutlinedIcon fontSize="small" />,      key: 'messages' },
-  { label: 'Payments',        icon: <PaymentOutlinedIcon fontSize="small" />,      key: 'payments' },
-  { label: 'Support Tickets', icon: <SupportAgentOutlinedIcon fontSize="small" />, key: 'support' },
-];
-
-const SITE_LINKS = [
-  { label: 'Home',             path: '/home',                           icon: <DashboardOutlinedIcon fontSize="small" /> },
-  { label: 'Custom Dresses',   path: '/marketplace/custom-dresses',     icon: <StorefrontOutlinedIcon fontSize="small" /> },
-  { label: 'Suits & Blazers',  path: '/marketplace/suits-blazers',      icon: <StorefrontOutlinedIcon fontSize="small" /> },
-  { label: 'Bridal Wear',      path: '/marketplace/bridal-wear',        icon: <FavoriteBorderIcon fontSize="small" /> },
-  { label: 'Traditional Wear', path: '/marketplace/traditional-wear',   icon: <StorefrontOutlinedIcon fontSize="small" /> },
-  { label: 'Alterations',      path: '/marketplace/alterations',        icon: <EditOutlinedIcon fontSize="small" /> },
-  { label: 'Fabric Selection', path: '/marketplace/fabric-selection',   icon: <BookmarkBorderIcon fontSize="small" /> },
-  { label: 'About Us',         path: '/about',                          icon: <PeopleOutlineIcon fontSize="small" /> },
-  { label: 'How It Works',     path: '/how-it-works',                   icon: <HourglassEmptyIcon fontSize="small" /> },
-  { label: 'Careers',          path: '/careers',                        icon: <PersonOutlineIcon fontSize="small" /> },
-  { label: 'Press & Media',    path: '/press-media',                    icon: <NotificationsNoneIcon fontSize="small" /> },
-  { label: 'Blog',             path: '/blog',                           icon: <MessageOutlinedIcon fontSize="small" /> },
-  { label: 'Promotions',       path: '/promotions',                     icon: <StarIcon fontSize="small" /> },
+  { label: 'Overview',      icon: <DashboardOutlinedIcon fontSize="small" />,    key: 'overview' },
+  { label: 'My Orders',     icon: <ShoppingBagOutlinedIcon fontSize="small" />,  key: 'orders' },
+  { label: 'Profile',       icon: <PersonOutlineIcon fontSize="small" />,        key: 'profile' },
+  { label: 'Invoices',      icon: <PaymentOutlinedIcon fontSize="small" />,      key: 'invoices' },
+  { label: 'Support Desk',  icon: <SupportAgentOutlinedIcon fontSize="small" />, key: 'support' },
 ];
 
 const BOOKING_STATS = [
@@ -78,7 +60,7 @@ const QUICK_ACTIONS = [
 
 const RECENT_ACTIVITY = [];
 
-function SidebarContent({ user, activeKey, setActiveKey, onLogout, navigate }) {
+function SidebarContent({ user, activeKey, setActiveKey, onLogout }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#fff' }}>
       {/* User card */}
@@ -91,7 +73,7 @@ function SidebarContent({ user, activeKey, setActiveKey, onLogout, navigate }) {
       </Box>
 
       {/* Nav */}
-      <List sx={{ px: 1.5, py: 1 }}>
+      <List sx={{ flex: 1, px: 1.5, py: 1 }}>
         {NAV_ITEMS.map((item) => {
           const active = activeKey === item.key;
           return (
@@ -114,31 +96,8 @@ function SidebarContent({ user, activeKey, setActiveKey, onLogout, navigate }) {
         })}
       </List>
 
-      {/* Site Pages */}
-      <Box sx={{ px: 1.5, pb: 1 }}>
-        <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 600, px: 1.5, display: 'block', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Browse
-        </Typography>
-        <List disablePadding>
-          {SITE_LINKS.map((item) => (
-            <ListItem key={item.path} disablePadding
-              onClick={() => navigate(item.path)}
-              sx={{
-                borderRadius: '10px', mb: 0.3, cursor: 'pointer',
-                color: '#374151',
-                '&:hover': { bgcolor: '#f3f4f6' },
-                px: 1.5, py: 0.8,
-              }}>
-              <ListItemIcon sx={{ color: '#6b7280', minWidth: 34 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label}
-                primaryTypographyProps={{ fontSize: '0.82rem', fontWeight: 500 }} />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-
       {/* Logout */}
-      <Box sx={{ p: 2, borderTop: '1px solid #f3f4f6', mt: 'auto' }}>
+      <Box sx={{ p: 2, borderTop: '1px solid #f3f4f6' }}>
         <Button fullWidth startIcon={<LogoutIcon />} onClick={onLogout} sx={{
           color: '#6b7280', textTransform: 'none', fontWeight: 600, justifyContent: 'flex-start',
           borderRadius: '10px', px: 1.5,
@@ -243,23 +202,47 @@ function CustomerDashboard() {
       <Header />
 
       {/* Hero Banner */}
+      <style>{`
+        @keyframes floatUp {
+          0%   { transform: translateY(0px) scale(1);   opacity: 0.7; }
+          50%  { transform: translateY(-18px) scale(1.1); opacity: 1; }
+          100% { transform: translateY(0px) scale(1);   opacity: 0.7; }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1);   opacity: 0.5; }
+          50%       { transform: scale(1.3); opacity: 1;   }
+        }
+        @keyframes drift {
+          0%   { transform: translateX(0) translateY(0); }
+          33%  { transform: translateX(12px) translateY(-8px); }
+          66%  { transform: translateX(-8px) translateY(6px); }
+          100% { transform: translateX(0) translateY(0); }
+        }
+        @keyframes rotateSlow {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+      `}</style>
       <Box sx={{
         mt: '64px',
         background: 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 40%, #0f2a52 70%, #0d1f3c 100%)',
         py: { xs: 4, md: 5 }, px: 2, textAlign: 'center', position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Decorative blobs/balls */}
-        <Box sx={{ position: 'absolute', top: -40, left: -40, width: 180, height: 180, borderRadius: '50%', bgcolor: 'rgba(37,99,235,0.25)', filter: 'blur(40px)', pointerEvents: 'none' }} />
-        <Box sx={{ position: 'absolute', bottom: -30, right: -30, width: 160, height: 160, borderRadius: '50%', bgcolor: 'rgba(124,58,237,0.2)', filter: 'blur(35px)', pointerEvents: 'none' }} />
-        <Box sx={{ position: 'absolute', top: '30%', left: '20%', width: 80, height: 80, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.12)', filter: 'blur(20px)', pointerEvents: 'none' }} />
-        <Box sx={{ position: 'absolute', top: '10%', right: '25%', width: 60, height: 60, borderRadius: '50%', bgcolor: 'rgba(16,185,129,0.15)', filter: 'blur(18px)', pointerEvents: 'none' }} />
-        {/* Solid small balls */}
-        <Box sx={{ position: 'absolute', top: 24, left: '15%', width: 10, height: 10, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.12)' }} />
-        <Box sx={{ position: 'absolute', top: 40, left: '35%', width: 6, height: 6, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.4)' }} />
-        <Box sx={{ position: 'absolute', bottom: 20, left: '45%', width: 8, height: 8, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.1)' }} />
-        <Box sx={{ position: 'absolute', top: 16, right: '30%', width: 7, height: 7, borderRadius: '50%', bgcolor: 'rgba(124,58,237,0.5)' }} />
-        <Box sx={{ position: 'absolute', bottom: 30, right: '18%', width: 10, height: 10, borderRadius: '50%', bgcolor: 'rgba(37,99,235,0.4)' }} />
+        {/* Animated blobs */}
+        <Box sx={{ position: 'absolute', top: -40, left: -40, width: 180, height: 180, borderRadius: '50%', bgcolor: 'rgba(37,99,235,0.25)', filter: 'blur(40px)', pointerEvents: 'none', animation: 'drift 8s ease-in-out infinite' }} />
+        <Box sx={{ position: 'absolute', bottom: -30, right: -30, width: 160, height: 160, borderRadius: '50%', bgcolor: 'rgba(124,58,237,0.2)', filter: 'blur(35px)', pointerEvents: 'none', animation: 'drift 10s ease-in-out infinite reverse' }} />
+        <Box sx={{ position: 'absolute', top: '30%', left: '20%', width: 80, height: 80, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.12)', filter: 'blur(20px)', pointerEvents: 'none', animation: 'drift 12s ease-in-out infinite' }} />
+        <Box sx={{ position: 'absolute', top: '10%', right: '25%', width: 60, height: 60, borderRadius: '50%', bgcolor: 'rgba(16,185,129,0.15)', filter: 'blur(18px)', pointerEvents: 'none', animation: 'drift 9s ease-in-out infinite reverse' }} />
+        {/* Animated floating dots */}
+        <Box sx={{ position: 'absolute', top: 24, left: '15%', width: 10, height: 10, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.3)', animation: 'floatUp 3s ease-in-out infinite' }} />
+        <Box sx={{ position: 'absolute', top: 40, left: '35%', width: 6, height: 6, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.7)', animation: 'floatUp 4s ease-in-out infinite 0.5s' }} />
+        <Box sx={{ position: 'absolute', bottom: 20, left: '45%', width: 8, height: 8, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.2)', animation: 'floatUp 5s ease-in-out infinite 1s' }} />
+        <Box sx={{ position: 'absolute', top: 16, right: '30%', width: 7, height: 7, borderRadius: '50%', bgcolor: 'rgba(124,58,237,0.7)', animation: 'pulse 3.5s ease-in-out infinite' }} />
+        <Box sx={{ position: 'absolute', bottom: 30, right: '18%', width: 10, height: 10, borderRadius: '50%', bgcolor: 'rgba(37,99,235,0.6)', animation: 'floatUp 4.5s ease-in-out infinite 0.8s' }} />
+        <Box sx={{ position: 'absolute', top: '50%', left: '8%', width: 5, height: 5, borderRadius: '50%', bgcolor: 'rgba(16,185,129,0.6)', animation: 'pulse 2.5s ease-in-out infinite 0.3s' }} />
+        <Box sx={{ position: 'absolute', top: '20%', right: '10%', width: 8, height: 8, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.5)', animation: 'floatUp 3.8s ease-in-out infinite 1.2s' }} />
+        <Box sx={{ position: 'absolute', bottom: '15%', left: '25%', width: 6, height: 6, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.25)', animation: 'pulse 4s ease-in-out infinite 0.6s' }} />
         {/* Top right actions */}
         <Box sx={{ position: 'absolute', top: 16, right: 20, display: 'flex', gap: 1 }}>
           <IconButton sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' } }}>
@@ -316,14 +299,14 @@ function CustomerDashboard() {
           {/* Main */}
           <Grid item xs={12} md={9}>
 
-            {/* My Bookings Tab */}
-            {activeKey === 'bookings' && (
+            {/* My Orders Tab */}
+            {activeKey === 'orders' && (
               <Paper elevation={0} sx={{ borderRadius: '16px', p: 3, border: '1px solid #e5e7eb', bgcolor: '#fff' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                   <Box sx={{ width: 32, height: 32, borderRadius: '8px', bgcolor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
                     <ShoppingBagOutlinedIcon fontSize="small" />
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>My Bookings</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>My Orders</Typography>
                 </Box>
                 <Typography variant="caption" sx={{ color: '#9ca3af', display: 'block', mb: 2 }}>
                   All your booking history
@@ -385,40 +368,134 @@ function CustomerDashboard() {
               </Paper>
             )}
 
+            {/* Profile Tab */}
+            {activeKey === 'profile' && (
+              <Paper elevation={0} sx={{ borderRadius: '16px', p: 3, border: '1px solid #e5e7eb', bgcolor: '#fff' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Box sx={{ width: 32, height: 32, borderRadius: '8px', bgcolor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
+                    <PersonOutlineIcon fontSize="small" />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>My Profile</Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  {[
+                    { label: 'First Name',  value: user?.firstName || '—' },
+                    { label: 'Last Name',   value: user?.lastName  || '—' },
+                    { label: 'Email',       value: user?.email     || '—' },
+                    { label: 'Phone',       value: user?.phone     || '—' },
+                    { label: 'Role',        value: user?.role      || '—' },
+                  ].map((f) => (
+                    <Grid item xs={12} sm={6} key={f.label}>
+                      <Box sx={{ p: 2, borderRadius: '12px', bgcolor: '#f9fafb', border: '1px solid #f3f4f6' }}>
+                        <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem' }}>{f.label}</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 600, color: '#1a1a2e', mt: 0.3 }}>{f.value}</Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Paper>
+            )}
+
+            {/* Invoices Tab */}
+            {activeKey === 'invoices' && (
+              <Paper elevation={0} sx={{ borderRadius: '16px', p: 3, border: '1px solid #e5e7eb', bgcolor: '#fff' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Box sx={{ width: 32, height: 32, borderRadius: '8px', bgcolor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
+                    <PaymentOutlinedIcon fontSize="small" />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>Invoices</Typography>
+                </Box>
+                {orders.filter(o => o.payment_status === 'completed').length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 6 }}>
+                    <PaymentOutlinedIcon sx={{ fontSize: 48, color: '#d1d5db', mb: 1 }} />
+                    <Typography variant="body1" sx={{ color: '#9ca3af', fontWeight: 500 }}>No invoices yet</Typography>
+                    <Typography variant="caption" sx={{ color: '#d1d5db' }}>Completed payments will appear here</Typography>
+                  </Box>
+                ) : (
+                  orders.filter(o => o.payment_status === 'completed').map((order) => (
+                    <Box key={order.order_id} sx={{
+                      display: 'flex', alignItems: 'center', gap: 2,
+                      p: 2, borderRadius: '12px', border: '1px solid #f3f4f6', mb: 1.5, bgcolor: '#fafafa',
+                    }}>
+                      <Box sx={{ width: 40, height: 40, borderRadius: '10px', bgcolor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a', flexShrink: 0 }}>
+                        <PaymentOutlinedIcon />
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
+                          {order.garment_type || 'Order'} — #{order.order_number}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                          {order.created_at ? new Date(order.created_at).toLocaleDateString('en-PK') : ''}
+                        </Typography>
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#16a34a' }}>
+                        Rs {parseFloat(order.payment_amount || order.final_price || 0).toLocaleString()}
+                      </Typography>
+                    </Box>
+                  ))
+                )}
+              </Paper>
+            )}
+
+            {/* Support Desk Tab */}
+            {activeKey === 'support' && (
+              <Paper elevation={0} sx={{ borderRadius: '16px', p: 3, border: '1px solid #e5e7eb', bgcolor: '#fff' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Box sx={{ width: 32, height: 32, borderRadius: '8px', bgcolor: '#fdf4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9333ea' }}>
+                    <SupportAgentOutlinedIcon fontSize="small" />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>Support Desk</Typography>
+                </Box>
+                <Typography variant="caption" sx={{ color: '#9ca3af', display: 'block', mb: 3 }}>
+                  Need help? Contact our support team
+                </Typography>
+                <Grid container spacing={2}>
+                  {[
+                    { label: 'WhatsApp',  value: '+92 333 3836851',        color: '#16a34a', bg: '#f0fdf4' },
+                    { label: 'Email',     value: 'info@logixinventor.com', color: '#2563eb', bg: '#eff6ff' },
+                    { label: 'Website',   value: 'www.logixinventor.com',  color: '#7c3aed', bg: '#f5f3ff' },
+                  ].map((c) => (
+                    <Grid item xs={12} sm={4} key={c.label}>
+                      <Box sx={{ p: 2.5, borderRadius: '14px', bgcolor: c.bg, border: `1px solid ${c.color}20`, textAlign: 'center' }}>
+                        <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem' }}>{c.label}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: c.color, mt: 0.5, wordBreak: 'break-all' }}>{c.value}</Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+                <Box sx={{ mt: 3, p: 2.5, borderRadius: '14px', bgcolor: '#f9fafb', border: '1px solid #f3f4f6' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5 }}>LogixInventor (PVT) Ltd.</Typography>
+                  <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                    Our support team is available to assist you with any issues related to your orders, payments, or account.
+                  </Typography>
+                </Box>
+              </Paper>
+            )}
+
             {/* Overview content */}
-            {activeKey !== 'bookings' && <>
+            {activeKey === 'overview' && <>
 
 
 
-            {/* Website Links */}
+            {/* Quick Stats Widgets */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
               {[
-                { label: 'Home',              path: '/home',                              icon: <DashboardOutlinedIcon />,    bg: '#eff6ff', color: '#2563eb' },
-                { label: 'Custom Dresses',    path: '/marketplace/custom-dresses',        icon: <StorefrontOutlinedIcon />,   bg: '#fdf4ff', color: '#9333ea' },
-                { label: 'Suits & Blazers',   path: '/marketplace/suits-blazers',         icon: <StorefrontOutlinedIcon />,   bg: '#f0fdf4', color: '#16a34a' },
-                { label: 'Bridal Wear',       path: '/marketplace/bridal-wear',           icon: <FavoriteBorderIcon />,       bg: '#fef2f2', color: '#dc2626' },
-                { label: 'Traditional Wear',  path: '/marketplace/traditional-wear',      icon: <StorefrontOutlinedIcon />,   bg: '#fff7ed', color: '#ea580c' },
-                { label: 'Alterations',       path: '/marketplace/alterations',           icon: <EditOutlinedIcon />,         bg: '#f0fdf4', color: '#0d9488' },
-                { label: 'Fabric Selection',  path: '/marketplace/fabric-selection',      icon: <BookmarkBorderIcon />,       bg: '#fdf4ff', color: '#7c3aed' },
-                { label: 'About Us',          path: '/about',                             icon: <PeopleOutlineIcon />,        bg: '#eff6ff', color: '#2563eb' },
-                { label: 'How It Works',      path: '/how-it-works',                      icon: <HourglassEmptyIcon />,       bg: '#fff7ed', color: '#ea580c' },
-                { label: 'Careers',           path: '/careers',                           icon: <PersonOutlineIcon />,        bg: '#f0fdf4', color: '#16a34a' },
-                { label: 'Press & Media',     path: '/press-media',                       icon: <NotificationsNoneIcon />,    bg: '#fef2f2', color: '#dc2626' },
-                { label: 'Blog',              path: '/blog',                              icon: <MessageOutlinedIcon />,      bg: '#f5f3ff', color: '#7c3aed' },
-                { label: 'Promotions',        path: '/promotions',                        icon: <StarIcon />,                 bg: '#fff7ed', color: '#f59e0b' },
-                { label: 'Find Tailors',      path: '/home',                              icon: <SearchOutlinedIcon />,       bg: '#eff6ff', color: '#0ea5e9' },
-              ].map((item) => (
-                <Grid item xs={6} sm={4} md={3} key={item.label}>
-                  <Paper elevation={0} onClick={() => navigate(item.path)} sx={{
-                    borderRadius: '14px', p: 2, border: '1px solid #e5e7eb', bgcolor: '#fff',
-                    textAlign: 'center', cursor: 'pointer',
+                { label: 'Favorite Tailors', value: stats.favorites,    icon: <FavoriteBorderIcon />, bg: '#fef2f2', color: '#dc2626' },
+                { label: 'Saved Tailors',    value: stats.favorites,    icon: <BookmarkBorderIcon />, bg: '#eff6ff', color: '#2563eb' },
+                { label: 'Total Orders',     value: stats.totalBookings, icon: <ShoppingBagOutlinedIcon />, bg: '#f0fdf4', color: '#16a34a' },
+              ].map((w) => (
+                <Grid item xs={12} sm={4} key={w.label}>
+                  <Paper elevation={0} sx={{
+                    borderRadius: '14px', p: 3, border: '1px solid #e5e7eb', bgcolor: '#fff',
+                    textAlign: 'center',
                     transition: 'all 0.2s',
-                    '&:hover': { transform: 'translateY(-3px)', boxShadow: `0 6px 20px ${item.color}25`, borderColor: item.color },
+                    '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 6px 20px rgba(0,0,0,0.08)' },
                   }}>
-                    <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 1, color: item.color }}>
-                      {item.icon}
+                    <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: w.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 1.5, color: w.color }}>
+                      {w.icon}
                     </Box>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#1a1a2e', fontSize: '0.78rem' }}>{item.label}</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 800, color: '#1a1a2e', lineHeight: 1 }}>{w.value}</Typography>
+                    <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '0.78rem' }}>{w.label}</Typography>
                   </Paper>
                 </Grid>
               ))}

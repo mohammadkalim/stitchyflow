@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const passport = require('passport');
 require('dotenv').config();
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
+app.use(passport.initialize());
 
 // Routes
 app.use('/api/v1/auth', require('./routes/auth.routes'));
@@ -27,6 +29,8 @@ app.use('/api/v1/business', require('./routes/business.routes'));
 app.use('/api/v1/ai-errors', require('./routes/ai_errors.routes'));
 app.use('/api/v1/verification', require('./routes/verification.routes'));
 app.use('/api/v1/password', require('./routes/password.routes'));
+app.use('/api/v1/logs',    require('./routes/logs.routes'));
+app.use('/api/v1/auth/google', require('./routes/google.auth.routes'));
 
 // Health check
 app.get('/health', (req, res) => {
