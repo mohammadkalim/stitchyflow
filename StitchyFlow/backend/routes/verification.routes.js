@@ -219,8 +219,8 @@ router.post('/register/verify', async (req, res) => {
     
     // Create user in database
     const [result] = await db.query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, phone, role, status, email_verified, customer_type) 
-       VALUES (?, ?, ?, ?, ?, ?, 'active', TRUE, ?)`,
+      `INSERT INTO users (email, password_hash, first_name, last_name, phone, role, status, email_verified, customer_type, approval_status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)`,
       [
         userData.email,
         hashedPassword,
@@ -228,7 +228,9 @@ router.post('/register/verify', async (req, res) => {
         userData.lastName,
         userData.phone,
         userData.role || 'customer',
-        userData.customerType || 'standard'
+        userData.role === 'tailor' ? 'pending' : 'active',
+        userData.customerType || 'standard',
+        userData.role === 'tailor' ? 'pending' : null
       ]
     );
     
@@ -237,6 +239,33 @@ router.post('/register/verify', async (req, res) => {
     // Create customer record if role is customer
     if (userData.role === 'customer' || !userData.role) {
       await db.query('INSERT INTO customers (user_id) VALUES (?)', [userId]);
+    }
+
+    // Create tailor verification request if role is tailor
+    if (userData.role === 'tailor') {
+      await db.query(
+        `INSERT INTO business_tailor_verifications 
+         (tailor_name, shop_name, contact_number, verification_status, user_id)
+         VALUES (?, ?, ?, 'pending', ?)`,
+        [
+          `${userData.firstName} ${userData.lastName}`,
+          `${userData.firstName}'s Tailor Shop`,
+          userData.phone || '',
+          userId
+        ]
+      ).catch(() => {
+        // If user_id column doesn't exist yet, insert without it
+        return db.query(
+          `INSERT INTO business_tailor_verifications 
+           (tailor_name, shop_name, contact_number, verification_status)
+           VALUES (?, ?, ?, 'pending')`,
+          [
+            `${userData.firstName} ${userData.lastName}`,
+            `${userData.firstName}'s Tailor Shop`,
+            userData.phone || ''
+          ]
+        );
+      });
     }
     
     // Generate JWT token
@@ -249,7 +278,7 @@ router.post('/register/verify', async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Account created successfully!',
+      message: userData.role === 'tailor' ? 'Account created! Awaiting admin approval.' : 'Account created successfully!',
       data: {
         accessToken,
         user: {
@@ -258,7 +287,9 @@ router.post('/register/verify', async (req, res) => {
           firstName: userData.firstName,
           lastName: userData.lastName,
           role: userData.role || 'customer',
-          customerType: userData.customerType || 'standard'
+          customerType: userData.customerType || 'standard',
+          approvalStatus: userData.role === 'tailor' ? 'pending' : null,
+          status: userData.role === 'tailor' ? 'pending' : 'active'
         }
       }
     });

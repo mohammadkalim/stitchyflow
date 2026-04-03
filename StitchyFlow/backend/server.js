@@ -32,6 +32,7 @@ app.use('/api/v1/password', require('./routes/password.routes'));
 app.use('/api/v1/logs',    require('./routes/logs.routes'));
 app.use('/api/v1/auth/google', require('./routes/google.auth.routes'));
 app.use('/api/v1/totp',   require('./routes/totp.routes'));
+app.use('/api/v1/tailor-approval', require('./routes/tailor_approval.routes'));
 
 // Health check
 app.get('/health', (req, res) => {

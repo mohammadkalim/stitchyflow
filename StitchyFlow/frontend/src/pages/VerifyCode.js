@@ -102,10 +102,15 @@ function VerifyCode() {
         localStorage.setItem('token', accessToken);
         localStorage.setItem('user', JSON.stringify(user));
         
-        showPopup('Account created successfully!', 'success');
-        setTimeout(() => {
-          navigate('/customer-dashboard');
-        }, 1500);
+        if (user.role === 'tailor') {
+          // Tailor needs admin approval — go to dashboard (pending state)
+          navigate('/tailor-dashboard');
+        } else {
+          showPopup('Account created successfully!', 'success');
+          setTimeout(() => {
+            navigate('/customer-dashboard');
+          }, 1500);
+        }
       }
     } catch (error) {
       const errorData = error.response?.data?.error;

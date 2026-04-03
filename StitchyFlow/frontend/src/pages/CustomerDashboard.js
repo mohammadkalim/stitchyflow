@@ -139,6 +139,7 @@ function CustomerDashboard() {
   const [twoFAMsg, setTwoFAMsg] = useState(null);
   const [totpSetup, setTotpSetup] = useState(null);      // { qrCode, secret, otpauthUrl }
   const [totpCode, setTotpCode] = useState('');
+  const [totpLoading, setTotpLoading] = useState(false);
   const [totpVerified, setTotpVerified] = useState(false);
   const [backupCodes, setBackupCodes] = useState([]);
   const [showBackupCodes, setShowBackupCodes] = useState(false);

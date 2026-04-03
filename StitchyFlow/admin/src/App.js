@@ -25,7 +25,7 @@ import SiteSettings from './pages/SiteSettings';
 import SiteMaintenanceMode from './pages/SiteMaintenanceMode';
 import AddMoreSMTP from './pages/AddMoreSMTP';
 import Business from './pages/Business';
-import TailerVerifications from './pages/TailerVerifications';
+import TailerVerifications from './pages/business/TailerVerifications';
 import TailorsShops from './pages/business/TailorsShops';
 import BusinessSettings from './pages/BusinessSettings';
 import BusinessTailerOrders from './pages/BusinessTailerOrders';

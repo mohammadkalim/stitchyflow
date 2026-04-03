@@ -37,7 +37,7 @@ router.post('/login', async (req, res) => {
     
     // Direct query instead of stored procedure
     const [users] = await db.query(
-      "SELECT user_id, email, password_hash, first_name, last_name, role, status FROM users WHERE email = ? AND status = 'active'",
+      "SELECT user_id, email, password_hash, first_name, last_name, role, status, approval_status FROM users WHERE email = ? AND status IN ('active', 'pending')",
       [email]
     );
     
@@ -89,7 +89,9 @@ router.post('/login', async (req, res) => {
           email: user.email,
           firstName: user.first_name,
           lastName: user.last_name,
-          role: user.role
+          role: user.role,
+          status: user.status,
+          approvalStatus: user.approval_status || null
         }
       }
     });

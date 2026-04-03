@@ -138,7 +138,7 @@ function Login() {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <LockOutlinedIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
+                  <LockOutlinedIcon sx={{ color: '#590000', fontSize: 20 }} />
                 </InputAdornment>
               ),
               endAdornment: (
@@ -157,7 +157,7 @@ function Login() {
                 borderRadius: '10px',
                 fontSize: '0.95rem',
                 bgcolor: '#fff',
-                '&:hover fieldset': { borderColor: '#2563eb' },
+                '&:hover fieldset': { borderColor: '#000000fc' },
                 '&.Mui-focused fieldset': { borderColor: '#2563eb' },
                 '& input:-webkit-autofill': {
                   WebkitBoxShadow: '0 0 0 100px #fff inset',
