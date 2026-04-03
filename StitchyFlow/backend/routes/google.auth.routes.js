@@ -47,6 +47,39 @@ passport.use(new GoogleStrategy({
   }
 }));
 
+// Admin: Google auth stats (admin token required)
+router.get('/stats', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false, error: { message: 'Access token required' } });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== 'admin') return res.status(403).json({ success: false, error: { message: 'Access denied' } });
+
+    // Google users = those with empty password_hash (registered via Google)
+    const [[{ total }]]        = await db.query("SELECT COUNT(*) AS total FROM users");
+    const [[{ google_users }]] = await db.query("SELECT COUNT(*) AS google_users FROM users WHERE (password_hash = '' OR password_hash IS NULL)");
+    const [[{ active }]]       = await db.query("SELECT COUNT(*) AS active FROM users WHERE status = 'active' AND (password_hash = '' OR password_hash IS NULL)");
+    const [[{ verified }]]     = await db.query("SELECT COUNT(*) AS verified FROM users WHERE email_verified = 1 AND (password_hash = '' OR password_hash IS NULL)");
+    const [googleUsersList]    = await db.query(
+      "SELECT user_id, email, first_name, last_name, role, status, email_verified, profile_image, created_at, last_login FROM users WHERE (password_hash = '' OR password_hash IS NULL) ORDER BY created_at DESC"
+    );
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers: total,
+        googleUsers: google_users,
+        activeGoogleUsers: active,
+        verifiedGoogleUsers: verified,
+        users: googleUsersList,
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
 // Initiate Google login
 router.get('/', passport.authenticate('google', {
   scope: ['profile', 'email'],

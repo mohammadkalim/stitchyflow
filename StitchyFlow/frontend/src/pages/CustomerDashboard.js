@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Container, Grid, Paper, Avatar, Button,
   Chip, Divider, List, ListItem, ListItemText, ListItemIcon,
-  IconButton, Badge, AppBar, Toolbar, Drawer, useMediaQuery, useTheme
+  IconButton, Badge, AppBar, Toolbar, Drawer, useMediaQuery, useTheme,
+  TextField, InputAdornment, Alert, Switch, FormControlLabel
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
@@ -24,6 +25,10 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import StarIcon from '@mui/icons-material/Star';
 import MenuIcon from '@mui/icons-material/Menu';
+import SecurityIcon from '@mui/icons-material/Security';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -34,6 +39,7 @@ const NAV_ITEMS = [
   { label: 'My Orders',     icon: <ShoppingBagOutlinedIcon fontSize="small" />,  key: 'orders' },
   { label: 'Profile',       icon: <PersonOutlineIcon fontSize="small" />,        key: 'profile' },
   { label: 'Invoices',      icon: <PaymentOutlinedIcon fontSize="small" />,      key: 'invoices' },
+  { label: 'Security',      icon: <SecurityIcon fontSize="small" />,             key: 'security' },
   { label: 'Support Desk',  icon: <SupportAgentOutlinedIcon fontSize="small" />, key: 'support' },
 ];
 
@@ -68,8 +74,7 @@ function SidebarContent({ user, activeKey, setActiveKey, onLogout }) {
         <Avatar sx={{ width: 56, height: 56, bgcolor: '#2563eb', mx: 'auto', mb: 1.5, fontSize: '1.4rem', fontWeight: 700 }}>
           {user?.firstName?.[0]?.toUpperCase() || '?'}
         </Avatar>
-        <Typography variant="body1" sx={{ fontWeight: 700, color: '#1a1a2e' }}>My Account</Typography>
-        <Typography variant="caption" sx={{ color: '#9ca3af' }}>Manage your orders</Typography>
+        <Typography variant="body1" sx={{ fontWeight: 700, color: '#1a1a2e' }}>{user?.firstName} {user?.lastName}</Typography>
       </Box>
 
       {/* Nav */}
@@ -78,7 +83,7 @@ function SidebarContent({ user, activeKey, setActiveKey, onLogout }) {
           const active = activeKey === item.key;
           return (
             <ListItem key={item.key} disablePadding
-              onClick={() => setActiveKey(item.key)}
+              onClick={() => { setActiveKey(item.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               sx={{
                 borderRadius: '10px', mb: 0.5, cursor: 'pointer',
                 bgcolor: active ? '#2563eb' : 'transparent',
@@ -118,6 +123,13 @@ function CustomerDashboard() {
   const [activeKey, setActiveKey] = useState('overview');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [orders, setOrders] = useState([]);
+  const [notifAnchor, setNotifAnchor] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
+  const [pwShow, setPwShow] = useState({ current: false, newPw: false, confirm: false });
+  const [pwMsg, setPwMsg] = useState(null);
+  const [twoFA, setTwoFA] = useState(false);
+  const [twoFAMsg, setTwoFAMsg] = useState(null);
   const [stats, setStats] = useState({
     totalTailors: 0,
     favorites: 0,
@@ -179,11 +191,54 @@ function CustomerDashboard() {
           completed,
           cancelled,
         });
+
+        // Build notifications from recent orders
+        const notifs = orderList.slice(0, 5).map(o => ({
+          id: o.order_id,
+          title: `Order #${o.order_number}`,
+          sub: `${o.garment_type || 'Item'} — ${o.status?.charAt(0).toUpperCase() + o.status?.slice(1)}`,
+          time: o.created_at ? new Date(o.created_at).toLocaleDateString('en-PK') : '',
+          read: false,
+        }));
+        setNotifications(notifs);
       } else {
         setStats(prev => ({ ...prev, totalTailors }));
       }
     } catch (err) {
       // keep default zeros
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPwMsg(null);
+    if (!pwForm.current || !pwForm.newPw || !pwForm.confirm) {
+      return setPwMsg({ type: 'error', text: 'Please fill in all fields.' });
+    }
+    if (pwForm.newPw !== pwForm.confirm) {
+      return setPwMsg({ type: 'error', text: 'New passwords do not match.' });
+    }
+    if (pwForm.newPw.length < 6) {
+      return setPwMsg({ type: 'error', text: 'Password must be at least 6 characters.' });
+    }
+    try {
+      const res = await fetch('http://localhost:5000/api/v1/password/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          oldPassword: pwForm.current,
+          newPassword: pwForm.newPw,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPwMsg({ type: 'success', text: 'Password changed successfully.' });
+        setPwForm({ current: '', newPw: '', confirm: '' });
+      } else {
+        setPwMsg({ type: 'error', text: data.error?.message || 'Failed to change password.' });
+      }
+    } catch {
+      setPwMsg({ type: 'error', text: 'Network error. Please try again.' });
     }
   };
 
@@ -197,57 +252,172 @@ function CustomerDashboard() {
 
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
 
+  // Hero config per active tab
+  const heroConfig = {
+    overview: {
+      bg: 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 40%, #0f2a52 70%, #0d1f3c 100%)',
+      blob1: 'rgba(37,99,235,0.25)', blob2: 'rgba(124,58,237,0.2)',
+      title: 'Dashboard Overview',
+      subtitle: "Welcome back! Here's your personal tailoring hub",
+      accentColor: '#f59e0b',
+      icon: <DashboardOutlinedIcon sx={{ fontSize: 32 }} />,
+      stats: [
+        { value: stats.totalTailors ?? 0, label: 'Total Tailors' },
+        { value: stats.favorites,         label: 'Favorites' },
+        { value: stats.totalBookings,     label: 'Total Services' },
+      ],
+    },
+    orders: {
+      bg: 'linear-gradient(135deg, #431407 0%, #7c2d12 40%, #9a3412 70%, #7c2d12 100%)',
+      blob1: 'rgba(234,88,12,0.35)', blob2: 'rgba(251,146,60,0.25)',
+      title: 'My Orders',
+      subtitle: 'Track and manage all your tailoring orders',
+      accentColor: '#fb923c',
+      icon: <ShoppingBagOutlinedIcon sx={{ fontSize: 32 }} />,
+      stats: [
+        { value: stats.totalBookings, label: 'My Orders' },
+        { value: stats.completed,     label: 'Total Orders' },
+        { value: orders.filter(o => o.payment_status === 'completed').length, label: 'Invoices' },
+      ],
+    },
+    profile: {
+      bg: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #1e40af 70%, #1e3a5f 100%)',
+      blob1: 'rgba(37,99,235,0.3)', blob2: 'rgba(99,102,241,0.25)',
+      title: 'My Profile',
+      subtitle: 'Manage your personal information',
+      accentColor: '#60a5fa',
+      icon: <PersonOutlineIcon sx={{ fontSize: 32 }} />,
+      stats: [
+        { value: stats.totalBookings, label: 'Total Orders' },
+        { value: stats.completed,     label: 'Completed' },
+        { value: stats.totalTailors,  label: 'Tailors' },
+      ],
+    },
+    invoices: {
+      bg: 'linear-gradient(135deg, #052e16 0%, #14532d 40%, #166534 70%, #14532d 100%)',
+      blob1: 'rgba(22,163,74,0.3)', blob2: 'rgba(16,185,129,0.2)',
+      title: 'Invoices',
+      subtitle: 'View and download your payment invoices',
+      accentColor: '#4ade80',
+      icon: <PaymentOutlinedIcon sx={{ fontSize: 32 }} />,
+      stats: [
+        { value: orders.filter(o => o.payment_status === 'completed').length, label: 'Paid Invoices' },
+        { value: `Rs ${stats.totalSpent.toLocaleString()}`, label: 'Total Spent' },
+        { value: stats.totalBookings, label: 'Total Orders' },
+      ],
+    },
+    security: {
+      bg: 'linear-gradient(135deg, #0c1a0c 0%, #14401a 40%, #166534 70%, #14401a 100%)',
+      blob1: 'rgba(22,163,74,0.2)', blob2: 'rgba(15,118,110,0.2)',
+      title: 'Security',
+      subtitle: 'Manage your account security and password',
+      accentColor: '#34d399',
+      icon: <SecurityIcon sx={{ fontSize: 32 }} />,
+      stats: [
+        { value: 'Active',                        label: 'Account Status' },
+        { value: twoFA ? '2FA On' : '2FA Off',    label: 'Two-Factor Auth' },
+        { value: 'Secure',                        label: 'Password' },
+      ],
+    },
+    support: {
+      bg: 'linear-gradient(135deg, #2e1065 0%, #4c1d95 40%, #5b21b6 70%, #4c1d95 100%)',
+      blob1: 'rgba(124,58,237,0.35)', blob2: 'rgba(167,139,250,0.2)',
+      title: 'Support Desk',
+      subtitle: 'Get help from our support team',
+      accentColor: '#c4b5fd',
+      icon: <SupportAgentOutlinedIcon sx={{ fontSize: 32 }} />,
+      stats: [
+        { value: '24/7',  label: 'Support' },
+        { value: '< 1hr', label: 'Response Time' },
+        { value: '100%',  label: 'Satisfaction' },
+      ],
+    },
+  };
+
+  const hero = heroConfig[activeKey] || heroConfig.overview;
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc' }}>
       <Header />
 
       {/* Hero Banner */}
-      <style>{`
-        @keyframes floatUp {
-          0%   { transform: translateY(0px) scale(1);   opacity: 0.7; }
-          50%  { transform: translateY(-18px) scale(1.1); opacity: 1; }
-          100% { transform: translateY(0px) scale(1);   opacity: 0.7; }
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1);   opacity: 0.5; }
-          50%       { transform: scale(1.3); opacity: 1;   }
-        }
-        @keyframes drift {
-          0%   { transform: translateX(0) translateY(0); }
-          33%  { transform: translateX(12px) translateY(-8px); }
-          66%  { transform: translateX(-8px) translateY(6px); }
-          100% { transform: translateX(0) translateY(0); }
-        }
-        @keyframes rotateSlow {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-      `}</style>
       <Box sx={{
         mt: '64px',
-        background: 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 40%, #0f2a52 70%, #0d1f3c 100%)',
+        background: hero.bg,
         py: { xs: 4, md: 5 }, px: 2, textAlign: 'center', position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Animated blobs */}
-        <Box sx={{ position: 'absolute', top: -40, left: -40, width: 180, height: 180, borderRadius: '50%', bgcolor: 'rgba(37,99,235,0.25)', filter: 'blur(40px)', pointerEvents: 'none', animation: 'drift 8s ease-in-out infinite' }} />
-        <Box sx={{ position: 'absolute', bottom: -30, right: -30, width: 160, height: 160, borderRadius: '50%', bgcolor: 'rgba(124,58,237,0.2)', filter: 'blur(35px)', pointerEvents: 'none', animation: 'drift 10s ease-in-out infinite reverse' }} />
-        <Box sx={{ position: 'absolute', top: '30%', left: '20%', width: 80, height: 80, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.12)', filter: 'blur(20px)', pointerEvents: 'none', animation: 'drift 12s ease-in-out infinite' }} />
-        <Box sx={{ position: 'absolute', top: '10%', right: '25%', width: 60, height: 60, borderRadius: '50%', bgcolor: 'rgba(16,185,129,0.15)', filter: 'blur(18px)', pointerEvents: 'none', animation: 'drift 9s ease-in-out infinite reverse' }} />
-        {/* Animated floating dots */}
-        <Box sx={{ position: 'absolute', top: 24, left: '15%', width: 10, height: 10, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.3)', animation: 'floatUp 3s ease-in-out infinite' }} />
-        <Box sx={{ position: 'absolute', top: 40, left: '35%', width: 6, height: 6, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.7)', animation: 'floatUp 4s ease-in-out infinite 0.5s' }} />
-        <Box sx={{ position: 'absolute', bottom: 20, left: '45%', width: 8, height: 8, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.2)', animation: 'floatUp 5s ease-in-out infinite 1s' }} />
-        <Box sx={{ position: 'absolute', top: 16, right: '30%', width: 7, height: 7, borderRadius: '50%', bgcolor: 'rgba(124,58,237,0.7)', animation: 'pulse 3.5s ease-in-out infinite' }} />
-        <Box sx={{ position: 'absolute', bottom: 30, right: '18%', width: 10, height: 10, borderRadius: '50%', bgcolor: 'rgba(37,99,235,0.6)', animation: 'floatUp 4.5s ease-in-out infinite 0.8s' }} />
-        <Box sx={{ position: 'absolute', top: '50%', left: '8%', width: 5, height: 5, borderRadius: '50%', bgcolor: 'rgba(16,185,129,0.6)', animation: 'pulse 2.5s ease-in-out infinite 0.3s' }} />
-        <Box sx={{ position: 'absolute', top: '20%', right: '10%', width: 8, height: 8, borderRadius: '50%', bgcolor: 'rgba(245,158,11,0.5)', animation: 'floatUp 3.8s ease-in-out infinite 1.2s' }} />
-        <Box sx={{ position: 'absolute', bottom: '15%', left: '25%', width: 6, height: 6, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.25)', animation: 'pulse 4s ease-in-out infinite 0.6s' }} />
         {/* Top right actions */}
         <Box sx={{ position: 'absolute', top: 16, right: 20, display: 'flex', gap: 1 }}>
-          <IconButton sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' } }}>
-            <Badge badgeContent={0} color="error"><NotificationsNoneIcon /></Badge>
+          <IconButton
+            onClick={e => setNotifAnchor(e.currentTarget)}
+            sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' } }}
+          >
+            <Badge badgeContent={notifications.filter(n => !n.read).length} color="error">
+              <NotificationsNoneIcon />
+            </Badge>
           </IconButton>
+
+          {/* Notification Popover */}
+          {Boolean(notifAnchor) && (
+            <Box
+              onClick={() => setNotifAnchor(null)}
+              sx={{ position: 'fixed', inset: 0, zIndex: 1200 }}
+            />
+          )}
+          {Boolean(notifAnchor) && (
+            <Box sx={{
+              position: 'absolute', top: 48, right: 0, zIndex: 1300,
+              width: 320, bgcolor: '#fff', borderRadius: '14px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+              border: '1px solid #e5e7eb', overflow: 'hidden',
+            }}>
+              <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1a1a2e' }}>Notifications</Typography>
+                {notifications.length > 0 && (
+                  <Typography
+                    variant="caption"
+                    sx={{ color: '#2563eb', cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => setNotifications(n => n.map(x => ({ ...x, read: true })))}
+                  >
+                    Mark all read
+                  </Typography>
+                )}
+              </Box>
+              {notifications.length === 0 ? (
+                <Box sx={{ py: 5, textAlign: 'center' }}>
+                  <NotificationsNoneIcon sx={{ fontSize: 36, color: '#d1d5db', mb: 1 }} />
+                  <Typography variant="body2" sx={{ color: '#9ca3af' }}>No notifications</Typography>
+                </Box>
+              ) : (
+                notifications.map((n, i) => (
+                  <Box
+                    key={n.id}
+                    onClick={() => {
+                      setNotifications(prev => prev.map((x, idx) => idx === i ? { ...x, read: true } : x));
+                      setNotifAnchor(null);
+                      setActiveKey('orders');
+                    }}
+                    sx={{
+                      px: 2.5, py: 1.5, cursor: 'pointer',
+                      bgcolor: n.read ? '#fff' : '#eff6ff',
+                      borderBottom: '1px solid #f9fafb',
+                      display: 'flex', alignItems: 'flex-start', gap: 1.5,
+                      '&:hover': { bgcolor: '#f3f4f6' },
+                    }}
+                  >
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: n.read ? 'transparent' : '#2563eb', mt: 0.8, flexShrink: 0 }} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#1a1a2e', fontSize: '0.82rem' }}>{n.title}</Typography>
+                      <Typography variant="caption" sx={{ color: '#6b7280' }}>{n.sub}</Typography>
+                    </Box>
+                    <Typography variant="caption" sx={{ color: '#9ca3af', flexShrink: 0, fontSize: '0.7rem' }}>{n.time}</Typography>
+                  </Box>
+                ))
+              )}
+            </Box>
+          )}
+
           <Button startIcon={<LogoutIcon />} onClick={handleLogout} size="small" sx={{
             bgcolor: 'rgba(255,255,255,0.15)', color: '#fff', textTransform: 'none',
             fontWeight: 600, borderRadius: '8px', px: 2,
@@ -257,28 +427,31 @@ function CustomerDashboard() {
           </Button>
         </Box>
 
-        <Avatar sx={{ width: 64, height: 64, bgcolor: 'rgba(255,255,255,0.2)', mx: 'auto', mb: 1.5, fontSize: '1.8rem', fontWeight: 700, border: '3px solid rgba(255,255,255,0.4)' }}>
-          {user.firstName?.[0]?.toUpperCase() || '?'}
-        </Avatar>
+        <Box sx={{
+          width: 64, height: 64, borderRadius: '50%',
+          bgcolor: '#fff', color: hero.accentColor,
+          mx: 'auto', mb: 1.5,
+          border: `3px solid ${hero.accentColor}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {hero.icon}
+        </Box>
         <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700, mb: 0.5 }}>
-          {fullName || user?.firstName || 'User'}
+          {hero.title}
         </Typography>
         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mb: 3 }}>
-          Welcome back! Here's your personal tailoring hub
+          {hero.subtitle}
         </Typography>
 
         {/* Hero stats */}
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 1, md: 3 }, flexWrap: 'wrap' }}>
-          {[
-            { value: stats.totalTailors ?? 0,                  label: 'Total Tailors' },
-            { value: stats.favorites,                         label: 'Favorites' },
-            { value: stats.totalBookings,                     label: 'Total Services' },
-          ].map((s) => (
+          {hero.stats.map((s) => (
             <Box key={s.label} sx={{
               bgcolor: 'rgba(255,255,255,0.15)', borderRadius: '14px',
               px: { xs: 3, md: 5 }, py: 1.5, minWidth: 100,
+              transition: 'all 0.3s',
             }}>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: '#f59e0b' }}>{s.value}</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: hero.accentColor }}>{s.value}</Typography>
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)' }}>{s.label}</Typography>
             </Box>
           ))}
@@ -434,6 +607,195 @@ function CustomerDashboard() {
                     </Box>
                   ))
                 )}
+              </Paper>
+            )}
+
+            {/* Security Tab */}
+            {activeKey === 'security' && (
+              <Paper elevation={0} sx={{ borderRadius: '16px', p: 3, border: '1px solid #e5e7eb', bgcolor: '#fff' }}>
+                {/* Header */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <Box sx={{ width: 32, height: 32, borderRadius: '8px', bgcolor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
+                    <SecurityIcon fontSize="small" />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>Security</Typography>
+                </Box>
+                <Typography variant="caption" sx={{ color: '#9ca3af', display: 'block', mb: 3 }}>
+                  Manage your password and account security
+                </Typography>
+
+                {/* Account Status Cards */}
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  {[
+                    { label: 'Account Status', value: 'Active',   color: '#16a34a', bg: '#f0fdf4' },
+                    { label: 'Email Verified', value: 'Verified', color: '#2563eb', bg: '#eff6ff' },
+                    { label: 'Login Method',   value: 'Password', color: '#7c3aed', bg: '#f5f3ff' },
+                  ].map(c => (
+                    <Grid item xs={12} sm={4} key={c.label}>
+                      <Box sx={{ p: 2, borderRadius: '12px', bgcolor: c.bg, border: `1px solid ${c.color}20`, textAlign: 'center' }}>
+                        <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.68rem' }}>{c.label}</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 700, color: c.color, mt: 0.3 }}>{c.value}</Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+
+                <Divider sx={{ mb: 3 }} />
+
+                {/* Change Password */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Box sx={{ width: 28, height: 28, borderRadius: '8px', bgcolor: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ea580c' }}>
+                    <LockOutlinedIcon sx={{ fontSize: 16 }} />
+                  </Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1a1a2e' }}>Change Password</Typography>
+                </Box>
+
+                {pwMsg && (
+                  <Alert severity={pwMsg.type} sx={{ mb: 2, borderRadius: '10px' }} onClose={() => setPwMsg(null)}>
+                    {pwMsg.text}
+                  </Alert>
+                )}
+
+                <Grid container spacing={2}>
+                  {[
+                    { label: 'Current Password', key: 'current' },
+                    { label: 'New Password',      key: 'newPw'   },
+                    { label: 'Confirm Password',  key: 'confirm' },
+                  ].map(f => (
+                    <Grid item xs={12} sm={6} key={f.key}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#374151', mb: 0.5, display: 'block' }}>{f.label}</Typography>
+                      <TextField
+                        fullWidth size="small"
+                        type={pwShow[f.key] ? 'text' : 'password'}
+                        placeholder={f.label}
+                        value={pwForm[f.key]}
+                        onChange={e => setPwForm(p => ({ ...p, [f.key]: e.target.value }))}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton size="small" onClick={() => setPwShow(p => ({ ...p, [f.key]: !p[f.key] }))}>
+                                {pwShow[f.key]
+                                  ? <VisibilityOffOutlinedIcon sx={{ fontSize: 18, color: '#9ca3af' }} />
+                                  : <VisibilityOutlinedIcon   sx={{ fontSize: 18, color: '#9ca3af' }} />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+
+                <Box sx={{ mt: 3 }}>
+                  <Button
+                    variant="contained"
+                    onClick={handleChangePassword}
+                    startIcon={<LockOutlinedIcon />}
+                    sx={{
+                      bgcolor: '#16a34a', color: '#fff', textTransform: 'none',
+                      fontWeight: 700, borderRadius: '10px', px: 3, py: 1.2,
+                      boxShadow: 'none',
+                      '&:hover': { bgcolor: '#15803d', boxShadow: '0 4px 12px rgba(22,163,74,0.3)' },
+                    }}
+                  >
+                    Update Password
+                  </Button>
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+
+                {/* Two-Factor Authentication */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Box sx={{ width: 28, height: 28, borderRadius: '8px', bgcolor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
+                    <SecurityIcon sx={{ fontSize: 16 }} />
+                  </Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1a1a2e' }}>Two-Factor Authentication (2FA)</Typography>
+                </Box>
+
+                {twoFAMsg && (
+                  <Alert severity={twoFAMsg.type} sx={{ mb: 2, borderRadius: '10px' }} onClose={() => setTwoFAMsg(null)}>
+                    {twoFAMsg.text}
+                  </Alert>
+                )}
+
+                <Box sx={{
+                  p: 2.5, borderRadius: '14px',
+                  bgcolor: twoFA ? '#f0fdf4' : '#f9fafb',
+                  border: `1px solid ${twoFA ? '#bbf7d0' : '#e5e7eb'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  flexWrap: 'wrap', gap: 2, mb: 2,
+                }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
+                      {twoFA ? '2FA is Enabled' : '2FA is Disabled'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#6b7280' }}>
+                      {twoFA
+                        ? 'Your account is protected with two-factor authentication.'
+                        : 'Enable 2FA to add an extra layer of security to your account.'}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Chip
+                      label={twoFA ? 'ON' : 'OFF'}
+                      size="small"
+                      sx={{
+                        fontWeight: 700, fontSize: '0.72rem',
+                        bgcolor: twoFA ? '#f0fdf4' : '#fef2f2',
+                        color: twoFA ? '#16a34a' : '#dc2626',
+                      }}
+                    />
+                    <Switch
+                      checked={twoFA}
+                      onChange={e => {
+                        setTwoFA(e.target.checked);
+                        setTwoFAMsg({
+                          type: e.target.checked ? 'success' : 'info',
+                          text: e.target.checked
+                            ? '2FA enabled. Your account is now more secure.'
+                            : '2FA disabled. We recommend keeping it enabled.',
+                        });
+                      }}
+                      sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': { color: '#16a34a' },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#16a34a' },
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                {twoFA && (
+                  <Box sx={{ p: 2.5, borderRadius: '14px', bgcolor: '#eff6ff', border: '1px solid #bfdbfe', mb: 2 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e40af', mb: 0.5 }}>
+                      How 2FA works
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#3730a3', lineHeight: 1.6, display: 'block' }}>
+                      When you log in, you'll be asked for a verification code in addition to your password.
+                      This code is sent to your registered email address and expires in 10 minutes.
+                    </Typography>
+                  </Box>
+                )}
+
+                <Divider sx={{ my: 3 }} />
+
+                {/* Security Tips */}
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 1.5 }}>Security Tips</Typography>
+                <Grid container spacing={1.5}>
+                  {[
+                    { tip: 'Use a strong password with letters, numbers and symbols', ok: true },
+                    { tip: 'Never share your password with anyone',                   ok: true },
+                    { tip: 'Log out from shared or public devices',                   ok: true },
+                    { tip: 'Update your password regularly every 3 months',           ok: false },
+                  ].map((t, i) => (
+                    <Grid item xs={12} sm={6} key={i}>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, p: 1.5, borderRadius: '10px', bgcolor: t.ok ? '#f0fdf4' : '#fff7ed', border: `1px solid ${t.ok ? '#bbf7d0' : '#fed7aa'}` }}>
+                        <CheckCircleOutlineIcon sx={{ fontSize: 16, color: t.ok ? '#16a34a' : '#ea580c', mt: 0.2, flexShrink: 0 }} />
+                        <Typography variant="caption" sx={{ color: '#374151', lineHeight: 1.5 }}>{t.tip}</Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
               </Paper>
             )}
 

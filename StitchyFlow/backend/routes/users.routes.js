@@ -21,8 +21,41 @@ router.get('/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Get all users (admin only)
-router.get('/', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+// Public: get tailors list (no auth required — used by customer dashboard)
+// Admin: get all users (requires auth + admin role)
+router.get('/', async (req, res) => {
+  const { role } = req.query;
+
+  // No auth needed for tailor listing
+  if (role === 'tailor') {
+    try {
+      const [users] = await db.query(
+        'SELECT user_id, first_name, last_name, role, status FROM users WHERE role = ? AND status = "active" ORDER BY created_at DESC',
+        ['tailor']
+      );
+      return res.json({ success: true, data: users });
+    } catch (error) {
+      return res.status(500).json({ success: false, error: { message: error.message } });
+    }
+  }
+
+  // All other queries require admin auth
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ success: false, error: { message: 'Access token required' } });
+
+  const jwt = require('jsonwebtoken');
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return res.status(403).json({ success: false, error: { message: 'Invalid or expired token' } });
+  }
+
+  if (decoded.role !== 'admin') {
+    return res.status(403).json({ success: false, error: { message: 'Access denied' } });
+  }
+
   try {
     const [users] = await db.query(
       'SELECT user_id, email, first_name, last_name, phone, role, status, created_at FROM users ORDER BY created_at DESC'

@@ -21,16 +21,16 @@ import { keyframes } from '@emotion/react';
 const _env = Number(process.env.REACT_APP_SPLASH_DURATION_MS);
 const SPLASH_MS = Number.isFinite(_env) && _env >= 800 ? _env : 10000;
 
-/* ─── PALETTE ─────────────────────────────── */
-const G   = '#c9a96e';   /* gold main   */
-const GL  = '#e8c98a';   /* gold light  */
-const GD  = '#8a6830';   /* gold dark   */
-const GX  = '#4a3010';   /* gold xdark  */
-const NAV = '#04080f';   /* navy black  */
-const N2  = '#070d1c';
-const N3  = '#0a1428';
-const W   = '#ffffff';
-const CR  = '#f5f0e8';   /* cream       */
+/* ─── PALETTE (Light Theme) ──────────────── */
+const G   = '#b8860b';   /* gold main   */
+const GL  = '#d4a017';   /* gold light  */
+const GD  = '#8a6500';   /* gold dark   */
+const GX  = '#5a4200';   /* gold xdark  */
+const NAV = '#ffffff';   /* white base  */
+const N2  = '#f5f7fa';
+const N3  = '#eef1f6';
+const W   = '#1a1a2e';   /* dark text   */
+const CR  = '#374151';   /* body text   */
 
 /* ─── KEYFRAMES ───────────────────────────── */
 
@@ -267,34 +267,34 @@ const DOTS = [
 function Background() {
   return (
     <>
-      {/* Deep base */}
+      {/* Light base */}
       <Box aria-hidden sx={{
         position:'absolute', inset:0, zIndex:0,
         background:`
-          radial-gradient(ellipse 90% 70% at 15% 15%, rgba(0,80,160,0.22) 0%, transparent 55%),
-          radial-gradient(ellipse 80% 60% at 85% 85%, rgba(0,48,120,0.18) 0%, transparent 55%),
-          radial-gradient(ellipse 60% 50% at 50% 50%, rgba(201,169,110,0.055) 0%, transparent 65%),
-          linear-gradient(162deg, ${NAV} 0%, ${N2} 42%, ${N3} 72%, ${NAV} 100%)
+          radial-gradient(ellipse 90% 70% at 15% 15%, rgba(37,99,235,0.07) 0%, transparent 55%),
+          radial-gradient(ellipse 80% 60% at 85% 85%, rgba(37,99,235,0.05) 0%, transparent 55%),
+          radial-gradient(ellipse 60% 50% at 50% 50%, rgba(184,134,11,0.04) 0%, transparent 65%),
+          linear-gradient(162deg, #ffffff 0%, #f5f7fa 42%, #eef1f6 72%, #ffffff 100%)
         `,
       }}/>
 
-      {/* Linen weave */}
+      {/* Subtle grid */}
       <Box aria-hidden sx={{
         position:'absolute', inset:0, zIndex:0, pointerEvents:'none',
         opacity:0, animation:`${kFade} 3s ease-out 0.8s forwards`,
         backgroundImage:`
-          linear-gradient(rgba(201,169,110,0.02) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(201,169,110,0.02) 1px, transparent 1px),
-          linear-gradient(rgba(255,255,255,0.006) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255,255,255,0.006) 1px, transparent 1px)
+          linear-gradient(rgba(184,134,11,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(184,134,11,0.04) 1px, transparent 1px),
+          linear-gradient(rgba(0,0,0,0.015) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,0,0,0.015) 1px, transparent 1px)
         `,
         backgroundSize:'72px 72px, 72px 72px, 18px 18px, 18px 18px',
       }}/>
 
-      {/* Vignette */}
+      {/* Soft vignette */}
       <Box aria-hidden sx={{
         position:'absolute', inset:0, zIndex:0, pointerEvents:'none',
-        background:'radial-gradient(ellipse 120% 120% at 50% 50%, transparent 34%, rgba(0,0,0,0.82) 100%)',
+        background:'radial-gradient(ellipse 120% 120% at 50% 50%, transparent 34%, rgba(200,210,230,0.35) 100%)',
       }}/>
     </>
   );
@@ -306,40 +306,9 @@ function Background() {
 function Curtain() {
   return (
     <>
-      {/* Gold line that draws before curtain opens */}
-      <Box aria-hidden sx={{
-        position:'absolute', top:'50%', left:0, right:0,
-        height:'1px', zIndex:12, pointerEvents:'none',
-        background:`linear-gradient(90deg, transparent 0%, ${G}88 20%, ${GL} 50%, ${G}88 80%, transparent 100%)`,
-        transformOrigin:'left center',
-        transform:'scaleX(0)',
-        animation:`${kLineDraw} 0.8s cubic-bezier(0.22,1,0.36,1) 0.2s forwards`,
-      }}/>
 
-      {/* Left panel */}
-      <Box aria-hidden sx={{
-        position:'absolute', top:0, bottom:0, left:0,
-        width:'50.5%', zIndex:11,
-        background:`linear-gradient(180deg, ${NAV} 0%, ${N2} 50%, ${NAV} 100%)`,
-        borderRight:`1px solid ${G}28`,
-        animation:`${kCurtL} 1s cubic-bezier(0.76,0,0.24,1) 1.2s forwards`,
-        display:'flex', alignItems:'center', justifyContent:'flex-end', pr:3,
-      }}>
-        {/* Subtle gold vertical accent */}
-        <Box sx={{ width:'1px', height:'40%', background:`linear-gradient(180deg,transparent,${G}22,transparent)` }}/>
-      </Box>
 
-      {/* Right panel */}
-      <Box aria-hidden sx={{
-        position:'absolute', top:0, bottom:0, right:0,
-        width:'50.5%', zIndex:11,
-        background:`linear-gradient(180deg, ${NAV} 0%, ${N2} 50%, ${NAV} 100%)`,
-        borderLeft:`1px solid ${G}28`,
-        animation:`${kCurtR} 1s cubic-bezier(0.76,0,0.24,1) 1.2s forwards`,
-        display:'flex', alignItems:'center', justifyContent:'flex-start', pl:3,
-      }}>
-        <Box sx={{ width:'1px', height:'40%', background:`linear-gradient(180deg,transparent,${G}22,transparent)` }}/>
-      </Box>
+      {/* Curtain removed for light theme */}
     </>
   );
 }
@@ -353,14 +322,14 @@ function Glows() {
       <Box aria-hidden sx={{
         position:'absolute', top:'-22%', left:'-22%',
         width:'72%', height:'72%', borderRadius:'50%',
-        background:'radial-gradient(circle, rgba(0,100,180,0.2) 0%, transparent 70%)',
+        background:'radial-gradient(circle, rgba(37,99,235,0.07) 0%, transparent 70%)',
         pointerEvents:'none', zIndex:0,
         animation:`${kGlow} 7s ease-in-out infinite`,
       }}/>
       <Box aria-hidden sx={{
         position:'absolute', bottom:'-22%', right:'-22%',
         width:'68%', height:'68%', borderRadius:'50%',
-        background:'radial-gradient(circle, rgba(0,48,120,0.17) 0%, transparent 70%)',
+        background:'radial-gradient(circle, rgba(37,99,235,0.05) 0%, transparent 70%)',
         pointerEvents:'none', zIndex:0,
         animation:`${kGlow} 8.5s ease-in-out 1.5s infinite`,
       }}/>
@@ -368,7 +337,7 @@ function Glows() {
         position:'absolute', top:'50%', left:'50%',
         transform:'translate(-50%,-50%)',
         width:'600px', height:'600px', borderRadius:'50%',
-        background:`radial-gradient(circle, rgba(201,169,110,0.055) 0%, transparent 70%)`,
+        background:`radial-gradient(circle, rgba(184,134,11,0.04) 0%, transparent 70%)`,
         pointerEvents:'none', zIndex:0,
         animation:`${kGlow} 6s ease-in-out 0.8s infinite`,
       }}/>
@@ -430,10 +399,10 @@ function Particles() {
           width:p.s, height:p.s, borderRadius:'50%',
           background: p.g
             ? `radial-gradient(circle, ${GL} 0%, ${G}88 100%)`
-            : `radial-gradient(circle, rgba(0,210,255,0.9) 0%, rgba(0,120,180,0.3) 100%)`,
+            : `radial-gradient(circle, rgba(37,99,235,0.7) 0%, rgba(37,99,235,0.2) 100%)`,
           '--dx':p.dx, '--dy':p.dy,
           animation:`${kDrift} ${p.dur}s ease-in-out ${p.d}s infinite`,
-          boxShadow: p.g ? `0 0 ${p.s*4}px ${G}55` : `0 0 ${p.s*4}px rgba(0,210,255,0.28)`,
+          boxShadow: p.g ? `0 0 ${p.s*4}px ${G}44` : `0 0 ${p.s*4}px rgba(37,99,235,0.18)`,
         }}/>
       ))}
     </Box>
@@ -654,7 +623,7 @@ function ScanLine() {
     <Box aria-hidden sx={{
       position:'absolute', left:0, right:0, height:'2px',
       zIndex:6, pointerEvents:'none',
-      background:`linear-gradient(90deg, transparent, ${G}22, transparent)`,
+      background:`linear-gradient(90deg, transparent, ${G}18, transparent)`,
       animation:`${kScan} 5.5s linear 2.5s infinite`,
     }}/>
   );
@@ -688,7 +657,7 @@ function LogoMark() {
       <Box aria-hidden sx={{
         position:'absolute', inset:-5, borderRadius:'42px',
         background:`conic-gradient(from 0deg,
-          ${G} 0%, ${GD} 22%, ${NAV} 48%, ${GD} 72%, ${G} 100%)`,
+          ${G} 0%, ${GD} 22%, #e5e7eb 48%, ${GD} 72%, ${G} 100%)`,
         animation:`${kSpinCW} 11s linear infinite`,
         zIndex:0,
       }}/>
@@ -707,12 +676,13 @@ function LogoMark() {
       <Box sx={{
         position:'absolute', inset:5, borderRadius:'37px',
         background:`linear-gradient(148deg,
-          rgba(255,255,255,0.13) 0%,
-          rgba(201,169,110,0.07) 35%,
-          rgba(0,12,36,0.58) 100%)`,
+          rgba(255,255,255,0.95) 0%,
+          rgba(245,247,250,0.9) 35%,
+          rgba(238,241,246,0.85) 100%)`,
         backdropFilter:'blur(28px)',
         WebkitBackdropFilter:'blur(28px)',
         border:`1px solid ${G}2c`,
+        boxShadow:'0 8px 32px rgba(0,0,0,0.08)',
         display:'flex', alignItems:'center', justifyContent:'center',
         zIndex:1,
         animation:`${kCardGlow} 4.5s ease-in-out 3.5s infinite, ${kMorph} 9s ease-in-out 3s infinite`,
@@ -722,9 +692,9 @@ function LogoMark() {
           style={{animation:`${kFloat} 5s ease-in-out infinite`}}>
           <defs>
             <linearGradient id="nb11" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.98"/>
-              <stop offset="55%"  stopColor="#e8f2f8" stopOpacity="0.93"/>
-              <stop offset="100%" stopColor="#c4d8e4" stopOpacity="0.86"/>
+              <stop offset="0%"   stopColor="#1a1a2e" stopOpacity="0.95"/>
+              <stop offset="55%"  stopColor="#374151" stopOpacity="0.88"/>
+              <stop offset="100%" stopColor="#4b5563" stopOpacity="0.82"/>
             </linearGradient>
             <linearGradient id="ng11" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%"   stopColor={G}/>
@@ -736,7 +706,7 @@ function LogoMark() {
             </filter>
           </defs>
           <rect x="29" y="3" width="6" height="40" rx="3" fill="url(#nb11)" filter="url(#nf11)"/>
-          <rect x="30.5" y="6" width="1.8" height="22" rx="0.9" fill={W} fillOpacity="0.38"/>
+          <rect x="30.5" y="6" width="1.8" height="22" rx="0.9" fill="#9ca3af" fillOpacity="0.38"/>
           <ellipse cx="32" cy="11" rx="3.5" ry="5" fill="none" stroke="url(#ng11)" strokeWidth="2.2"/>
           <path d="M29,43 L32,59 L35,43 Z" fill="url(#nb11)"/>
           <path d="M32,59 Q17,66 32,72 Q47,66 32,59"
@@ -787,14 +757,14 @@ function BrandName() {
               fontFamily:'"Segoe UI", system-ui, -apple-system, sans-serif',
               background: isAccent
                 ? `linear-gradient(175deg, ${GL} 0%, ${G} 50%, ${GD} 100%)`
-                : `linear-gradient(175deg, #f4f9ff 0%, #b8d8ee 40%, ${W} 65%, #cce8ff 100%)`,
+                : `linear-gradient(175deg, #1a1a2e 0%, #2563eb 40%, #1a1a2e 65%, #374151 100%)`,
               backgroundSize:'100% 200%',
               WebkitBackgroundClip:'text',
               WebkitTextFillColor:'transparent',
               animation:`${kLetUp} 0.55s cubic-bezier(0.22,1,0.36,1) ${3.5+i*0.055}s both`,
               filter: isAccent
-                ? `drop-shadow(0 0 12px ${G}77)`
-                : `drop-shadow(0 0 6px rgba(0,200,255,0.2))`,
+                ? `drop-shadow(0 0 12px ${G}55)`
+                : `drop-shadow(0 0 6px rgba(37,99,235,0.15))`,
             }}>
               {ch}
             </Box>
@@ -862,7 +832,7 @@ function Tagline() {
   return (
     <Box component="p" sx={{
       m:0, mb:'44px',
-      color:`${CR}66`,
+      color:`#6b7280`,
       fontWeight:300,
       fontSize:{xs:'0.62rem', sm:'0.7rem'},
       letterSpacing:'0.32em',
@@ -927,7 +897,7 @@ function ProgressBar({ progress, phase }) {
         <Box component="span" sx={{
           fontSize:'0.58rem', letterSpacing:'0.18em',
           textTransform:'uppercase', fontWeight:700,
-          color: phase===1 ? G : 'rgba(255,255,255,0.28)',
+          color: phase===1 ? G : 'rgba(0,0,0,0.28)',
           transition:'color 0.6s',
           textShadow: phase===1 ? `0 0 14px ${G}` : 'none',
           animation: phase===1 ? `${kReadyPop} 0.7s ease-out` : 'none',
@@ -993,8 +963,8 @@ function SplashScreen({ durationMs = SPLASH_MS }) {
       <Background />
       <ScanLine />
       <Glows />
-      <OrbitRings />
-      <PulseRings />
+      {/* OrbitRings removed */}
+      {/* PulseRings removed */}
       <Particles />
       <ThreadCanvas />
       <CornerBrackets />
@@ -1048,7 +1018,7 @@ function SplashScreen({ durationMs = SPLASH_MS }) {
         opacity:0, animation:`${kFade} 1s ease-out 5.2s forwards`,
       }}>
         <Box component="span" sx={{
-          color:'rgba(255,255,255,0.13)',
+          color:'rgba(0,0,0,0.25)',
           fontSize:'0.56rem', letterSpacing:'0.18em',
           textTransform:'uppercase',
         }}>

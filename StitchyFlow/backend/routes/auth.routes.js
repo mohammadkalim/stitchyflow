@@ -99,4 +99,37 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Change password (authenticated)
+router.post('/change-password', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ success: false, error: { message: 'Access token required' } });
+
+    const jwt = require('jsonwebtoken');
+    let decoded;
+    try { decoded = jwt.verify(token, process.env.JWT_SECRET); }
+    catch { return res.status(403).json({ success: false, error: { message: 'Invalid or expired token' } }); }
+
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword)
+      return res.status(400).json({ success: false, error: { message: 'Both current and new password are required' } });
+    if (newPassword.length < 6)
+      return res.status(400).json({ success: false, error: { message: 'Password must be at least 6 characters' } });
+
+    const [users] = await db.query('SELECT password_hash FROM users WHERE user_id = ?', [decoded.userId]);
+    if (!users.length) return res.status(404).json({ success: false, error: { message: 'User not found' } });
+
+    const valid = await bcrypt.compare(currentPassword, users[0].password_hash);
+    if (!valid) return res.status(400).json({ success: false, error: { message: 'Current password is incorrect' } });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.query('UPDATE users SET password_hash = ? WHERE user_id = ?', [hashed, decoded.userId]);
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
 module.exports = router;

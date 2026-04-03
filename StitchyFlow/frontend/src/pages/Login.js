@@ -32,11 +32,8 @@ function Login() {
       const { accessToken, user } = response.data.data;
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
-      showPopup('Login successful! Redirecting...', 'success');
-      setTimeout(() => {
-        if (user.role === 'tailor') navigate('/tailor-dashboard');
-        else navigate('/customer-dashboard');
-      }, 1200);
+      if (user.role === 'tailor') navigate('/tailor-dashboard');
+      else navigate('/customer-dashboard');
     } catch (error) {
       showPopup(error.response?.data?.error?.message || 'Login failed. Please try again.');
     }
