@@ -31,6 +31,7 @@ app.use('/api/v1/verification', require('./routes/verification.routes'));
 app.use('/api/v1/password', require('./routes/password.routes'));
 app.use('/api/v1/logs',    require('./routes/logs.routes'));
 app.use('/api/v1/auth/google', require('./routes/google.auth.routes'));
+app.use('/api/v1/totp',   require('./routes/totp.routes'));
 
 // Health check
 app.get('/health', (req, res) => {

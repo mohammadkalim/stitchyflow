@@ -78,8 +78,14 @@ start_service() {
         # Start the service in background from the directory
         (cd "$directory" && eval "$command" > /dev/null 2>&1 &)
         
-        # Wait for service to start
-        sleep 5
+        # Wait for service to start (React apps need more time)
+        local max_wait=60
+        local waited=0
+        print_info "Waiting for ${service_name} to start..."
+        while ! check_port $port && [ $waited -lt $max_wait ]; do
+            sleep 2
+            waited=$((waited + 2))
+        done
         
         if check_port $port; then
             print_status "${service_name} started successfully on port ${port}"
@@ -241,20 +247,13 @@ if [ "$BACKEND_STARTED" = true ] && [ "$FRONTEND_STARTED" = true ] && [ "$ADMIN_
     echo -e "${CYAN}╚════════════════════════════════════════════════════════════════════════════╝${NC}"
 elif [ "$BACKEND_STARTED" = false ] && [ "$FRONTEND_STARTED" = false ] && [ "$ADMIN_STARTED" = false ]; then
     echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${RED}${BOLD}                    ✗ Application Not Yet Implemented                      ${CYAN}║${NC}"
+    echo -e "${CYAN}║${RED}${BOLD}                    ✗ All Services Failed to Start                         ${CYAN}║${NC}"
     echo -e "${CYAN}╚════════════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "${YELLOW}${BOLD}⚠ Notice:${NC} The StitchyFlow application code has not been created yet."
-    echo -e "${WHITE}The following directories are missing:${NC}"
-    echo -e "  ${RED}✗${NC} ./StitchyFlow/backend"
-    echo -e "  ${RED}✗${NC} ./StitchyFlow/frontend"
-    echo -e "  ${RED}✗${NC} ./StitchyFlow/admin"
-    echo ""
-    echo -e "${CYAN}${BOLD}Next Steps:${NC}"
-    echo -e "  1. Implement the backend API (Node.js/Express.js)"
-    echo -e "  2. Implement the frontend application (React.js)"
-    echo -e "  3. Implement the admin panel (React.js)"
-    echo -e "  4. Run this script again to start all services"
+    echo -e "${YELLOW}${BOLD}⚠ Troubleshooting:${NC}"
+    echo -e "  - Ensure dependencies are installed: ${GREEN}npm install${NC} in each service folder"
+    echo -e "  - Check MySQL is running on port 3306"
+    echo -e "  - Review logs in ${GREEN}./StitchyFlow/backend/server.log${NC}"
     echo ""
 else
     echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════════════╗${NC}"

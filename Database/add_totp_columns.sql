@@ -1,0 +1,5 @@
+-- Run this SQL to add TOTP columns to users table
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(64) DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS totp_secret_temp VARCHAR(64) DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS totp_enabled TINYINT(1) DEFAULT 0;

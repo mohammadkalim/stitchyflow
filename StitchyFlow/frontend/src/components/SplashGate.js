@@ -10,13 +10,16 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import SplashScreen, { SPLASH_MS } from '../pages/SplashScreen';
 
 function SplashGate() {
-  const [showSplash, setShowSplash] = useState(true);
   const navigate = useNavigate();
+  const path = window.location.pathname;
+  // Only show splash on home/root routes
+  const shouldSplash = path === '/' || path === '' || path === '/home';
+  const [showSplash, setShowSplash] = useState(shouldSplash);
 
   useEffect(() => {
+    if (!shouldSplash) return;
     const t = setTimeout(() => {
       setShowSplash(false);
-      const path = window.location.pathname;
       if (path === '/' || path === '') {
         navigate('/home', { replace: true });
       }

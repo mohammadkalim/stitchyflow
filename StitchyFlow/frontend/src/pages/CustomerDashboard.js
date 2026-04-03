@@ -3,8 +3,10 @@ import {
   Box, Typography, Container, Grid, Paper, Avatar, Button,
   Chip, Divider, List, ListItem, ListItemText, ListItemIcon,
   IconButton, Badge, AppBar, Toolbar, Drawer, useMediaQuery, useTheme,
-  TextField, InputAdornment, Alert, Switch, FormControlLabel
+  TextField, InputAdornment, Alert, Switch, FormControlLabel, CircularProgress,
+  Dialog, DialogContent
 } from '@mui/material';
+import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -27,6 +29,11 @@ import StarIcon from '@mui/icons-material/Star';
 import MenuIcon from '@mui/icons-material/Menu';
 import SecurityIcon from '@mui/icons-material/Security';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import SmartphoneIcon from '@mui/icons-material/Smartphone';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import Header from '../components/Header';
@@ -130,6 +137,11 @@ function CustomerDashboard() {
   const [pwMsg, setPwMsg] = useState(null);
   const [twoFA, setTwoFA] = useState(false);
   const [twoFAMsg, setTwoFAMsg] = useState(null);
+  const [totpSetup, setTotpSetup] = useState(null);      // { qrCode, secret, otpauthUrl }
+  const [totpCode, setTotpCode] = useState('');
+  const [totpVerified, setTotpVerified] = useState(false);
+  const [backupCodes, setBackupCodes] = useState([]);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
   const [stats, setStats] = useState({
     totalTailors: 0,
     favorites: 0,
@@ -142,6 +154,24 @@ function CustomerDashboard() {
     cancelled: 0,
   });
 
+  const fetchTotpStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch('http://localhost:5000/api/v1/totp/status', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        const enabled = data.data?.totpEnabled === true || data.data?.totpEnabled == 1;
+        setTwoFA(enabled);
+        setTotpVerified(enabled);
+      }
+    } catch (e) {
+      console.error('TOTP status fetch failed:', e);
+    }
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (!stored) { navigate('/login'); return; }
@@ -149,7 +179,15 @@ function CustomerDashboard() {
     if (u.role !== 'customer') { navigate('/login'); return; }
     setUser(u);
     fetchStats(u);
+    fetchTotpStatus();
   }, [navigate]);
+
+  // Separate effect: re-fetch TOTP status whenever Security tab is opened
+  useEffect(() => {
+    if (activeKey === 'security') {
+      fetchTotpStatus();
+    }
+  }, [activeKey]);
 
   const fetchStats = async (u) => {
     try {
@@ -246,6 +284,80 @@ function CustomerDashboard() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
+  };
+
+  const handleTwoFAToggle = async (checked) => {
+    const token = localStorage.getItem('token');
+    if (checked) {
+      // Start TOTP setup — fetch QR code
+      setTotpLoading(true);
+      setTwoFAMsg(null);
+      try {
+        const res = await fetch('http://localhost:5000/api/v1/totp/setup', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          setTotpSetup(data.data);
+          setTwoFA(true);
+          setTotpVerified(false);
+          setTotpCode('');
+        } else {
+          setTwoFAMsg({ type: 'error', text: data.error?.message || 'Failed to setup 2FA.' });
+        }
+      } catch {
+        setTwoFAMsg({ type: 'error', text: 'Network error. Please try again.' });
+      } finally {
+        setTotpLoading(false);
+      }
+    } else {
+      // Disable TOTP
+      try {
+        await fetch('http://localhost:5000/api/v1/totp/disable', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (_) {}
+      setTwoFA(false);
+      setTotpSetup(null);
+      setTotpVerified(false);
+      setTotpCode('');
+      setTwoFAMsg({ type: 'info', text: '2FA disabled. We recommend keeping it enabled.' });
+    }
+  };
+
+  const handleTotpVerify = async () => {
+    if (!totpCode || totpCode.length !== 6) {
+      return setTwoFAMsg({ type: 'error', text: 'Please enter the 6-digit code from your authenticator app.' });
+    }
+    setTotpLoading(true);
+    setTwoFAMsg(null);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/v1/totp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ token: totpCode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTotpVerified(true);
+        setTotpSetup(null);
+        setTotpCode('');
+        setTwoFAMsg({ type: 'success', text: '2FA enabled. Your account is now more secure.' });
+        // Show backup codes
+        if (data.data?.backupCodes) {
+          setBackupCodes(data.data.backupCodes);
+          setShowBackupCodes(true);
+        }
+      } else {
+        setTwoFAMsg({ type: 'error', text: data.error?.message || 'Invalid code.' });
+      }
+    } catch {
+      setTwoFAMsg({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setTotpLoading(false);
+    }
   };
 
   if (!user) return null;
@@ -746,33 +858,415 @@ function CustomerDashboard() {
                         color: twoFA ? '#16a34a' : '#dc2626',
                       }}
                     />
-                    <Switch
-                      checked={twoFA}
-                      onChange={e => {
-                        setTwoFA(e.target.checked);
-                        setTwoFAMsg({
-                          type: e.target.checked ? 'success' : 'info',
-                          text: e.target.checked
-                            ? '2FA enabled. Your account is now more secure.'
-                            : '2FA disabled. We recommend keeping it enabled.',
-                        });
-                      }}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': { color: '#16a34a' },
-                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#16a34a' },
-                      }}
-                    />
+                    {totpLoading ? (
+                      <CircularProgress size={24} sx={{ color: '#16a34a' }} />
+                    ) : (
+                      <Switch
+                        checked={twoFA}
+                        onChange={e => handleTwoFAToggle(e.target.checked)}
+                        sx={{
+                          '& .MuiSwitch-switchBase.Mui-checked': { color: '#16a34a' },
+                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#16a34a' },
+                        }}
+                      />
+                    )}
                   </Box>
                 </Box>
 
-                {twoFA && (
+                {/* QR Code Setup — Professional Modal */}
+                <Dialog
+                  open={!!(twoFA && totpSetup && !totpVerified)}
+                  onClose={() => { setTwoFA(false); setTotpSetup(null); setTotpCode(''); setTwoFAMsg(null); }}
+                  maxWidth="sm"
+                  fullWidth
+                  PaperProps={{
+                    sx: {
+                      borderRadius: '24px',
+                      overflow: 'hidden',
+                      boxShadow: '0 32px 80px rgba(0,0,0,0.18)',
+                      background: '#fff',
+                    }
+                  }}
+                >
+                  {/* Header Banner */}
+                  <Box sx={{
+                    background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0e7490 100%)',
+                    px: 4, pt: 4, pb: 3, position: 'relative',
+                  }}>
+                    <IconButton
+                      onClick={() => { setTwoFA(false); setTotpSetup(null); setTotpCode(''); setTwoFAMsg(null); }}
+                      sx={{ position: 'absolute', top: 14, right: 14, color: 'rgba(255,255,255,0.6)', '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.1)' } }}
+                      size="small"
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+                      <Box sx={{
+                        width: 48, height: 48, borderRadius: '14px',
+                        background: 'rgba(255,255,255,0.12)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                      }}>
+                        <ShieldOutlinedIcon sx={{ color: '#38bdf8', fontSize: 26 }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
+                          Two-Factor Authentication
+                        </Typography>
+                        <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.78rem', mt: 0.3 }}>
+                          Secure your account with an authenticator app
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Steps indicator */}
+                    <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                      {['Scan QR', 'Enter Code', 'Done'].map((step, i) => (
+                        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                          <Box sx={{
+                            width: 22, height: 22, borderRadius: '50%',
+                            bgcolor: i === 0 ? '#38bdf8' : i === 1 && totpCode.length > 0 ? '#38bdf8' : 'rgba(255,255,255,0.15)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '0.65rem', fontWeight: 700,
+                            color: i <= 1 ? '#0f172a' : 'rgba(255,255,255,0.4)',
+                            transition: 'all 0.3s',
+                          }}>
+                            {i + 1}
+                          </Box>
+                          <Typography sx={{ color: i === 0 ? '#e0f2fe' : 'rgba(255,255,255,0.4)', fontSize: '0.72rem', fontWeight: i === 0 ? 600 : 400 }}>
+                            {step}
+                          </Typography>
+                          {i < 2 && <Box sx={{ width: 20, height: 1, bgcolor: 'rgba(255,255,255,0.15)', mx: 0.3 }} />}
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+
+                  <DialogContent sx={{ px: 4, py: 3 }}>
+
+                    {/* App suggestions */}
+                    <Box sx={{
+                      display: 'flex', gap: 1, mb: 3, p: 2,
+                      borderRadius: '12px', bgcolor: '#f8fafc', border: '1px solid #e2e8f0',
+                      alignItems: 'center',
+                    }}>
+                      <SmartphoneIcon sx={{ color: '#64748b', fontSize: 18, flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: '0.78rem', color: '#475569' }}>
+                        Download <strong>Google Authenticator</strong>, <strong>Authy</strong>, or <strong>Microsoft Authenticator</strong> on your phone, then scan the QR code below.
+                      </Typography>
+                    </Box>
+
+                    {/* QR Code */}
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                      <Box sx={{
+                        position: 'relative',
+                        p: '3px',
+                        borderRadius: '20px',
+                        background: 'linear-gradient(135deg, #0ea5e9, #0284c7, #0369a1)',
+                        boxShadow: '0 8px 32px rgba(14,165,233,0.25)',
+                      }}>
+                        <Box sx={{
+                          bgcolor: '#fff', borderRadius: '18px', p: 2.5,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <QRCodeSVG
+                            value={totpSetup?.otpauthUrl || ''}
+                            size={190}
+                            bgColor="#ffffff"
+                            fgColor="#0f172a"
+                            level="M"
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    {/* Manual key */}
+                    <Box sx={{
+                      borderRadius: '14px', overflow: 'hidden',
+                      border: '1px solid #e2e8f0', mb: 3,
+                    }}>
+                      <Box sx={{ px: 2.5, py: 1.2, bgcolor: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
+                        <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                          Manual Entry Key
+                        </Typography>
+                      </Box>
+                      <Box sx={{ px: 2.5, py: 1.8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                        <Typography sx={{
+                          fontFamily: 'monospace', fontWeight: 700, fontSize: '0.9rem',
+                          color: '#0f172a', letterSpacing: '0.12em', wordBreak: 'break-all',
+                        }}>
+                          {totpSetup?.secret}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={() => navigator.clipboard.writeText(totpSetup?.secret || '')}
+                          sx={{
+                            flexShrink: 0, color: '#64748b', bgcolor: '#f1f5f9',
+                            borderRadius: '8px', p: 0.8,
+                            '&:hover': { bgcolor: '#e2e8f0', color: '#0f172a' },
+                          }}
+                        >
+                          <ContentCopyIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Box>
+                    </Box>
+
+                    {/* Divider with label */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <Box sx={{ flex: 1, height: '1px', bgcolor: '#e2e8f0' }} />
+                      <Typography sx={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        Step 2 — Verify
+                      </Typography>
+                      <Box sx={{ flex: 1, height: '1px', bgcolor: '#e2e8f0' }} />
+                    </Box>
+
+                    {/* Code input */}
+                    <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155', mb: 1.5 }}>
+                      Enter the 6-digit code from your authenticator app
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'stretch' }}>
+                      <TextField
+                        fullWidth
+                        placeholder="• • • • • •"
+                        value={totpCode}
+                        onChange={e => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        inputProps={{
+                          maxLength: 6,
+                          style: { textAlign: 'center', letterSpacing: '0.5em', fontWeight: 800, fontSize: '1.3rem', fontFamily: 'monospace', padding: '14px 0' }
+                        }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '12px',
+                            bgcolor: '#f8fafc',
+                            '& fieldset': { borderColor: '#e2e8f0', borderWidth: '1.5px' },
+                            '&:hover fieldset': { borderColor: '#94a3b8' },
+                            '&.Mui-focused fieldset': { borderColor: '#0ea5e9', borderWidth: '2px' },
+                          },
+                        }}
+                      />
+                      <Button
+                        variant="contained"
+                        onClick={handleTotpVerify}
+                        disabled={totpLoading || totpCode.length !== 6}
+                        sx={{
+                          minWidth: 140, borderRadius: '12px', textTransform: 'none',
+                          fontWeight: 700, fontSize: '0.88rem', px: 3,
+                          background: totpCode.length === 6
+                            ? 'linear-gradient(135deg, #0ea5e9, #0284c7)'
+                            : undefined,
+                          boxShadow: totpCode.length === 6 ? '0 4px 16px rgba(14,165,233,0.35)' : 'none',
+                          '&:hover': { background: 'linear-gradient(135deg, #0284c7, #0369a1)', boxShadow: '0 6px 20px rgba(14,165,233,0.4)' },
+                          '&.Mui-disabled': { bgcolor: '#e2e8f0', color: '#94a3b8' },
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        {totpLoading
+                          ? <CircularProgress size={20} sx={{ color: '#fff' }} />
+                          : <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                              <CheckCircleIcon sx={{ fontSize: 18 }} /> Verify
+                            </Box>
+                        }
+                      </Button>
+                    </Box>
+
+                    {twoFAMsg && (
+                      <Alert
+                        severity={twoFAMsg.type}
+                        sx={{ mt: 2, borderRadius: '12px', fontSize: '0.82rem', border: '1px solid', borderColor: twoFAMsg.type === 'error' ? '#fecaca' : '#bbf7d0' }}
+                      >
+                        {twoFAMsg.text}
+                      </Alert>
+                    )}
+                  </DialogContent>
+
+                  {/* Footer */}
+                  <Box sx={{ px: 4, pb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                      <LockOutlinedIcon sx={{ fontSize: 14, color: '#94a3b8' }} />
+                      <Typography sx={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                        Secured with end-to-end encryption
+                      </Typography>
+                    </Box>
+                    <Button
+                      onClick={() => { setTwoFA(false); setTotpSetup(null); setTotpCode(''); setTwoFAMsg(null); }}
+                      sx={{
+                        color: '#64748b', textTransform: 'none', fontWeight: 600,
+                        fontSize: '0.82rem', borderRadius: '10px', px: 2,
+                        '&:hover': { bgcolor: '#f1f5f9', color: '#334155' },
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </Box>
+                </Dialog>
+
+                {/* Backup Codes Modal */}
+                <Dialog
+                  open={showBackupCodes}
+                  onClose={() => setShowBackupCodes(false)}
+                  maxWidth="sm"
+                  fullWidth
+                  PaperProps={{ sx: { borderRadius: '24px', overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.18)' } }}
+                >
+                  {/* Header */}
+                  <Box sx={{
+                    background: 'linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%)',
+                    px: 4, pt: 4, pb: 3, position: 'relative',
+                  }}>
+                    <IconButton
+                      onClick={() => setShowBackupCodes(false)}
+                      size="small"
+                      sx={{ position: 'absolute', top: 14, right: 14, color: 'rgba(255,255,255,0.6)', '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.1)' } }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{
+                        width: 48, height: 48, borderRadius: '14px',
+                        background: 'rgba(255,255,255,0.12)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                      }}>
+                        <CheckCircleIcon sx={{ color: '#6ee7b7', fontSize: 26 }} />
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
+                          2FA Enabled Successfully
+                        </Typography>
+                        <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.78rem', mt: 0.3 }}>
+                          Save your backup codes in a safe place
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  <DialogContent sx={{ px: 4, py: 3 }}>
+                    {/* Warning */}
+                    <Box sx={{
+                      display: 'flex', gap: 1.5, p: 2, mb: 3,
+                      borderRadius: '12px', bgcolor: '#fffbeb', border: '1px solid #fde68a',
+                    }}>
+                      <Typography sx={{ fontSize: '1.1rem' }}>⚠️</Typography>
+                      <Typography sx={{ fontSize: '0.8rem', color: '#92400e', lineHeight: 1.6 }}>
+                        These backup codes can be used to access your account if you lose your authenticator device.
+                        <strong> Each code can only be used once.</strong> Store them securely.
+                      </Typography>
+                    </Box>
+
+                    {/* Codes Grid */}
+                    <Box sx={{
+                      borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden', mb: 3,
+                    }}>
+                      <Box sx={{ px: 2.5, py: 1.2, bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                          Backup Codes (8 codes)
+                        </Typography>
+                        <Chip label="One-time use" size="small" sx={{ fontSize: '0.65rem', bgcolor: '#fef3c7', color: '#92400e', fontWeight: 600, height: 20 }} />
+                      </Box>
+                      <Box sx={{ p: 2.5 }}>
+                        <Grid container spacing={1.5}>
+                          {backupCodes.map((code, i) => (
+                            <Grid item xs={6} sm={3} key={i}>
+                              <Box sx={{
+                                p: 1.5, borderRadius: '10px',
+                                bgcolor: '#f8fafc', border: '1px solid #e2e8f0',
+                                textAlign: 'center',
+                                transition: 'all 0.2s',
+                                '&:hover': { bgcolor: '#f1f5f9', borderColor: '#94a3b8' },
+                              }}>
+                                <Typography sx={{
+                                  fontFamily: 'monospace', fontWeight: 700,
+                                  fontSize: '1rem', color: '#0f172a', letterSpacing: '0.15em',
+                                }}>
+                                  {code}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
+                    </Box>
+
+                    {/* Action Buttons */}
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      <Button
+                        fullWidth
+                        variant="outlined"
+                        startIcon={<ContentCopyIcon />}
+                        onClick={() => {
+                          navigator.clipboard.writeText(backupCodes.join('\n'));
+                        }}
+                        sx={{
+                          borderRadius: '12px', textTransform: 'none', fontWeight: 600,
+                          fontSize: '0.85rem', py: 1.3,
+                          borderColor: '#e2e8f0', color: '#334155',
+                          '&:hover': { borderColor: '#94a3b8', bgcolor: '#f8fafc' },
+                        }}
+                      >
+                        Copy All Codes
+                      </Button>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        startIcon={<span style={{ fontSize: '1rem' }}>⬇</span>}
+                        onClick={() => {
+                          const content = [
+                            'StitchyFlow - 2FA Backup Codes',
+                            '================================',
+                            `Generated: ${new Date().toLocaleString()}`,
+                            '',
+                            'Keep these codes safe. Each code can only be used once.',
+                            '',
+                            ...backupCodes.map((c, i) => `${i + 1}. ${c}`),
+                            '',
+                            'www.stitchyflow.com',
+                          ].join('\n');
+                          const blob = new Blob([content], { type: 'text/plain' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'stitchyflow-backup-codes.txt';
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        sx={{
+                          borderRadius: '12px', textTransform: 'none', fontWeight: 700,
+                          fontSize: '0.85rem', py: 1.3,
+                          background: 'linear-gradient(135deg, #059669, #047857)',
+                          boxShadow: '0 4px 14px rgba(5,150,105,0.35)',
+                          '&:hover': { background: 'linear-gradient(135deg, #047857, #065f46)' },
+                        }}
+                      >
+                        Download Codes
+                      </Button>
+                    </Box>
+                  </DialogContent>
+
+                  <Box sx={{ px: 4, pb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      onClick={() => setShowBackupCodes(false)}
+                      sx={{
+                        borderRadius: '12px', textTransform: 'none', fontWeight: 700,
+                        fontSize: '0.88rem', px: 4, py: 1.2,
+                        background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+                        color: '#fff',
+                        boxShadow: '0 4px 14px rgba(14,165,233,0.3)',
+                        '&:hover': { background: 'linear-gradient(135deg, #0284c7, #0369a1)' },
+                      }}
+                    >
+                      I've Saved My Codes
+                    </Button>
+                  </Box>
+                </Dialog>
+                {twoFA && totpVerified && (
                   <Box sx={{ p: 2.5, borderRadius: '14px', bgcolor: '#eff6ff', border: '1px solid #bfdbfe', mb: 2 }}>
                     <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e40af', mb: 0.5 }}>
                       How 2FA works
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#3730a3', lineHeight: 1.6, display: 'block' }}>
-                      When you log in, you'll be asked for a verification code in addition to your password.
-                      This code is sent to your registered email address and expires in 10 minutes.
+                      When you log in, you'll be asked for a 6-digit code from your authenticator app.
+                      This code changes every 30 seconds and keeps your account secure.
                     </Typography>
                   </Box>
                 )}
