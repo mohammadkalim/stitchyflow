@@ -13,12 +13,61 @@ const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const nodemailer = require('nodemailer');
 
+async function ensureSMTPDefaultColumn() {
+  const [columns] = await db.query("SHOW COLUMNS FROM smtp_settings LIKE 'is_default'");
+  if (columns.length === 0) {
+    await db.query("ALTER TABLE smtp_settings ADD COLUMN is_default BOOLEAN NOT NULL DEFAULT FALSE");
+    await db.query(`
+      UPDATE smtp_settings
+      SET is_default = TRUE
+      WHERE id = (
+        SELECT id FROM (
+          SELECT id
+          FROM smtp_settings
+          WHERE is_active = TRUE
+          ORDER BY updated_at DESC, id DESC
+          LIMIT 1
+        ) AS fallback
+      )
+    `);
+  }
+}
+
+async function getDefaultSMTPSettings() {
+  await ensureSMTPDefaultColumn();
+  const [settings] = await db.query(`
+    SELECT *
+    FROM smtp_settings
+    WHERE is_default = TRUE
+    LIMIT 1
+  `);
+
+  if (settings.length > 0) {
+    return settings[0];
+  }
+
+  const [fallback] = await db.query(`
+    SELECT *
+    FROM smtp_settings
+    WHERE is_active = TRUE
+    ORDER BY updated_at DESC, id DESC
+    LIMIT 1
+  `);
+
+  if (fallback.length > 0) {
+    await db.query('UPDATE smtp_settings SET is_default = FALSE');
+    await db.query('UPDATE smtp_settings SET is_default = TRUE WHERE id = ?', [fallback[0].id]);
+    return { ...fallback[0], is_default: true };
+  }
+
+  return null;
+}
+
 // Get SMTP Settings
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const [settings] = await db.query('SELECT * FROM smtp_settings WHERE is_active = TRUE LIMIT 1');
-    
-    if (settings.length === 0) {
+    const settings = await getDefaultSMTPSettings();
+    if (!settings) {
       return res.status(404).json({ 
         success: false, 
         error: { message: 'SMTP settings not found' } 
@@ -26,7 +75,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 
     // Remove password from response for security
-    const { password, ...safeSettings } = settings[0];
+    const { password, ...safeSettings } = settings;
     
     res.json({
       success: true,
@@ -41,9 +90,8 @@ router.get('/', authenticateToken, async (req, res) => {
 // Get Full SMTP Settings (with password - admin only)
 router.get('/full', authenticateToken, async (req, res) => {
   try {
-    const [settings] = await db.query('SELECT * FROM smtp_settings WHERE is_active = TRUE LIMIT 1');
-    
-    if (settings.length === 0) {
+    const settings = await getDefaultSMTPSettings();
+    if (!settings) {
       return res.status(404).json({ 
         success: false, 
         error: { message: 'SMTP settings not found' } 
@@ -52,7 +100,7 @@ router.get('/full', authenticateToken, async (req, res) => {
 
     res.json({
       success: true,
-      data: settings[0]
+      data: settings
     });
   } catch (error) {
     console.error('Error fetching full SMTP settings:', error);
@@ -63,6 +111,7 @@ router.get('/full', authenticateToken, async (req, res) => {
 // Get All SMTP Configurations
 router.get('/all', authenticateToken, async (req, res) => {
   try {
+    await ensureSMTPDefaultColumn();
     const [settings] = await db.query('SELECT * FROM smtp_settings ORDER BY created_at DESC');
     
     res.json({
@@ -78,6 +127,7 @@ router.get('/all', authenticateToken, async (req, res) => {
 // Create New SMTP Configuration
 router.post('/new', authenticateToken, async (req, res) => {
   try {
+    await ensureSMTPDefaultColumn();
     const { 
       server_address, 
       username, 
@@ -85,7 +135,8 @@ router.post('/new', authenticateToken, async (req, res) => {
       port, 
       encryption, 
       authentication_required,
-      is_active
+      is_active,
+      is_default
     } = req.body;
 
     // Validate required fields
@@ -96,10 +147,14 @@ router.post('/new', authenticateToken, async (req, res) => {
       });
     }
 
+    if (is_default === true) {
+      await db.query('UPDATE smtp_settings SET is_default = FALSE');
+    }
+
     const [result] = await db.query(
       `INSERT INTO smtp_settings 
-        (server_address, username, password, port, encryption, authentication_required, is_active) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        (server_address, username, password, port, encryption, authentication_required, is_active, is_default) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         server_address, 
         username, 
@@ -107,7 +162,8 @@ router.post('/new', authenticateToken, async (req, res) => {
         port || 465, 
         encryption || 'SSL', 
         authentication_required !== false,
-        is_active !== false
+        is_active !== false,
+        is_default === true
       ]
     );
 
@@ -126,9 +182,10 @@ router.post('/new', authenticateToken, async (req, res) => {
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    await ensureSMTPDefaultColumn();
 
     // Check if settings exist
-    const [existing] = await db.query('SELECT id FROM smtp_settings WHERE id = ?', [id]);
+    const [existing] = await db.query('SELECT id, is_default FROM smtp_settings WHERE id = ?', [id]);
 
     if (existing.length === 0) {
       return res.status(404).json({
@@ -138,6 +195,13 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 
     await db.query('DELETE FROM smtp_settings WHERE id = ?', [id]);
+    if (existing[0].is_default) {
+      const [remaining] = await db.query('SELECT id FROM smtp_settings ORDER BY updated_at DESC, id DESC LIMIT 1');
+      if (remaining.length > 0) {
+        await db.query('UPDATE smtp_settings SET is_default = FALSE');
+        await db.query('UPDATE smtp_settings SET is_default = TRUE WHERE id = ?', [remaining[0].id]);
+      }
+    }
 
     res.json({
       success: true,
@@ -153,9 +217,10 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 router.patch('/:id/toggle', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    await ensureSMTPDefaultColumn();
 
     // Check if settings exist
-    const [existing] = await db.query('SELECT id, is_active FROM smtp_settings WHERE id = ?', [id]);
+    const [existing] = await db.query('SELECT id, is_active, is_default FROM smtp_settings WHERE id = ?', [id]);
 
     if (existing.length === 0) {
       return res.status(404).json({
@@ -166,6 +231,13 @@ router.patch('/:id/toggle', authenticateToken, async (req, res) => {
 
     const newStatus = !existing[0].is_active;
     await db.query('UPDATE smtp_settings SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newStatus, id]);
+    if (!newStatus && existing[0].is_default) {
+      await db.query('UPDATE smtp_settings SET is_default = FALSE WHERE id = ?', [id]);
+      const [candidate] = await db.query('SELECT id FROM smtp_settings WHERE is_active = TRUE ORDER BY updated_at DESC, id DESC LIMIT 1');
+      if (candidate.length > 0) {
+        await db.query('UPDATE smtp_settings SET is_default = TRUE WHERE id = ?', [candidate[0].id]);
+      }
+    }
 
     res.json({
       success: true,
@@ -181,13 +253,15 @@ router.patch('/:id/toggle', authenticateToken, async (req, res) => {
 // Create or Update SMTP Settings
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    await ensureSMTPDefaultColumn();
     const { 
       server_address, 
       username, 
       password, 
       port, 
       encryption, 
-      authentication_required 
+      authentication_required,
+      is_default
     } = req.body;
 
     // Validate required fields
@@ -199,10 +273,15 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Check if settings already exist
-    const [existing] = await db.query('SELECT id FROM smtp_settings LIMIT 1');
+    const [existing] = await db.query('SELECT id FROM smtp_settings ORDER BY is_default DESC, updated_at DESC, id DESC LIMIT 1');
 
     if (existing.length > 0) {
       // Update existing settings
+      if (is_default === true) {
+        await db.query('UPDATE smtp_settings SET is_default = FALSE');
+      }
+
+      const shouldBeDefault = is_default !== false;
       await db.query(
         `UPDATE smtp_settings SET 
           server_address = ?, 
@@ -211,6 +290,7 @@ router.post('/', authenticateToken, async (req, res) => {
           port = ?, 
           encryption = ?, 
           authentication_required = ?,
+          is_default = ?,
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ?`,
         [
@@ -220,6 +300,7 @@ router.post('/', authenticateToken, async (req, res) => {
           port || 465, 
           encryption || 'SSL', 
           authentication_required !== false,
+          shouldBeDefault,
           existing[0].id
         ]
       );
@@ -230,17 +311,23 @@ router.post('/', authenticateToken, async (req, res) => {
       });
     } else {
       // Create new settings
+      if (is_default === true) {
+        await db.query('UPDATE smtp_settings SET is_default = FALSE');
+      }
+
+      const shouldBeDefault = is_default !== false;
       const [result] = await db.query(
         `INSERT INTO smtp_settings 
-          (server_address, username, password, port, encryption, authentication_required, is_active) 
-        VALUES (?, ?, ?, ?, ?, ?, TRUE)`,
+          (server_address, username, password, port, encryption, authentication_required, is_active, is_default) 
+        VALUES (?, ?, ?, ?, ?, ?, TRUE, ?)`,
         [
           server_address, 
           username, 
           password, 
           port || 465, 
           encryption || 'SSL', 
-          authentication_required !== false
+          authentication_required !== false,
+          shouldBeDefault
         ]
       );
 
@@ -260,6 +347,7 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    await ensureSMTPDefaultColumn();
     const { 
       server_address, 
       username, 
@@ -267,9 +355,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
       port, 
       encryption, 
       authentication_required,
-      is_active
+      is_active,
+      is_default
     } = req.body;
-
     // Check if settings exist
     const [existing] = await db.query('SELECT id FROM smtp_settings WHERE id = ?', [id]);
 
@@ -278,6 +366,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
         success: false,
         error: { message: 'SMTP settings not found' }
       });
+    }
+
+    if (is_default === true) {
+      await db.query('UPDATE smtp_settings SET is_default = FALSE');
     }
 
     // Build update query dynamically
@@ -312,6 +404,17 @@ router.put('/:id', authenticateToken, async (req, res) => {
       updates.push('is_active = ?');
       values.push(is_active);
     }
+    if (is_default !== undefined) {
+      updates.push('is_default = ?');
+      values.push(is_default);
+    }
+    if (is_active === false && is_default === true) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Default SMTP must remain active' }
+      });
+    }
+
 
     if (updates.length === 0) {
       return res.status(400).json({
@@ -333,6 +436,40 @@ router.put('/:id', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating SMTP settings:', error);
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Set Default SMTP Settings
+router.patch('/:id/default', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await ensureSMTPDefaultColumn();
+    const [existing] = await db.query('SELECT id, is_active FROM smtp_settings WHERE id = ?', [id]);
+
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'SMTP settings not found' }
+      });
+    }
+
+    if (!existing[0].is_active) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Only active SMTP can be set as default' }
+      });
+    }
+
+    await db.query('UPDATE smtp_settings SET is_default = FALSE');
+    await db.query('UPDATE smtp_settings SET is_default = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+
+    res.json({
+      success: true,
+      message: 'Default SMTP updated successfully'
+    });
+  } catch (error) {
+    console.error('Error setting default SMTP:', error);
     res.status(500).json({ success: false, error: { message: error.message } });
   }
 });

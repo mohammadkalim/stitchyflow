@@ -14,18 +14,20 @@ CREATE TABLE IF NOT EXISTS smtp_settings (
     encryption VARCHAR(50) NOT NULL DEFAULT 'SSL',
     authentication_required BOOLEAN NOT NULL DEFAULT TRUE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Insert default SMTP settings
-INSERT INTO smtp_settings (server_address, username, password, port, encryption, authentication_required, is_active) 
+INSERT INTO smtp_settings (server_address, username, password, port, encryption, authentication_required, is_active, is_default) 
 VALUES (
     'smtp.gmail.com',
     'mkbytecoder14@gmail.com',
     'rmxdcrjykiqjulfs',
     465,
     'SSL',
+    TRUE,
     TRUE,
     TRUE
 )
@@ -37,4 +39,5 @@ ON DUPLICATE KEY UPDATE
     encryption = VALUES(encryption),
     authentication_required = VALUES(authentication_required),
     is_active = VALUES(is_active),
+    is_default = VALUES(is_default),
     updated_at = CURRENT_TIMESTAMP;

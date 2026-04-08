@@ -26,7 +26,7 @@ function authMiddleware(req, res, next) {
 
 // Get SMTP transporter
 async function getSMTPTransporter() {
-  const [settings] = await db.query('SELECT * FROM smtp_settings WHERE is_active = TRUE LIMIT 1');
+  const [settings] = await db.query('SELECT * FROM smtp_settings WHERE is_default = TRUE OR is_active = TRUE ORDER BY is_default DESC, updated_at DESC, id DESC LIMIT 1');
   if (!settings.length) throw new Error('SMTP not configured');
   const smtp = settings[0];
   return nodemailer.createTransport({

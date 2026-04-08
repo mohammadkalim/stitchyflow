@@ -1,24 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card, CardContent, Typography, Box, TextField, Button, Switch, FormControlLabel,
-  Grid, Alert, CircularProgress, Divider, Paper
+  Grid, Alert, CircularProgress, Divider, Paper, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, IconButton, Chip, Dialog, DialogTitle,
+  DialogContent, DialogActions
 } from '@mui/material';
 import {
   Email as EmailIcon, Save as SaveIcon, Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon
+  CheckCircle as CheckCircleIcon, Delete as DeleteIcon, Edit as EditIcon,
+  Add as AddIcon, Link as LinkIcon, LinkOff as LinkOffIcon, Star as StarIcon
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
 function SMTPSettings() {
+  const [smtpList, setSmtpList] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    server_address: 'smtp.gmail.com',
-    username: 'mkbytecoder14@gmail.com',
-    password: 'rmxd crjy kiqj ulfs',
+    server_address: '',
+    username: '',
+    password: '',
     port: 465,
     encryption: 'SSL',
-    authentication_required: true
+    authentication_required: true,
+    is_active: true,
+    is_default: false
   });
   
   const [loading, setLoading] = useState(false);
@@ -35,7 +43,7 @@ function SMTPSettings() {
     setLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${API_URL}/smtp/full`, {
+      const response = await fetch(`${API_URL}/smtp/all`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -45,13 +53,30 @@ function SMTPSettings() {
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data) {
+          setSmtpList(result.data);
+          const defaultSMTP = result.data.find((item) => item.is_default) || result.data[0];
+          if (defaultSMTP) {
+            setFormData({
+              server_address: defaultSMTP.server_address || '',
+              username: defaultSMTP.username || '',
+              password: defaultSMTP.password || '',
+              port: defaultSMTP.port || 465,
+              encryption: defaultSMTP.encryption || 'SSL',
+              authentication_required: defaultSMTP.authentication_required !== false,
+              is_active: defaultSMTP.is_active !== false,
+              is_default: defaultSMTP.is_default === true
+            });
+          }
+        } else {
           setFormData({
-            server_address: result.data.server_address || '',
-            username: result.data.username || '',
-            password: result.data.password || '',
-            port: result.data.port || 465,
-            encryption: result.data.encryption || 'SSL',
-            authentication_required: result.data.authentication_required !== false
+            server_address: '',
+            username: '',
+            password: '',
+            port: 465,
+            encryption: 'SSL',
+            authentication_required: true,
+            is_active: true,
+            is_default: false
           });
         }
       }
@@ -71,14 +96,16 @@ function SMTPSettings() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     setSaving(true);
     setMessage(null);
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${API_URL}/smtp`, {
-        method: 'POST',
+      const url = editingId ? `${API_URL}/smtp/${editingId}` : `${API_URL}/smtp/new`;
+      const method = editingId ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -89,10 +116,13 @@ function SMTPSettings() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        setMessage(result.message || 'SMTP settings saved successfully');
+        setMessage(result.message || (editingId ? 'SMTP settings updated successfully' : 'SMTP settings added successfully'));
         setMessageType('success');
-        // Auto-hide success message after 5 seconds
         setTimeout(() => setMessage(null), 5000);
+        setShowForm(false);
+        setEditingId(null);
+        resetForm();
+        fetchSMTPSettings();
       } else {
         setMessage(result.error?.message || 'Failed to save SMTP settings');
         setMessageType('error');
@@ -141,6 +171,116 @@ function SMTPSettings() {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      server_address: '',
+      username: '',
+      password: '',
+      port: 465,
+      encryption: 'SSL',
+      authentication_required: true,
+      is_active: true,
+      is_default: false
+    });
+  };
+
+  const handleAddMore = () => {
+    setEditingId(null);
+    resetForm();
+    setShowForm(true);
+  };
+
+  const handleEdit = (smtp) => {
+    setFormData({
+      server_address: smtp.server_address || '',
+      username: smtp.username || '',
+      password: smtp.password || '',
+      port: smtp.port || 465,
+      encryption: smtp.encryption || 'SSL',
+      authentication_required: smtp.authentication_required !== false,
+      is_active: smtp.is_active !== false,
+      is_default: smtp.is_default === true
+    });
+    setEditingId(smtp.id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this SMTP configuration? This action cannot be undone.')) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_URL}/smtp/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setMessage('SMTP configuration deleted successfully');
+        setMessageType('success');
+        fetchSMTPSettings();
+      } else {
+        setMessage(result.error?.message || 'Failed to delete SMTP');
+        setMessageType('error');
+      }
+    } catch (error) {
+      setMessage('Network error: Unable to delete SMTP');
+      setMessageType('error');
+    }
+  };
+
+  const handleSetDefault = async (id) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_URL}/smtp/${id}/default`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setMessage('Default SMTP updated successfully');
+        setMessageType('success');
+        fetchSMTPSettings();
+      } else {
+        setMessage(result.error?.message || 'Failed to set default SMTP');
+        setMessageType('error');
+      }
+    } catch (error) {
+      setMessage('Network error: Unable to set default SMTP');
+      setMessageType('error');
+    }
+  };
+
+  const handleToggleStatus = async (id) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_URL}/smtp/${id}/toggle`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setMessage(result.message || 'SMTP status updated');
+        setMessageType('success');
+        fetchSMTPSettings();
+      } else {
+        setMessage(result.error?.message || 'Failed to update SMTP status');
+        setMessageType('error');
+      }
+    } catch (error) {
+      setMessage('Network error: Unable to update SMTP status');
+      setMessageType('error');
+    }
+  };
+
   if (loading) {
     return (
       <Layout title="Administration - SMTP Settings">
@@ -161,7 +301,8 @@ function SMTPSettings() {
             border: '1px solid rgba(0,0,0,0.05)'
           }}>
             <CardContent sx={{ p: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box sx={{
                   width: 60,
                   height: 60,
@@ -181,6 +322,22 @@ function SMTPSettings() {
                     Configure email server settings for notifications
                   </Typography>
                 </Box>
+                </Box>
+                <Button
+                  variant="contained"
+                  onClick={handleAddMore}
+                  startIcon={<AddIcon />}
+                  sx={{
+                    borderRadius: '12px',
+                    px: 3,
+                    py: 1.2,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)'
+                  }}
+                >
+                  Add More SMTP
+                </Button>
               </Box>
 
               <Divider sx={{ mb: 4 }} />
@@ -195,164 +352,74 @@ function SMTPSettings() {
                 </Alert>
               )}
 
-              <form onSubmit={handleSubmit}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="SMTP Server Address"
-                      name="server_address"
-                      value={formData.server_address}
-                      onChange={handleChange}
-                      required
-                      placeholder="smtp.gmail.com"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: '12px',
-                          backgroundColor: '#f8f9fa'
-                        }
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Username / Email"
-                      name="username"
-                      type="email"
-                      value={formData.username}
-                      onChange={handleChange}
-                      required
-                      placeholder="your-email@gmail.com"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: '12px',
-                          backgroundColor: '#f8f9fa'
-                        }
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Password / App Password"
-                      name="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      placeholder="Enter your password or app password"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: '12px',
-                          backgroundColor: '#f8f9fa'
-                        }
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Port"
-                      name="port"
-                      type="number"
-                      value={formData.port}
-                      onChange={handleChange}
-                      required
-                      placeholder="465"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: '12px',
-                          backgroundColor: '#f8f9fa'
-                        }
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Encryption Method"
-                      name="encryption"
-                      value={formData.encryption}
-                      onChange={handleChange}
-                      required
-                      select
-                      SelectProps={{ native: true }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: '12px',
-                          backgroundColor: '#f8f9fa'
-                        }
-                      }}
-                    >
-                      <option value="SSL">SSL</option>
-                      <option value="TLS">TLS</option>
-                      <option value="None">None</option>
-                    </TextField>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={formData.authentication_required}
-                          onChange={handleChange}
-                          name="authentication_required"
-                          color="primary"
-                        />
-                      }
-                      label="Authentication Required"
-                      sx={{
-                        '& .MuiFormControlLabel-label': {
-                          fontWeight: 500,
-                          color: '#1a1a2e'
-                        }
-                      }}
-                    />
-                  </Grid>
-                </Grid>
-
-                <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={handleTestConnection}
-                    disabled={testing || saving}
-                    startIcon={testing ? <CircularProgress size={20} /> : <RefreshIcon />}
-                    sx={{
-                      borderRadius: '12px',
-                      px: 3,
-                      py: 1.5,
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      borderColor: '#2196F3',
-                      color: '#2196F3'
-                    }}
-                  >
-                    {testing ? 'Testing...' : 'Test Connection'}
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={saving}
-                    startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
-                    sx={{
-                      borderRadius: '12px',
-                      px: 4,
-                      py: 1.5,
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)',
-                      boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)'
-                    }}
-                  >
-                    {saving ? 'Saving...' : 'Save Settings'}
-                  </Button>
-                </Box>
-              </form>
+              <TableContainer component={Paper} sx={{ borderRadius: '12px' }}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: '#f5f7fa' }}>
+                      <TableCell sx={{ fontWeight: 600 }}>Server</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Username</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Port</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Encryption</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Default</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {smtpList.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                          <Typography variant="body1" sx={{ color: '#666' }}>
+                            No SMTP configurations found. Use "Add More SMTP" to create one.
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : smtpList.map((smtp) => (
+                      <TableRow key={smtp.id} hover>
+                        <TableCell>{smtp.server_address}</TableCell>
+                        <TableCell>{smtp.username}</TableCell>
+                        <TableCell>{smtp.port}</TableCell>
+                        <TableCell>{smtp.encryption}</TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={smtp.is_active ? 'Active' : 'Inactive'}
+                            color={smtp.is_active ? 'success' : 'default'}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {smtp.is_default ? (
+                            <Chip size="small" icon={<StarIcon />} label="Default" color="primary" />
+                          ) : (
+                            <Button
+                              size="small"
+                              variant="text"
+                              onClick={() => handleSetDefault(smtp.id)}
+                            >
+                              Set Default
+                            </Button>
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            onClick={() => handleToggleStatus(smtp.id)}
+                            sx={{ color: smtp.is_active ? '#FF9800' : '#4CAF50' }}
+                            title={smtp.is_active ? 'Disconnect' : 'Connect'}
+                          >
+                            {smtp.is_active ? <LinkOffIcon /> : <LinkIcon />}
+                          </IconButton>
+                          <IconButton onClick={() => handleEdit(smtp)} sx={{ color: '#2196F3' }} title="Edit">
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton onClick={() => handleDelete(smtp.id)} sx={{ color: '#F44336' }} title="Delete">
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </Card>
         </Grid>
@@ -415,11 +482,74 @@ function SMTPSettings() {
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ color: '#666' }}>
-              SMTP settings are configured and ready to use for sending email notifications.
+              Default SMTP is used automatically for all outgoing emails.
             </Typography>
           </Paper>
         </Grid>
       </Grid>
+
+      <Dialog
+        open={showForm}
+        onClose={() => {
+          setShowForm(false);
+          setEditingId(null);
+          resetForm();
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '760px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#1a1a2e' }}>
+          {editingId ? 'Edit SMTP Configuration' : 'Add More SMTP'}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth label="SMTP Server Address" name="server_address" value={formData.server_address} onChange={handleChange} required />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth label="Username / Email" name="username" type="email" value={formData.username} onChange={handleChange} required />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth label="Password / App Password" name="password" type="password" value={formData.password} onChange={handleChange} required />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField fullWidth label="Port" name="port" type="number" value={formData.port} onChange={handleChange} required />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <TextField fullWidth select SelectProps={{ native: true }} label="Encryption" name="encryption" value={formData.encryption} onChange={handleChange} required>
+                <option value="SSL">SSL</option>
+                <option value="TLS">TLS</option>
+                <option value="None">None</option>
+              </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                <FormControlLabel control={<Switch checked={formData.authentication_required} onChange={handleChange} name="authentication_required" />} label="Authentication Required" />
+                <FormControlLabel control={<Switch checked={formData.is_active} onChange={handleChange} name="is_active" color="success" />} label="Active" />
+                <FormControlLabel control={<Switch checked={formData.is_default} onChange={handleChange} name="is_default" color="primary" />} label="Set As Default" />
+              </Box>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => {
+            setShowForm(false);
+            setEditingId(null);
+            resetForm();
+          }} variant="outlined" sx={{ borderRadius: '10px', textTransform: 'none' }}>Cancel</Button>
+          <Button onClick={handleTestConnection} variant="outlined" disabled={testing || saving} startIcon={testing ? <CircularProgress size={20} /> : <RefreshIcon />} sx={{ borderRadius: '10px', textTransform: 'none' }}>
+            {testing ? 'Testing...' : 'Test'}
+          </Button>
+          <Button onClick={handleSubmit} variant="contained" disabled={saving} startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} sx={{ borderRadius: '10px', textTransform: 'none' }}>
+            {saving ? 'Saving...' : (editingId ? 'Update SMTP' : 'Add SMTP')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Layout>
   );
 }
