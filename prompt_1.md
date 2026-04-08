@@ -117,3 +117,32 @@ Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
 ----------
 
 
+please Admin panel http://localhost:4000/dashboard sidebar create a 1 page of email Templeats please this email Templeate ke page ke andar sari email Templeats show kare and please please All CRUD opershion show kare Edit Delete please Add email Templeate bhe kar sake and please email Templeate ko Edir kare and please jo phir jo email aye to please wahi jo cheez Edit kare the apne who ho Edit and please gab Delete kar de email Templeate ko to please who email na jye please You create a to z Eamil Templeate System and please sidebar men Email Temoleate ke page men icon paper ka ho and please sari Email Templeates Squareshpe men show kare and please Email Templeates page was create a Professional and corpoorate and mordern Full Professional UI/UX light Blue Theme and please Add new Templeate was create a Professional and corporate and moreern and Big popup popup wight Theme and working as well
+
+________ Database ___________
+
+please Database http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow create a 1 Table of email Templeates and please Database men bhe Saab Data live show kare 
+
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

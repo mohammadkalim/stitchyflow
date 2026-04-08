@@ -41,7 +41,8 @@ import {
   HourglassEmpty as PendingSessionIcon,
   HistoryToggleOff as SessionLogsIcon,
   AccountTree as CASubIcon,
-  Label as SubcategoryIcon
+  Label as SubcategoryIcon,
+  Article as EmailTemplateIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -78,6 +79,7 @@ const businessSubItems = [
 ];
 
 const adminSubItems = [
+  { text: 'Email Templates', icon: <EmailTemplateIcon />, path: '/email-templates' },
   { text: 'SMTP Settings', icon: <SMTPIcon />, path: '/smtp-settings' },
   { text: 'Admin Settings', icon: <AdminSettingsIcon />, path: '/admin-settings' },
   { text: 'Site Settings', icon: <SiteSettingsIcon />, path: '/site-settings' },

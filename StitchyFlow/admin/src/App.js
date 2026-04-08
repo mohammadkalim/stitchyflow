@@ -46,6 +46,7 @@ import DeletedSessions from './pages/sessions/DeletedSessions';
 import PendingSessions from './pages/sessions/PendingSessions';
 import CategoriesPage from './pages/CategoriesPage';
 import SubcategoriesPage from './pages/SubcategoriesPage';
+import EmailTemplatesPage from './pages/EmailTemplatesPage';
 
 const theme = createTheme({
   palette: {
@@ -88,6 +89,7 @@ function App() {
           <Route path="/payments" element={<PrivateRoute><Payments /></PrivateRoute>} />
           <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
           <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+          <Route path="/email-templates" element={<PrivateRoute><EmailTemplatesPage /></PrivateRoute>} />
           <Route path="/smtp-settings" element={<PrivateRoute><SMTPSettings /></PrivateRoute>} />
           <Route path="/admin-settings" element={<PrivateRoute><AdminSettings /></PrivateRoute>} />
           <Route path="/site-settings" element={<PrivateRoute><SiteSettings /></PrivateRoute>} />

@@ -516,4 +516,7 @@ router.put('/settings', authenticateToken, async (req, res) => {
   }
 });
 
+// Email templates CRUD (same as /api/v1/email-templates) — admin panel uses this path first.
+router.use('/email-templates', require('./email_templates.routes')());
+
 module.exports = router;

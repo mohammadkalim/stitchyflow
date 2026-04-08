@@ -92,8 +92,13 @@ start_service() {
                 sleep 1
             fi
         else
+            # Same workspace already bound this port — must restart so new API routes (e.g. /email-templates) load.
             print_warning "${service_name} is already running on port ${port}"
-            return 0
+            print_info "Restarting to load the latest code from this workspace..."
+            if [[ -n "$port_pid" ]]; then
+                kill "$port_pid" > /dev/null 2>&1
+                sleep 1
+            fi
         fi
     else
         if [ ! -d "$directory" ]; then

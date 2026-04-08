@@ -35,6 +35,7 @@ app.use('/api/v1/totp',   require('./routes/totp.routes'));
 app.use('/api/v1/tailor-approval', require('./routes/tailor_approval.routes'));
 app.use('/api/v1/sessions',      require('./routes/sessions.routes'));
 app.use('/api/v1/catalog', require('./routes/catalog.public.routes'));
+app.use('/api/v1/email-templates', require('./routes/email_templates.routes')());
 app.use('/api/v1/ca-sub', require('./routes/ca_sub.routes'));
 
 // Health check

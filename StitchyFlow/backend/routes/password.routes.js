@@ -9,6 +9,7 @@ const router = express.Router();
 const db = require('../config/database');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+const { getRenderedEmail } = require('../utils/emailTemplateDb');
 
 // Get SMTP transporter
 async function getSMTPTransporter() {
@@ -43,50 +44,38 @@ async function getPasswordResetExpireMinutes() {
   return 30; // Default 30 minutes
 }
 
-// Send password changed notification email
+// Send password changed notification (template slug: password_changed)
 async function sendPasswordChangedEmail(email, firstName) {
   const transporter = await getSMTPTransporter();
-  
-  const mailOptions = {
+
+  const fallbackHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
+        <div style="background: white; border-radius: 12px; padding: 30px;">
+          <h1 style="color: #2563eb; text-align: center;">StitchyFlow</h1>
+          <p style="color: #334155; font-size: 16px;">Hi ${firstName || 'There'},</p>
+          <p style="color: #334155; font-size: 16px;">This is to confirm that your StitchyFlow account password has been successfully changed.</p>
+          <p style="color: #334155; font-size: 16px;">If you did not make this change, please contact support immediately.</p>
+          <p style="color: #94a3b8; font-size: 12px; text-align: center;">&copy; 2026 StitchyFlow.</p>
+        </div>
+      </div>`;
+
+  let subject = 'Your StitchyFlow Password Has Been Changed';
+  let html = fallbackHtml;
+
+  const custom = await getRenderedEmail('password_changed', {
+    firstName: firstName || 'There'
+  });
+  if (custom) {
+    subject = custom.subject;
+    html = custom.html;
+  }
+
+  await transporter.sendMail({
     from: '"StitchyFlow" <mkbytecoder14@gmail.com>',
     to: email,
-    subject: 'Your StitchyFlow Password Has Been Changed',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
-        <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">StitchyFlow</h1>
-          </div>
-          
-          <p style="color: #334155; font-size: 16px; line-height: 1.6;">
-            Hi ${firstName || 'There'},
-          </p>
-          
-          <p style="color: #334155; font-size: 16px; line-height: 1.6;">
-            This is to confirm that your StitchyFlow account password has been successfully changed.
-          </p>
-          
-          <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 20px; margin: 25px 0;">
-            <p style="color: #166534; font-size: 14px; margin: 0; text-align: center;">
-              <strong>Your Account Password is Changed</strong>
-            </p>
-          </div>
-          
-          <p style="color: #334155; font-size: 16px; line-height: 1.6;">
-            If you did not make this change, please contact our support team immediately.
-          </p>
-          
-          <div style="border-top: 1px solid #e2e8f0; margin-top: 30px; padding-top: 20px;">
-            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
-              &copy; 2026 StitchyFlow. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </div>
-    `
-  };
-  
-  await transporter.sendMail(mailOptions);
+    subject,
+    html
+  });
 }
 
 // Validate user and old password

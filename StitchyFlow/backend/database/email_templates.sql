@@ -1,0 +1,12 @@
+-- StitchyFlow — email templates (also auto-created by API on first use)
+CREATE TABLE IF NOT EXISTS email_templates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  slug VARCHAR(64) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  subject VARCHAR(500) NOT NULL,
+  body_html MEDIUMTEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

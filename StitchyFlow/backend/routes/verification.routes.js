@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const nodemailer = require('nodemailer');
+const { getRenderedEmail } = require('../utils/emailTemplateDb');
 
 // Generate 6-digit verification code
 function generateVerificationCode() {
@@ -47,50 +48,50 @@ async function getVerificationExpireMinutes() {
   return 10; // Default 10 minutes
 }
 
-// Send verification email
+// Send verification email (uses Admin → Email Templates → registration_verification when active)
 async function sendVerificationEmail(email, code, firstName) {
   const transporter = await getSMTPTransporter();
   const expireMinutes = await getVerificationExpireMinutes();
-  
-  const mailOptions = {
-    from: '"StitchyFlow" <mkbytecoder14@gmail.com>',
-    to: email,
-    subject: 'Your StitchyFlow Verification Code',
-    html: `
+
+  const fallbackHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
         <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
           <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="color: #2563eb; margin: 0; font-size: 28px;">StitchyFlow</h1>
             <p style="color: #64748b; margin: 10px 0 0 0;">Your Verification Code</p>
           </div>
-          
-          <p style="color: #334155; font-size: 16px; line-height: 1.6;">
-            Hi ${firstName || 'There'},
-          </p>
-          
-          <p style="color: #334155; font-size: 16px; line-height: 1.6;">
-            Thank you for creating an account with StitchyFlow. Please use the verification code below to complete your registration:
-          </p>
-          
+          <p style="color: #334155; font-size: 16px; line-height: 1.6;">Hi ${firstName || 'There'},</p>
+          <p style="color: #334155; font-size: 16px; line-height: 1.6;">Thank you for creating an account with StitchyFlow. Please use the verification code below:</p>
           <div style="background: #eff6ff; border: 2px dashed #2563eb; border-radius: 8px; padding: 20px; text-align: center; margin: 25px 0;">
             <span style="font-size: 36px; font-weight: bold; color: #2563eb; letter-spacing: 8px;">${code}</span>
           </div>
-          
-          <p style="color: #64748b; font-size: 14px; text-align: center;">
-            This code will expire in <strong>${expireMinutes} minutes</strong>.
-          </p>
-          
+          <p style="color: #64748b; font-size: 14px; text-align: center;">This code will expire in <strong>${expireMinutes} minutes</strong>.</p>
           <div style="border-top: 1px solid #e2e8f0; margin-top: 30px; padding-top: 20px;">
-            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
-              If you didn't request this code, please ignore this email.<br>
-              &copy; 2026 StitchyFlow. All rights reserved.
-            </p>
+            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">If you didn't request this code, please ignore this email.<br>&copy; 2026 StitchyFlow.</p>
           </div>
         </div>
-      </div>
-    `
+      </div>`;
+
+  let subject = 'Your StitchyFlow Verification Code';
+  let html = fallbackHtml;
+
+  const custom = await getRenderedEmail('registration_verification', {
+    code,
+    firstName: firstName || 'There',
+    expireMinutes
+  });
+  if (custom) {
+    subject = custom.subject;
+    html = custom.html;
+  }
+
+  const mailOptions = {
+    from: '"StitchyFlow" <mkbytecoder14@gmail.com>',
+    to: email,
+    subject,
+    html
   };
-  
+
   await transporter.sendMail(mailOptions);
 }
 

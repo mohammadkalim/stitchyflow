@@ -11,6 +11,7 @@ const router = express.Router();
 const db = require('../config/database');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
+const { getRenderedEmail } = require('../utils/emailTemplateDb');
 
 // Auth middleware
 function authMiddleware(req, res, next) {
@@ -38,51 +39,36 @@ async function getSMTPTransporter() {
   });
 }
 
-// Send approval/rejection email
+// Send approval/rejection email (templates: tailor_approval_approved / tailor_approval_rejected)
 async function sendApprovalEmail(email, firstName, approved, note) {
   try {
     const transporter = await getSMTPTransporter();
-    const subject = approved ? '🎉 Your StitchyFlow Shop is Approved!' : 'StitchyFlow Account Update';
-    const html = approved ? `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8fafc;">
-        <div style="background:#fff;border-radius:12px;padding:30px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <div style="text-align:center;margin-bottom:24px;">
-            <h1 style="color:#2563eb;margin:0;font-size:28px;">StitchyFlow</h1>
-          </div>
-          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:20px;text-align:center;margin-bottom:24px;">
-            <div style="font-size:48px;margin-bottom:8px;">✅</div>
-            <h2 style="color:#15803d;margin:0 0 8px 0;">Congratulations, ${firstName}!</h2>
-            <p style="color:#166534;margin:0;">Your Tailor Shop has been <strong>approved</strong> by our admin team.</p>
-          </div>
-          <p style="color:#334155;font-size:15px;line-height:1.6;">You can now log in to your dashboard and start accepting orders from customers.</p>
-          ${note ? `<p style="color:#64748b;font-size:14px;background:#f8fafc;padding:12px;border-radius:8px;border-left:3px solid #2563eb;"><strong>Admin Note:</strong> ${note}</p>` : ''}
-          <div style="text-align:center;margin-top:24px;">
-            <a href="${process.env.FRONTEND_URL}/login" style="background:#2563eb;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Login to Dashboard</a>
-          </div>
-          <div style="border-top:1px solid #e2e8f0;margin-top:30px;padding-top:20px;">
-            <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">&copy; 2026 StitchyFlow. All rights reserved.</p>
-          </div>
-        </div>
-      </div>
-    ` : `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f8fafc;">
-        <div style="background:#fff;border-radius:12px;padding:30px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <div style="text-align:center;margin-bottom:24px;">
-            <h1 style="color:#2563eb;margin:0;font-size:28px;">StitchyFlow</h1>
-          </div>
-          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:20px;text-align:center;margin-bottom:24px;">
-            <div style="font-size:48px;margin-bottom:8px;">❌</div>
-            <h2 style="color:#dc2626;margin:0 0 8px 0;">Application Not Approved</h2>
-            <p style="color:#7f1d1d;margin:0;">Hi ${firstName}, your Tailor Shop application was not approved at this time.</p>
-          </div>
-          ${note ? `<p style="color:#64748b;font-size:14px;background:#f8fafc;padding:12px;border-radius:8px;border-left:3px solid #ef4444;"><strong>Reason:</strong> ${note}</p>` : ''}
-          <p style="color:#334155;font-size:15px;line-height:1.6;">If you believe this is a mistake or would like to appeal, please contact our support team.</p>
-          <div style="border-top:1px solid #e2e8f0;margin-top:30px;padding-top:20px;">
-            <p style="color:#94a3b8;font-size:12px;text-align:center;margin:0;">&copy; 2026 StitchyFlow. All rights reserved.</p>
-          </div>
-        </div>
-      </div>
-    `;
+    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`;
+    const slug = approved ? 'tailor_approval_approved' : 'tailor_approval_rejected';
+    const noteBlock = note
+      ? (approved
+        ? `<p style="color:#64748b;font-size:14px;background:#f8fafc;padding:12px;border-radius:8px;border-left:3px solid #2563eb;"><strong>Admin Note:</strong> ${note}</p>`
+        : `<p style="color:#64748b;font-size:14px;background:#f8fafc;padding:12px;border-radius:8px;border-left:3px solid #ef4444;"><strong>Reason:</strong> ${note}</p>`)
+      : '';
+
+    const fallbackSubject = approved ? '🎉 Your StitchyFlow Shop is Approved!' : 'StitchyFlow Account Update';
+    const fallbackHtml = approved
+      ? `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;"><div style="background:#fff;border-radius:12px;padding:30px;"><h1 style="color:#2563eb;text-align:center;">StitchyFlow</h1><h2 style="color:#15803d;">Congratulations, ${firstName}!</h2><p>Your shop has been approved.</p>${noteBlock}<p style="text-align:center;"><a href="${loginUrl}" style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Login</a></p></div></div>`
+      : `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;"><div style="background:#fff;border-radius:12px;padding:30px;"><h1 style="color:#2563eb;text-align:center;">StitchyFlow</h1><p>Hi ${firstName}, your application was not approved.</p>${noteBlock}</div></div>`;
+
+    let subject = fallbackSubject;
+    let html = fallbackHtml;
+
+    const custom = await getRenderedEmail(slug, {
+      firstName: firstName || 'There',
+      note: noteBlock || '',
+      loginUrl
+    });
+    if (custom) {
+      subject = custom.subject;
+      html = custom.html;
+    }
+
     await transporter.sendMail({ from: '"StitchyFlow" <noreply@stitchyflow.com>', to: email, subject, html });
   } catch (e) {
     console.error('Approval email error:', e.message);
