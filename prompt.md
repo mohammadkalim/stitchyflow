@@ -262,3 +262,36 @@ Admin panel passoword ********** admin123 ***********
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
 
 
+
+
+--------
+
+
+please Admin panal this page SMTP Settings http://localhost:4000/smtp-settings please this page ke andar create a 1 opshon of Add more SMTP and please Add more SMTP popup was create a Professional and corporate and mordern UI/UX popup and please create ho jye to please All CRUD opershion work kare and please dono men se kese ko bhe Defolt rakh sak te and please Delte Edit bhe kar sake and please this All popups was create a Professional and coporate and mordern UI/UX 
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+_______ Database ________
+
+
+please gab Admin panal men SMTP new create kare to please Database ke this Table men bhe Save ho http://localhost:8080/phpmyadmin/index.php?route=/sql&pos=0&db=stitchyflow&table=smtp_settings and please jo SMTP ko Defolt Select kare to please os he SMTP se mails aye 
+
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

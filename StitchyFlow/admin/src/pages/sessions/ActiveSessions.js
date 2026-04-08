@@ -47,14 +47,34 @@ export default function ActiveSessions() {
     setLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        setRows([]);
+        setSnack({ open: true, msg: 'Please login again to view active sessions.', sev: 'warning' });
+        setTimeout(() => { window.location.href = '/login'; }, 900);
+        return;
+      }
+
       const qs = search ? `?search=${encodeURIComponent(search)}` : '';
       const res = await fetch(`${API}/sessions/active${qs}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const data = await res.json();
-      if (data.success) setRows(data.data || []);
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem('adminToken');
+        setRows([]);
+        setSnack({ open: true, msg: data?.error?.message || 'Session expired. Please login again.', sev: 'warning' });
+        setTimeout(() => { window.location.href = '/login'; }, 1200);
+        return;
+      }
+
+      if (!res.ok || !data.success) {
+        throw new Error(data?.error?.message || 'Unable to fetch active sessions');
+      }
+
+      setRows(data.data || []);
     } catch (e) {
-      setSnack({ open: true, msg: 'Failed to load sessions', sev: 'error' });
+      setSnack({ open: true, msg: e.message || 'Failed to load sessions', sev: 'error' });
     } finally { setLoading(false); }
   }, [search]);
 
