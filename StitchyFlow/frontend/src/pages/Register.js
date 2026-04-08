@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Button, TextField, InputAdornment, IconButton,
   Checkbox, FormControlLabel, Divider, Paper, Grid,
-  Dialog, DialogContent, CircularProgress
+  Dialog, DialogContent, CircularProgress, Alert
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
@@ -16,6 +16,7 @@ import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import Header from '../components/Header';
+import { apiFetch } from '../utils/api';
 
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
@@ -32,6 +33,56 @@ const fieldSx = {
 
 function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [searchBanner, setSearchBanner] = useState({
+    show: false,
+    categoryName: '',
+    subcategoryName: '',
+    q: ''
+  });
+
+  useEffect(() => {
+    const categoryId = searchParams.get('categoryId');
+    const subcategoryId = searchParams.get('subcategoryId');
+    const q = searchParams.get('q') || '';
+    if (!categoryId && !subcategoryId && !q.trim()) {
+      setSearchBanner({ show: false, categoryName: '', subcategoryName: '', q: '' });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        let categoryName = '';
+        let subcategoryName = '';
+        if (categoryId) {
+          const catRes = await apiFetch('/catalog/categories');
+          const cats = Array.isArray(catRes?.data) ? catRes.data : [];
+          const cat = cats.find((c) => String(c.id) === String(categoryId));
+          categoryName = cat?.name || '';
+        }
+        if (subcategoryId && categoryId) {
+          const subRes = await apiFetch(`/catalog/subcategories?category_id=${encodeURIComponent(categoryId)}`);
+          const subs = Array.isArray(subRes?.data) ? subRes.data : [];
+          const sub = subs.find((s) => String(s.id) === String(subcategoryId));
+          subcategoryName = sub?.name || '';
+        }
+        if (!cancelled) {
+          setSearchBanner({
+            show: !!(categoryName || subcategoryName || q.trim()),
+            categoryName,
+            subcategoryName,
+            q: q.trim()
+          });
+        }
+      } catch {
+        if (!cancelled) setSearchBanner({ show: false, categoryName: '', subcategoryName: '', q: '' });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams]);
+
   const [formData, setFormData] = useState({
     email: '', password: '', confirmPassword: '',
     firstName: '', lastName: '', phone: '', role: 'customer', customerType: 'standard',
@@ -107,6 +158,31 @@ function Register() {
         borderRadius: '16px', p: { xs: 3, sm: 4 },
         boxShadow: '0 4px 32px rgba(0,0,0,0.08)',
       }}>
+
+        {searchBanner.show && (
+          <Alert severity="info" sx={{ mb: 2.5, borderRadius: '12px', textAlign: 'left' }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+              Your search from home
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+              {searchBanner.categoryName && (
+                <>Category: <strong>{searchBanner.categoryName}</strong></>
+              )}
+              {searchBanner.subcategoryName && (
+                <>
+                  {searchBanner.categoryName ? ' · ' : ''}
+                  Subcategory: <strong>{searchBanner.subcategoryName}</strong>
+                </>
+              )}
+              {searchBanner.q && (
+                <>
+                  {(searchBanner.categoryName || searchBanner.subcategoryName) ? ' · ' : ''}
+                  Search: &ldquo;{searchBanner.q}&rdquo;
+                </>
+              )}
+            </Typography>
+          </Alert>
+        )}
 
         {/* Tab switcher */}
         <Box sx={{

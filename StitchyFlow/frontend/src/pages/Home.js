@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Button, Container, Grid, Card, CardContent,
-  Avatar, Rating, TextField, Select, MenuItem, InputAdornment, Paper
+  Avatar, Rating, TextField, MenuItem, InputAdornment, Paper,
+  CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import TuneIcon from '@mui/icons-material/Tune';
+import LabelOutlinedIcon from '@mui/icons-material/LabelOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import NearMeIcon from '@mui/icons-material/NearMe';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -17,6 +19,7 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { apiFetch } from '../utils/api';
 
 const btnStyles = `
   @keyframes shimmer {
@@ -102,7 +105,85 @@ const reviewsData = [
 function Home() {
   const navigate = useNavigate();
   const [category, setCategory] = useState('');
+  const [subcategory, setSubcategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [subcategories, setSubcategories] = useState([]);
+  const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState('');
+
+  const selectedCategoryName = useMemo(() => {
+    if (!category) return '';
+    const c = categories.find((x) => String(x.id) === String(category));
+    return c?.name || '';
+  }, [category, categories]);
+
+  const selectedSubcategoryName = useMemo(() => {
+    if (!subcategory) return '';
+    const s = subcategories.find((x) => String(x.id) === String(subcategory));
+    return s?.name || '';
+  }, [subcategory, subcategories]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setCategoriesLoading(true);
+        setCategoriesError('');
+        const res = await apiFetch('/catalog/categories');
+        if (!cancelled) setCategories(Array.isArray(res?.data) ? res.data : []);
+      } catch (err) {
+        if (!cancelled) {
+          setCategories([]);
+          const msg = err?.message || '';
+          const offline = /failed to fetch|networkerror|load failed/i.test(msg);
+          setCategoriesError(
+            offline
+              ? 'Cannot reach the API. Start the backend on port 5000, then restart the frontend (npm start) so the dev proxy applies.'
+              : `Categories could not load: ${msg || 'Check that the API is running.'}`
+          );
+        }
+      } finally {
+        if (!cancelled) setCategoriesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!category) {
+      setSubcategory('');
+      setSubcategories([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        setSubcategoriesLoading(true);
+        const res = await apiFetch(`/catalog/subcategories?category_id=${encodeURIComponent(category)}`);
+        if (!cancelled) setSubcategories(Array.isArray(res?.data) ? res.data : []);
+      } catch {
+        if (!cancelled) setSubcategories([]);
+      } finally {
+        if (!cancelled) setSubcategoriesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [category]);
+
+  const pushSearchParams = () => {
+    const p = new URLSearchParams();
+    if (category) p.set('categoryId', category);
+    if (subcategory) p.set('subcategoryId', subcategory);
+    if (searchQuery.trim()) p.set('q', searchQuery.trim());
+    const qs = p.toString();
+    navigate(qs ? `/register?${qs}` : '/register');
+  };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#fff' }}>
@@ -164,38 +245,96 @@ function Home() {
               Search from hundreds of verified tailors across Pakistan
             </Typography>
 
-            {/* Fields Row */}
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={12} md={6}>
+            {/* Fields Row — categories & subcategories from live DB */}
+            <Grid container spacing={2} sx={{ mb: 1 }}>
+              <Grid item xs={12} md={4}>
                 <Typography variant="caption" sx={{ fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', mb: 0.8 }}>
                   Category
                 </Typography>
-                <Select
+                <TextField
+                  select
                   fullWidth
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  displayEmpty
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <TuneIcon sx={{ color: '#8b5cf6', fontSize: 20 }} />
-                    </InputAdornment>
-                  }
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setSubcategory('');
+                  }}
+                  disabled={categoriesLoading}
+                  SelectProps={{ displayEmpty: true }}
+                  inputProps={{ 'aria-label': 'Category' }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <TuneIcon sx={{ color: '#8b5cf6', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                  }}
                   sx={{
                     borderRadius: '10px',
+                    bgcolor: '#fafafa',
                     fontSize: '0.95rem',
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
                     '& .MuiSelect-select': { py: 1.4 },
                   }}
                 >
-                  <MenuItem value="">All Categories</MenuItem>
-                  <MenuItem value="dresses">Custom Dresses</MenuItem>
-                  <MenuItem value="suits">Suits & Blazers</MenuItem>
-                  <MenuItem value="traditional">Traditional Wear</MenuItem>
-                  <MenuItem value="alterations">Alterations</MenuItem>
-                  <MenuItem value="bridal">Bridal Wear</MenuItem>
-                </Select>
+                  <MenuItem value="">
+                    <em>{categoriesLoading ? 'Loading categories…' : 'All Categories'}</em>
+                  </MenuItem>
+                  {categories.map((c) => (
+                    <MenuItem key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={4}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', mb: 0.8 }}>
+                  Subcategory
+                </Typography>
+                <TextField
+                  select
+                  fullWidth
+                  value={subcategory}
+                  onChange={(e) => setSubcategory(e.target.value)}
+                  disabled={!category || subcategoriesLoading}
+                  SelectProps={{ displayEmpty: true }}
+                  inputProps={{ 'aria-label': 'Subcategory' }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LabelOutlinedIcon sx={{ color: '#2563eb', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    borderRadius: '10px',
+                    bgcolor: '#fafafa',
+                    fontSize: '0.95rem',
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
+                    '& .MuiSelect-select': { py: 1.4 },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>
+                      {!category
+                        ? 'Select a category first'
+                        : subcategoriesLoading
+                          ? 'Loading…'
+                          : subcategories.length === 0
+                            ? 'No subcategories'
+                            : 'All subcategories'}
+                    </em>
+                  </MenuItem>
+                  {subcategories.map((s) => (
+                    <MenuItem key={s.id} value={String(s.id)}>
+                      {s.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
                 <Typography variant="caption" sx={{ fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', mb: 0.8 }}>
                   Search
                 </Typography>
@@ -222,13 +361,73 @@ function Home() {
               </Grid>
             </Grid>
 
+            <Paper
+              elevation={0}
+              sx={{
+                mb: 2,
+                p: 2,
+                borderRadius: '12px',
+                textAlign: 'left',
+                border: '1px solid #bfdbfe',
+                background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)',
+              }}
+            >
+              <Typography variant="caption" sx={{ fontWeight: 800, color: '#1e40af', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                Current selection (live database)
+              </Typography>
+              {categoriesLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1.5 }}>
+                  <CircularProgress size={22} thickness={4} sx={{ color: '#2563eb' }} />
+                  <Typography variant="body2" sx={{ color: '#475569' }}>
+                    Loading categories…
+                  </Typography>
+                </Box>
+              ) : categoriesError ? (
+                <Typography variant="body2" sx={{ color: '#b91c1c', mt: 1.5, fontWeight: 600 }}>
+                  {categoriesError}
+                </Typography>
+              ) : (
+                <Box sx={{ mt: 1.5 }}>
+                  <Typography variant="body2" sx={{ color: '#334155', mb: 0.75 }}>
+                    <Box component="span" sx={{ fontWeight: 700, color: '#64748b' }}>Category: </Box>
+                    {selectedCategoryName || (
+                      <Box component="span" sx={{ fontStyle: 'italic', color: '#94a3b8' }}>All categories</Box>
+                    )}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#334155', mb: 1 }}>
+                    <Box component="span" sx={{ fontWeight: 700, color: '#64748b' }}>Subcategory: </Box>
+                    {!category ? (
+                      <Box component="span" sx={{ fontStyle: 'italic', color: '#94a3b8' }}>Choose a category first</Box>
+                    ) : subcategoriesLoading ? (
+                      <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                        <CircularProgress size={16} thickness={4} />
+                        Loading…
+                      </Box>
+                    ) : selectedSubcategoryName ? (
+                      selectedSubcategoryName
+                    ) : (
+                      <Box component="span" sx={{ fontStyle: 'italic', color: '#94a3b8' }}>
+                        {subcategories.length === 0 ? 'No subcategories for this category' : 'All subcategories'}
+                      </Box>
+                    )}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                    {categories.length} categor{categories.length === 1 ? 'y' : 'ies'} in database
+                    {category && !subcategoriesLoading && subcategories.length > 0
+                      ? ` · ${subcategories.length} subcategor${subcategories.length === 1 ? 'y' : 'ies'} under this category`
+                      : ''}
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+
             {/* Buttons Row */}
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <Button fullWidth variant="contained"
                   startIcon={<NearMeIcon />}
                   className="btn-green"
-                  onClick={() => navigate('/register')}
+                  onClick={pushSearchParams}
                   sx={{
                     bgcolor: '#16a34a',
                     fontWeight: 700,
@@ -244,7 +443,7 @@ function Home() {
                 <Button fullWidth variant="contained"
                   startIcon={<SearchIcon />}
                   className="btn-blue"
-                  onClick={() => navigate('/register')}
+                  onClick={pushSearchParams}
                   sx={{
                     bgcolor: '#2563eb',
                     fontWeight: 700,

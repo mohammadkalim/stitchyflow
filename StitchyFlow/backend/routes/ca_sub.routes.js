@@ -2,35 +2,40 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
+const { ensureCASubTables } = require('../utils/caSubTables');
 
-async function ensureCASubTables() {
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS categories (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(120) NOT NULL UNIQUE,
-      description TEXT,
-      is_active BOOLEAN NOT NULL DEFAULT TRUE,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  `);
+/** Public list for homepage / marketplace (active categories only, no auth). */
+router.get('/categories/public', async (req, res) => {
+  try {
+    await ensureCASubTables();
+    const [rows] = await db.query(
+      'SELECT id, name, description FROM categories WHERE is_active = TRUE ORDER BY name ASC'
+    );
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
 
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS subcategories (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      category_id INT NOT NULL,
-      name VARCHAR(120) NOT NULL,
-      description TEXT,
-      is_active BOOLEAN NOT NULL DEFAULT TRUE,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      UNIQUE KEY uniq_subcategory_name_per_category (category_id, name),
-      CONSTRAINT fk_subcategories_category
-        FOREIGN KEY (category_id) REFERENCES categories(id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  `);
-}
+/** Public subcategories for a category (active only). Query: ?category_id= */
+router.get('/subcategories/public', async (req, res) => {
+  try {
+    await ensureCASubTables();
+    const categoryId = req.query.category_id;
+    if (!categoryId) {
+      return res.status(400).json({ success: false, error: { message: 'category_id query is required' } });
+    }
+    const [rows] = await db.query(
+      `SELECT id, name, description FROM subcategories
+       WHERE category_id = ? AND is_active = TRUE
+       ORDER BY name ASC`,
+      [categoryId]
+    );
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
 
 router.get('/categories', authenticateToken, async (req, res) => {
   try {

@@ -1,4 +1,16 @@
-const BASE = 'http://localhost:5000/api/v1';
+/**
+ * API base: use REACT_APP_API_URL in production (full URL, no trailing slash).
+ * In development, default is relative `/api/v1` so Create React App proxies to `package.json` "proxy" (port 5000).
+ */
+function getApiBase() {
+  const env = process.env.REACT_APP_API_URL;
+  if (env && env.trim()) {
+    return env.replace(/\/$/, '');
+  }
+  return '/api/v1';
+}
+
+const BASE = getApiBase();
 
 export function getToken() {
   return localStorage.getItem('token');
@@ -6,7 +18,10 @@ export function getToken() {
 
 export async function apiFetch(path, options = {}) {
   const token = getToken();
-  const res = await fetch(`${BASE}${path}`, {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  const url = BASE.startsWith('http') ? `${BASE}${p}` : `${BASE}${p}`;
+
+  const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -14,7 +29,18 @@ export async function apiFetch(path, options = {}) {
     },
     ...options,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error?.message || 'Request failed');
+
+  const text = await res.text();
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
+
+  if (!res.ok) {
+    const msg = data?.error?.message || data?.message || `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
   return data;
 }
