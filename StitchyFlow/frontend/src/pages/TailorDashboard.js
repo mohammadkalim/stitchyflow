@@ -9,6 +9,10 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import OverviewSection from './tailor/OverviewSection';
 import MyBusinessesSection from './tailor/MyBusinessesSection';
+import ServicesSection from './tailor/ServicesSection';
+import PromotionsSection from './tailor/PromotionsSection';
+import OrdersSection from './tailor/OrdersSection';
+import ReviewsSection from './tailor/ReviewsSection';
 import MessagesSection from './tailor/MessagesSection';
 import AnalyticsSection from './tailor/AnalyticsSection';
 import SupportSection from './tailor/SupportSection';
@@ -126,7 +130,6 @@ function TailorDashboard() {
 
   const navTo = (key) => {
     if (!isApproved && key !== 'overview' && key !== 'terms') return;
-    if (key === 'promotions') { navigate('/promotions'); return; }
     navToSection(key);
   };
 
@@ -313,11 +316,15 @@ function TailorDashboard() {
 
           {activeKey === 'overview'   && <OverviewSection user={user} isApproved={isApproved} onNavigate={navToSection} />}
           {activeKey === 'businesses' && <MyBusinessesSection isApproved={isApproved} />}
+          {activeKey === 'services'   && <ServicesSection isApproved={isApproved} />}
+          {activeKey === 'promotions' && <PromotionsSection isApproved={isApproved} />}
+          {activeKey === 'bookings'   && <OrdersSection isApproved={isApproved} />}
+          {activeKey === 'reviews'    && <ReviewsSection isApproved={isApproved} />}
           {activeKey === 'messages'   && <MessagesSection isApproved={isApproved} user={user} />}
           {activeKey === 'analytics'  && <AnalyticsSection isApproved={isApproved} />}
           {activeKey === 'support'    && <SupportSection isApproved={isApproved} />}
           {activeKey === 'terms'      && <TermsSection />}
-          {['locations','services','media','features','why','promotions','bookings','reviews'].includes(activeKey) && (
+          {['locations','media','features','why'].includes(activeKey) && (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 12 }}>
               <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem', mb: 0.5 }}>Coming Soon</Typography>
               <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem' }}>This section is under development.</Typography>

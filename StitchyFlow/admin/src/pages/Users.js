@@ -14,7 +14,7 @@ import {
   FilterList as FilterIcon, Close as CloseIcon,
   Phone as PhoneIcon, Cancel as CancelIcon,
   Lock as LockIcon, Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon
+  VisibilityOff as VisibilityOffIcon, Block as BlockIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import Layout from '../components/Layout';
@@ -67,6 +67,10 @@ function Users() {
   // Snackbar state
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [loading, setLoading] = useState(true);
+  // Suspend state
+  const [openSuspendDialog, setOpenSuspendDialog] = useState(false);
+  const [suspendUser, setSuspendUser] = useState(null);
+  const [suspending, setSuspending] = useState(false);
 
   // Fetch users from database on component mount
   useEffect(() => {
@@ -313,6 +317,28 @@ function Users() {
         severity: 'error' 
       });
     }
+  };
+
+  // ── SUSPEND USER ──────────────────────────────────────────────────────────
+  const handleSuspendUser = async () => {
+    if (!suspendUser) return;
+    setSuspending(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await axios.patch(
+        `http://localhost:5000/api/v1/admin/users/${suspendUser.id}/suspend`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.success) {
+        setOpenSuspendDialog(false);
+        setSuspendUser(null);
+        setSnackbar({ open: true, message: 'User suspended and all sessions terminated', severity: 'success' });
+        fetchUsers();
+      }
+    } catch (error) {
+      setSnackbar({ open: true, message: error.response?.data?.error?.message || 'Failed to suspend user', severity: 'error' });
+    } finally { setSuspending(false); }
   };
 
   const handleStatusChange = async (userId, newStatus) => {
@@ -668,6 +694,11 @@ function Users() {
                         <Tooltip title="Edit">
                           <IconButton size="small" onClick={() => openEdit(user)} sx={{ color: '#2563EB' }}>
                             <EditIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Suspend User">
+                          <IconButton size="small" onClick={() => { setSuspendUser(user); setOpenSuspendDialog(true); }} sx={{ color: '#d97706', '&:hover': { bgcolor: '#fef3c7' } }}>
+                            <BlockIcon sx={{ fontSize: 18 }} />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Delete">
@@ -1795,6 +1826,37 @@ function Users() {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* ── Suspend User Dialog ── */}
+      <Dialog open={openSuspendDialog} onClose={() => setOpenSuspendDialog(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}>
+        <DialogTitle sx={{ pb: 1, pt: 3, px: 3 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <Box sx={{ width: 64, height: 64, borderRadius: '16px', bgcolor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              <BlockIcon sx={{ fontSize: 32, color: '#d97706' }} />
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a' }}>Suspend User?</Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ px: 3, textAlign: 'center' }}>
+          <Typography sx={{ color: '#475569', lineHeight: 1.7 }}>
+            Are you sure you want to suspend <strong>{suspendUser?.name}</strong>?
+          </Typography>
+          <Box sx={{ mt: 2, p: 2, bgcolor: '#fef3c7', borderRadius: '10px', border: '1px solid #fde68a' }}>
+            <Typography variant="body2" sx={{ color: '#92400e', fontWeight: 500 }}>
+              ⚠️ This will immediately log out the user and terminate all their active sessions.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 2, justifyContent: 'center', gap: 1.5 }}>
+          <Button onClick={() => setOpenSuspendDialog(false)} variant="outlined" sx={{ borderRadius: '10px', textTransform: 'none', px: 3, fontWeight: 600, borderColor: '#e2e8f0', color: '#64748b' }}>
+            Cancel
+          </Button>
+          <Button onClick={handleSuspendUser} disabled={suspending} variant="contained"
+            sx={{ borderRadius: '10px', textTransform: 'none', px: 3, fontWeight: 700, bgcolor: '#d97706', '&:hover': { bgcolor: '#b45309' }, boxShadow: 'none' }}>
+            {suspending ? 'Suspending...' : 'Yes, Suspend'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Layout>
   );
 }

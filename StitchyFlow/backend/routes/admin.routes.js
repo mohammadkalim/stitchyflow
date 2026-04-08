@@ -219,6 +219,78 @@ router.delete('/users/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// ── SUSPEND USER ──────────────────────────────────────────────────────────────
+// PATCH /api/v1/admin/users/:id/suspend
+router.patch('/users/:id/suspend', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const [users] = await db.query('SELECT user_id, role, status FROM users WHERE user_id = ?', [userId]);
+    if (!users.length) return res.status(404).json({ success: false, error: { message: 'User not found' } });
+
+    // Prevent suspending last admin
+    if (users[0].role === 'admin') {
+      const [adminCount] = await db.query("SELECT COUNT(*) as cnt FROM users WHERE role='admin' AND status='active'");
+      if (adminCount[0].cnt <= 1) return res.status(403).json({ success: false, error: { message: 'Cannot suspend the last admin' } });
+    }
+
+    // Set user status to suspended
+    await db.query("UPDATE users SET status='suspended', updated_at=NOW() WHERE user_id=?", [userId]);
+
+    // Auto-delete (mark deleted) all active sessions for this user
+    await db.query(
+      "UPDATE user_sessions SET status='deleted', deleted_at=NOW(), updated_at=NOW() WHERE user_id=? AND status IN ('active','pending')",
+      [userId]
+    );
+
+    // Log to session_logs
+    await db.query(
+      "INSERT INTO session_logs (user_id, action, details, created_at) VALUES (?, 'TERMINATED', 'All sessions terminated — user suspended by admin', NOW())",
+      [userId]
+    );
+
+    res.json({ success: true, message: 'User suspended and all sessions terminated' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
+// ── ACTIVATE USER ─────────────────────────────────────────────────────────────
+// PATCH /api/v1/admin/users/:id/activate
+router.patch('/users/:id/activate', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const [users] = await db.query('SELECT user_id, status FROM users WHERE user_id = ?', [userId]);
+    if (!users.length) return res.status(404).json({ success: false, error: { message: 'User not found' } });
+
+    await db.query("UPDATE users SET status='active', updated_at=NOW() WHERE user_id=?", [userId]);
+
+    // Log activation
+    await db.query(
+      "INSERT INTO session_logs (user_id, action, details, created_at) VALUES (?, 'STATUS_CHANGED', 'User account activated by admin', NOW())",
+      [userId]
+    );
+
+    res.json({ success: true, message: 'User account activated successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
+// ── GET SUSPENDED USERS ───────────────────────────────────────────────────────
+// GET /api/v1/admin/users/suspended
+router.get('/users/suspended/list', authenticateToken, async (req, res) => {
+  try {
+    const [users] = await db.query(`
+      SELECT user_id, CONCAT(first_name,' ',last_name) AS full_name, email,
+             phone AS phone_number, role, status, created_at, updated_at
+      FROM users WHERE status='suspended' ORDER BY updated_at DESC
+    `);
+    res.json({ success: true, data: users });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
 // Get All Orders
 router.get('/orders', authenticateToken, async (req, res) => {
   try {

@@ -1,275 +1,250 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, Grid, Paper, Button, Chip, Divider,
+  Box, Typography, Button, Grid, Paper, Avatar, LinearProgress,
+  Chip, CircularProgress,
 } from '@mui/material';
-import { keyframes } from '@mui/material/styles';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import AddBusinessOutlinedIcon from '@mui/icons-material/AddBusinessOutlined';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import StarIcon from '@mui/icons-material/Star';
-import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
+import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import UpgradeIcon from '@mui/icons-material/Upgrade';
-import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
+import MiscellaneousServicesOutlinedIcon from '@mui/icons-material/MiscellaneousServicesOutlined';
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import TipsAndUpdatesOutlinedIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
+import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
+import { apiFetch } from '../../utils/api';
 
-const FOREST = '#1b4332';
-const FOREST_LIGHT = '#2d6a4f';
-const NAVY = '#0d1b2a';
+const G = '#1b4332';
+const GL = '#2d6a4f';
 
-const pulse = keyframes`0%,100%{opacity:1}50%{opacity:.55}`;
-
-/* ── Mini SVG Charts ── */
-function LineChart({ data, color = '#40916c', height = 100 }) {
-  const max = Math.max(...data, 1);
-  const w = 400; const h = height;
-  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - (v / max) * (h - 12) - 6}`).join(' ');
-  const gid = `lg${color.replace('#', '')}`;
+function Sparkline({ color = GL }) {
+  const pts = [20, 35, 28, 45, 38, 55, 48, 62, 50, 70];
+  const max = Math.max(...pts); const min = Math.min(...pts);
+  const norm = pts.map(p => 40 - ((p - min) / (max - min)) * 36);
+  const d = norm.map((y, i) => `${i === 0 ? 'M' : 'L'}${(i / (pts.length - 1)) * 100},${y}`).join(' ');
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', height }} preserveAspectRatio="none">
+    <svg width="100" height="44" viewBox="0 0 100 44" style={{ display: 'block' }}>
       <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+        <linearGradient id={`sg${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <polygon points={`0,${h} ${pts} ${w},${h}`} fill={`url(#${gid})`} />
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      <path d={`${d} L100,44 L0,44 Z`} fill={`url(#sg${color.replace('#','')})`} />
+      <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function BarChart({ data, color = '#2563eb', height = 100, labels }) {
-  const max = Math.max(...data, 1);
-  const w = 400; const h = height; const gap = 10;
-  const bw = (w - gap * (data.length - 1)) / data.length;
+function KpiCard({ label, value, icon, color, trend }) {
   return (
-    <svg viewBox={`0 0 ${w} ${h + 18}`} style={{ width: '100%', height: height + 18 }}>
-      {data.map((v, i) => {
-        const bh = Math.max((v / max) * h, 4);
-        return (
-          <g key={i}>
-            <rect x={i * (bw + gap)} y={h - bh} width={bw} height={bh} rx="4" fill={color} opacity="0.85" />
-            {labels && <text x={i * (bw + gap) + bw / 2} y={h + 14} textAnchor="middle" fontSize="10" fill="#94a3b8" fontFamily="inherit">{labels[i]}</text>}
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-/* ── Stat Card ── */
-function StatCard({ label, value, sub, icon, trend, trendUp, live, locked }) {
-  return (
-    <Paper elevation={0} sx={{ borderRadius: '12px', p: 2, border: '1px solid #e2e8f0', bgcolor: '#fff', opacity: locked ? 0.55 : 1, position: 'relative', height: '100%' }}>
-      {locked && <Box sx={{ position: 'absolute', top: 8, right: 8 }}><LockOutlinedIcon sx={{ fontSize: 13, color: '#cbd5e1' }} /></Box>}
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.25 }}>
-        <Box sx={{ width: 40, height: 40, borderRadius: '10px', bgcolor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</Box>
-        {live && <Chip label="Live" size="small" sx={{ height: 20, fontSize: '0.62rem', fontWeight: 800, bgcolor: '#ede9fe', color: '#6d28d9', animation: `${pulse} 2s ease-in-out infinite` }} />}
-        {trend !== undefined && !live && (
-          <Chip size="small" icon={<TrendingUpIcon sx={{ fontSize: 11 }} />} label={trend}
-            sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700, bgcolor: trendUp ? '#f0fdf4' : '#fef2f2', color: trendUp ? '#16a34a' : '#dc2626', '& .MuiChip-icon': { color: trendUp ? '#16a34a' : '#dc2626' } }} />
-        )}
-        {sub && !trend && !live && <Typography sx={{ fontSize: '0.65rem', color: '#94a3b8' }}>{sub}</Typography>}
+    <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', p: 2.5, bgcolor: '#fff', height: '100%' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+        <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {React.cloneElement(icon, { sx: { color, fontSize: 22 } })}
+        </Box>
+        <Chip label={trend} size="small" sx={{ bgcolor: '#f0fdf4', color: '#16a34a', fontWeight: 700, fontSize: '0.68rem', height: 22 }} />
       </Box>
-      <Typography sx={{ fontWeight: 800, fontSize: '1.45rem', color: '#0f172a', lineHeight: 1 }}>{value}</Typography>
-      <Typography sx={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600, mt: 0.4 }}>{label}</Typography>
-      {trend === undefined && !live && sub && (
-        <Typography sx={{ color: '#94a3b8', fontSize: '0.7rem', mt: 0.3 }}>{sub}</Typography>
-      )}
+      <Typography sx={{ fontWeight: 800, fontSize: '1.6rem', color: '#0f172a', lineHeight: 1.2, mt: 1 }}>{value}</Typography>
+      <Typography sx={{ color: '#64748b', fontSize: '0.78rem', mt: 0.4 }}>{label}</Typography>
+      <Box sx={{ mt: 1.5 }}><Sparkline color={color} /></Box>
+    </Paper>
+  );
+}
+
+function QuickAction({ icon, label, desc, color, onClick }) {
+  return (
+    <Paper elevation={0} onClick={onClick} sx={{
+      borderRadius: '16px', border: '1px solid #e2e8f0', p: 2.5, bgcolor: '#fff',
+      cursor: 'pointer', transition: 'all 0.18s',
+      '&:hover': { borderColor: color, boxShadow: `0 4px 20px ${color}22`, transform: 'translateY(-2px)' },
+    }}>
+      <Box sx={{ width: 48, height: 48, borderRadius: '14px', bgcolor: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1.5 }}>
+        {React.cloneElement(icon, { sx: { color, fontSize: 24 } })}
+      </Box>
+      <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>{label}</Typography>
+      <Typography sx={{ color: '#64748b', fontSize: '0.75rem', mt: 0.4 }}>{desc}</Typography>
     </Paper>
   );
 }
 
 export default function OverviewSection({ user, isApproved, onNavigate }) {
-  /* mock data — replace with real API data */
-  const revenueData = [180000, 420000, 310000, 480000, 390000, 520000];
-  const bookingData  = [5, 9, 4, 7, 3, 8, 6];
-  const months6      = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const months7      = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', ''];
+  const [shops, setShops]   = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch('/business/shops/enriched').catch(() => ({ data: [] })),
+      apiFetch('/orders').catch(() => ({ data: [] })),
+    ]).then(([s, o]) => {
+      setShops(Array.isArray(s?.data) ? s.data : []);
+      setOrders(Array.isArray(o?.data) ? o.data : []);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const totalRevenue = orders.filter(o => o.order_status === 'completed').reduce((s, o) => s + (parseFloat(o.total_amount) || 0), 0);
+
+  const kpis = [
+    { label: 'Total Revenue', value: `Rs ${totalRevenue.toLocaleString()}`, icon: <AttachMoneyIcon />, color: G, trend: '+12%' },
+    { label: 'Total Orders', value: orders.length, icon: <ShoppingBagOutlinedIcon />, color: '#2563eb', trend: '+8%' },
+    { label: 'My Businesses', value: shops.length, icon: <StorefrontOutlinedIcon />, color: '#7c3aed', trend: `+${shops.length}` },
+    { label: 'Completed', value: orders.filter(o => o.order_status === 'completed').length, icon: <StarBorderIcon />, color: '#d97706', trend: 'done' },
+  ];
+
+  const quickActions = [
+    { icon: <AddBusinessOutlinedIcon />, label: 'Add Business', desc: 'Register a new shop', color: G, key: 'businesses' },
+    { icon: <MiscellaneousServicesOutlinedIcon />, label: 'Add Service', desc: 'List a new service', color: '#2563eb', key: 'services' },
+    { icon: <LocalOfferOutlinedIcon />, label: 'Create Promo', desc: 'Launch a promotion', color: '#7c3aed', key: 'promotions' },
+    { icon: <CalendarTodayOutlinedIcon />, label: 'View Orders', desc: 'Manage your orders', color: '#d97706', key: 'bookings' },
+  ];
 
   return (
     <Box>
-      {/* ── Hero Banner ── */}
-      <Paper elevation={0} sx={{ borderRadius: '14px', p: { xs: 2.5, md: 3 }, mb: 3, overflow: 'hidden', background: `linear-gradient(125deg, ${NAVY} 0%, #16324a 55%, #1b4965 100%)`, position: 'relative', boxShadow: '0 8px 32px rgba(13,27,42,0.18)' }}>
-        <Box sx={{ position: 'absolute', top: -30, right: -10, width: 160, height: 160, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.04)' }} />
-        <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: { xs: '1.2rem', md: '1.45rem' }, mb: 0.6 }}>
-          Welcome back, {user?.firstName}!
-        </Typography>
-        <Typography sx={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.87rem', mb: 2.5, maxWidth: 580 }}>
-          Here&apos;s what&apos;s happening with your business today. You have{' '}
-          <Box component="span" sx={{ color: '#4ade80', fontWeight: 800 }}>0 pending orders</Box>{' '}
-          requiring your attention.
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-          <Button variant="contained" startIcon={<AddCircleOutlineIcon sx={{ fontSize: 17 }} />}
-            disabled={!isApproved} onClick={() => onNavigate('businesses')}
-            sx={{ bgcolor: FOREST_LIGHT, color: '#fff', textTransform: 'none', fontWeight: 700, borderRadius: '10px', px: 2.5, py: 0.9, fontSize: '0.85rem', boxShadow: '0 4px 14px rgba(27,67,50,0.4)', '&:hover': { bgcolor: FOREST }, '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' } }}>
-            Add New Business
-          </Button>
-          <Button variant="outlined" startIcon={<CalendarTodayOutlinedIcon sx={{ fontSize: 17 }} />}
-            disabled={!isApproved}
-            sx={{ borderColor: 'rgba(255,255,255,0.4)', color: '#fff', textTransform: 'none', fontWeight: 600, borderRadius: '10px', px: 2.5, py: 0.9, fontSize: '0.85rem', bgcolor: 'rgba(0,0,0,0.12)', '&:hover': { bgcolor: 'rgba(0,0,0,0.2)', borderColor: 'rgba(255,255,255,0.5)' }, '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.25)' } }}>
-            View Calendar
-          </Button>
+      {/* Hero Banner */}
+      <Paper elevation={0} sx={{ borderRadius: '20px', overflow: 'hidden', mb: 3, background: `linear-gradient(135deg, #0d1b2a 0%, #112233 60%, ${G} 100%)`, position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.03)' }} />
+        <Box sx={{ p: { xs: 3, md: 4 }, display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
+          <Avatar sx={{ width: 72, height: 72, bgcolor: GL, fontSize: '1.8rem', fontWeight: 800, border: '3px solid rgba(255,255,255,0.2)' }}>
+            {user?.firstName?.[0]?.toUpperCase() || 'T'}
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', mb: 0.3 }}>Welcome back,</Typography>
+            <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: { xs: '1.3rem', md: '1.6rem' }, lineHeight: 1.2 }}>
+              {user?.firstName} {user?.lastName}
+            </Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', mt: 0.5 }}>
+              {isApproved ? '✓ Verified Tailor' : '⏳ Pending Approval'} · {shops.length} Business{shops.length !== 1 ? 'es' : ''}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+            <Button onClick={() => onNavigate('businesses')} variant="contained" startIcon={<AddBusinessOutlinedIcon />}
+              sx={{ bgcolor: GL, color: '#fff', fontWeight: 700, borderRadius: '12px', textTransform: 'none', px: 2.5, '&:hover': { bgcolor: G } }}>
+              Add Business
+            </Button>
+            <Button onClick={() => onNavigate('bookings')} variant="outlined" startIcon={<CalendarTodayOutlinedIcon />}
+              sx={{ borderColor: 'rgba(255,255,255,0.4)', color: '#fff', fontWeight: 700, borderRadius: '12px', textTransform: 'none', px: 2.5, '&:hover': { borderColor: '#fff', bgcolor: 'rgba(255,255,255,0.08)' } }}>
+              View Orders
+            </Button>
+          </Box>
         </Box>
       </Paper>
 
-      {/* ── Free Plan Bar ── */}
-      <Paper elevation={0} sx={{ borderRadius: '12px', p: 2, mb: 3, border: '1px solid #e8ecf1', bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: '#fffbeb', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <StarIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.9rem' }}>Free Plan</Typography>
-            <Typography sx={{ color: '#64748b', fontSize: '0.74rem' }}>Upgrade to unlock more potential for your business</Typography>
-          </Box>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 3 }, flexWrap: 'wrap' }}>
-          {[
-            { icon: <StorefrontOutlinedIcon sx={{ fontSize: 14, color: '#64748b' }} />, text: '0 / 1 Businesses' },
-            { icon: <WorkOutlineIcon sx={{ fontSize: 14, color: '#64748b' }} />, text: '/ 3 Services' },
-            { icon: <VisibilityIcon sx={{ fontSize: 14, color: '#64748b' }} />, text: '/ 10 Media' },
-          ].map((x) => (
-            <Box key={x.text} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {x.icon}
-              <Typography sx={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 600 }}>{x.text}</Typography>
-            </Box>
+      {/* KPI Cards */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress sx={{ color: G }} /></Box>
+      ) : (
+        <Grid container spacing={2.5} sx={{ mb: 3 }}>
+          {kpis.map(k => (
+            <Grid item xs={12} sm={6} lg={3} key={k.label}><KpiCard {...k} /></Grid>
           ))}
-          <Button variant="contained" startIcon={<UpgradeIcon sx={{ fontSize: 16 }} />} size="small"
-            sx={{ bgcolor: FOREST, textTransform: 'none', fontWeight: 700, borderRadius: '9px', fontSize: '0.78rem', px: 2, boxShadow: 'none', '&:hover': { bgcolor: FOREST_LIGHT } }}>
-            Upgrade Plan
-          </Button>
-        </Box>
-      </Paper>
+        </Grid>
+      )}
 
-      {/* ── KPI Cards ── */}
+      {/* Quick Actions */}
+      <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem', mb: 1.5 }}>Quick Actions</Typography>
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        {[
-          { label: 'Total Revenue', value: 'Rs 0', sub: '+12%', trend: '+12%', trendUp: true, icon: <AttachMoneyIcon sx={{ fontSize: 20, color: '#40916c' }} /> },
-          { label: 'Total Orders', value: '0', sub: '0 compared', icon: <CalendarTodayOutlinedIcon sx={{ fontSize: 20, color: '#2563eb' }} /> },
-          { label: 'Profile Views', value: '0', live: true, icon: <PeopleOutlineIcon sx={{ fontSize: 20, color: '#7c3aed' }} /> },
-          { label: 'Rating Score', value: '0.0 / 5.0', sub: '0 reviews', icon: <StarIcon sx={{ fontSize: 20, color: '#f59e0b' }} /> },
-        ].map((s) => (
-          <Grid item xs={6} lg={3} key={s.label}>
-            <StatCard {...s} locked={!isApproved} />
+        {quickActions.map(a => (
+          <Grid item xs={6} sm={3} key={a.label}>
+            <QuickAction {...a} onClick={() => onNavigate(a.key)} />
           </Grid>
         ))}
       </Grid>
 
-      {/* ── Performance Analytics ── */}
-      <Box sx={{ mb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <ShowChartIcon sx={{ fontSize: 18, color: FOREST }} />
-          <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>Performance Analytics</Typography>
-        </Box>
-        <Grid container spacing={2.5} sx={{ mb: 3 }}>
-          {/* Revenue Trend */}
-          <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ borderRadius: '12px', p: 2.5, border: '1px solid #e8ecf1', bgcolor: '#fff', opacity: isApproved ? 1 : 0.55 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <AttachMoneyIcon sx={{ fontSize: 16, color: FOREST }} />
-                  <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.88rem' }}>Revenue Trend (PKR)</Typography>
+      <Grid container spacing={2.5}>
+        {/* Recent Orders */}
+        <Grid item xs={12} md={7}>
+          <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', p: 2.5, bgcolor: '#fff' }}>
+            <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem', mb: 2 }}>Recent Orders</Typography>
+            {orders.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 5 }}>
+                <InboxOutlinedIcon sx={{ fontSize: 48, color: '#cbd5e1', mb: 1 }} />
+                <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem' }}>No orders yet</Typography>
+              </Box>
+            ) : (
+              orders.slice(0, 5).map(o => (
+                <Box key={o.order_id} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.2, borderBottom: '1px solid #f1f5f9' }}>
+                  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ShoppingBagOutlinedIcon sx={{ fontSize: 18, color: GL }} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: '0.83rem', color: '#0f172a' }} noWrap>#{o.order_number}</Typography>
+                    <Typography sx={{ color: '#64748b', fontSize: '0.73rem' }}>{o.customer_name || 'Customer'}</Typography>
+                  </Box>
+                  <Chip label={o.order_status || 'pending'} size="small"
+                    sx={{ bgcolor: '#f0fdf4', color: GL, fontWeight: 700, fontSize: '0.68rem', height: 22 }} />
                 </Box>
-                <Chip label="Last 6 Months" size="small" sx={{ bgcolor: '#f0fdf4', color: FOREST, fontSize: '0.65rem', fontWeight: 700, height: 20 }} />
-              </Box>
-              <LineChart data={revenueData} color="#40916c" height={120} />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-                {months6.map((m) => <Typography key={m} sx={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600 }}>{m}</Typography>)}
-              </Box>
-            </Paper>
-          </Grid>
-          {/* Monthly Bookings */}
-          <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ borderRadius: '12px', p: 2.5, border: '1px solid #e8ecf1', bgcolor: '#fff', opacity: isApproved ? 1 : 0.55 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <CalendarTodayOutlinedIcon sx={{ fontSize: 16, color: '#2563eb' }} />
-                  <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.88rem' }}>Monthly Orders</Typography>
-                </Box>
-                <Typography sx={{ color: '#2563eb', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>Trend Analysis</Typography>
-              </Box>
-              <BarChart data={bookingData} color="#2563eb" height={120} labels={months7} />
-            </Paper>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* ── Recent Bookings + Overview Stats + Pro Tip ── */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid item xs={12} lg={8}>
-          {/* Recent Bookings */}
-          <Paper elevation={0} sx={{ borderRadius: '12px', p: 2.5, border: '1px solid #e8ecf1', bgcolor: '#fff', mb: 2.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>Recent Orders</Typography>
-              <Button size="small" endIcon={<ArrowForwardIcon sx={{ fontSize: 13 }} />} disabled={!isApproved}
-                sx={{ color: FOREST, textTransform: 'none', fontWeight: 700, fontSize: '0.78rem' }}>View All →</Button>
-            </Box>
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <WorkOutlineIcon sx={{ fontSize: 40, color: '#e2e8f0', mb: 1 }} />
-              <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem' }}>No recent orders found.</Typography>
-            </Box>
-          </Paper>
-
-          {/* Your Businesses */}
-          <Paper elevation={0} sx={{ borderRadius: '12px', p: 2.5, border: '1px solid #e8ecf1', bgcolor: '#fff' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>Your Businesses</Typography>
-              <Button size="small" endIcon={<ArrowForwardIcon sx={{ fontSize: 13 }} />} disabled={!isApproved} onClick={() => onNavigate('businesses')}
-                sx={{ color: FOREST, textTransform: 'none', fontWeight: 700, fontSize: '0.78rem' }}>Manage All →</Button>
-            </Box>
-            <Box sx={{ textAlign: 'center', py: 3 }}>
-              <StorefrontOutlinedIcon sx={{ fontSize: 40, color: '#e2e8f0', mb: 1 }} />
-              <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem', mb: 1.25 }}>You haven&apos;t added any businesses yet.</Typography>
-              {isApproved
-                ? <Button onClick={() => onNavigate('businesses')} sx={{ color: '#2563eb', fontWeight: 800, textTransform: 'none', fontSize: '0.85rem' }}>Register your first business</Button>
-                : <Typography sx={{ color: '#cbd5e1', fontSize: '0.76rem' }}>Unlocked after admin approval</Typography>}
-            </Box>
+              ))
+            )}
           </Paper>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
-          {/* Overview Stats */}
-          <Paper elevation={0} sx={{ borderRadius: '12px', p: 2.5, border: '1px solid #e8ecf1', bgcolor: '#fff', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 2 }}>
-              <ShowChartIcon sx={{ fontSize: 16, color: FOREST }} />
-              <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.88rem' }}>Overview Stats</Typography>
-            </Box>
+        {/* Right column */}
+        <Grid item xs={12} md={5}>
+          <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', p: 2.5, bgcolor: '#fff', mb: 2.5 }}>
+            <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem', mb: 2 }}>Your Businesses</Typography>
+            {shops.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 3 }}>
+                <StorefrontOutlinedIcon sx={{ fontSize: 40, color: '#cbd5e1', mb: 1 }} />
+                <Typography sx={{ color: '#94a3b8', fontSize: '0.82rem' }}>No businesses yet</Typography>
+                <Button size="small" onClick={() => onNavigate('businesses')}
+                  sx={{ mt: 1, color: GL, fontWeight: 700, textTransform: 'none', fontSize: '0.78rem' }}>+ Add Business</Button>
+              </Box>
+            ) : (
+              shops.slice(0, 3).map(s => (
+                <Box key={s.shop_id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1, borderBottom: '1px solid #f1f5f9' }}>
+                  <Box sx={{ width: 34, height: 34, borderRadius: '9px', bgcolor: `${G}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <StorefrontOutlinedIcon sx={{ fontSize: 17, color: G }} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', color: '#0f172a' }} noWrap>{s.shop_name}</Typography>
+                    <Typography sx={{ color: '#64748b', fontSize: '0.72rem' }}>{s.city || 'N/A'}</Typography>
+                  </Box>
+                  <Chip label={s.shop_status || 'active'} size="small"
+                    sx={{ bgcolor: '#f0fdf4', color: GL, fontWeight: 700, fontSize: '0.65rem', height: 20 }} />
+                </Box>
+              ))
+            )}
+          </Paper>
+
+          <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', p: 2.5, bgcolor: '#fff', mb: 2.5 }}>
+            <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem', mb: 2 }}>Business Stats</Typography>
             {[
-              { label: 'Active Listings', value: '0' },
-              { label: 'Pending Reviews', value: '0' },
-              { label: 'Completion Rate', value: '0%' },
-            ].map((s, i, arr) => (
-              <Box key={s.label}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.1 }}>
-                  <Typography sx={{ color: '#475569', fontSize: '0.82rem' }}>{s.label}</Typography>
-                  <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.85rem' }}>{s.value}</Typography>
+              { label: 'Profile Completion', value: shops.length > 0 ? 72 : 10, color: G },
+              { label: 'Order Fulfillment', value: orders.length > 0 ? Math.round((orders.filter(o => o.order_status === 'completed').length / orders.length) * 100) : 0, color: '#2563eb' },
+              { label: 'Active Businesses', value: shops.filter(s => s.shop_status === 'active').length > 0 ? 100 : 0, color: '#d97706' },
+            ].map(s => (
+              <Box key={s.label} sx={{ mb: 1.8 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Typography sx={{ fontSize: '0.78rem', color: '#475569', fontWeight: 500 }}>{s.label}</Typography>
+                  <Typography sx={{ fontSize: '0.78rem', color: '#0f172a', fontWeight: 700 }}>{s.value}%</Typography>
                 </Box>
-                {i < arr.length - 1 && <Divider />}
+                <LinearProgress variant="determinate" value={s.value}
+                  sx={{ height: 6, borderRadius: 3, bgcolor: '#f1f5f9', '& .MuiLinearProgress-bar': { bgcolor: s.color, borderRadius: 3 } }} />
               </Box>
             ))}
           </Paper>
 
-          {/* Pro Tip */}
-          <Paper elevation={0} sx={{ borderRadius: '12px', p: 2.25, border: '1px solid #c8e6c9', bgcolor: '#e8f5e9' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
-              <InfoOutlinedIcon sx={{ fontSize: 16, color: FOREST }} />
-              <Typography sx={{ fontWeight: 800, color: FOREST, fontSize: '0.82rem' }}>Pro Tip</Typography>
+          <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', p: 2.5, bgcolor: '#fff', mb: 2.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+              <NotificationsNoneIcon sx={{ fontSize: 20, color: GL }} />
+              <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>Notifications</Typography>
             </Box>
-            <Typography sx={{ color: '#1b4332', fontSize: '0.78rem', lineHeight: 1.7, mb: 1.5 }}>
-              Complete your business profile with high-quality images to increase booking rates by up to 40%. Rates up to more.
-            </Typography>
-            <Button size="small" endIcon={<ArrowForwardIcon sx={{ fontSize: 13 }} />} disabled={!isApproved}
-              sx={{ color: FOREST, textTransform: 'none', fontWeight: 800, fontSize: '0.75rem', p: 0, minWidth: 0 }}>
-              IMPROVE PROFILE +
-            </Button>
+            <Typography sx={{ color: '#94a3b8', fontSize: '0.82rem', textAlign: 'center', py: 2 }}>No new notifications</Typography>
+          </Paper>
+
+          <Paper elevation={0} sx={{ borderRadius: '16px', p: 2.5, background: `linear-gradient(135deg, ${G}, ${GL})` }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+              <TipsAndUpdatesOutlinedIcon sx={{ color: '#fff', fontSize: 22, mt: 0.2 }} />
+              <Box>
+                <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.88rem', mb: 0.5 }}>Pro Tip</Typography>
+                <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.78rem', lineHeight: 1.6 }}>
+                  Complete your business profile to attract more customers. Profiles with photos get 3x more inquiries.
+                </Typography>
+              </Box>
+            </Box>
           </Paper>
         </Grid>
       </Grid>

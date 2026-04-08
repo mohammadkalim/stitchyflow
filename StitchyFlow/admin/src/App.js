@@ -38,6 +38,12 @@ import AIErrorHandling from './pages/AIErrorHandling';
 import GoogleAuthSettings from './pages/GoogleAuthSettings';
 import Logs from './pages/logs/Logs';
 import AuditLogs from './pages/logs/AuditLogs';
+import SessionsManagement from './pages/sessions/SessionsManagement';
+import ActiveSessions from './pages/sessions/ActiveSessions';
+import InactiveSessions from './pages/sessions/InactiveSessions';
+import SessionLogs from './pages/sessions/SessionLogs';
+import DeletedSessions from './pages/sessions/DeletedSessions';
+import PendingSessions from './pages/sessions/PendingSessions';
 
 const theme = createTheme({
   palette: {
@@ -99,6 +105,12 @@ function App() {
           <Route path="/google-auth" element={<PrivateRoute><GoogleAuthSettings /></PrivateRoute>} />
           <Route path="/logs/system" element={<PrivateRoute><Logs /></PrivateRoute>} />
           <Route path="/logs/audit"  element={<PrivateRoute><AuditLogs /></PrivateRoute>} />
+          <Route path="/sessions"           element={<PrivateRoute><SessionsManagement /></PrivateRoute>} />
+          <Route path="/sessions/active"    element={<PrivateRoute><ActiveSessions /></PrivateRoute>} />
+          <Route path="/sessions/inactive"  element={<PrivateRoute><InactiveSessions /></PrivateRoute>} />
+          <Route path="/sessions/logs"      element={<PrivateRoute><SessionLogs /></PrivateRoute>} />
+          <Route path="/sessions/deleted"   element={<PrivateRoute><DeletedSessions /></PrivateRoute>} />
+          <Route path="/sessions/pending"   element={<PrivateRoute><PendingSessions /></PrivateRoute>} />
         </Routes>
       </Router>
     </ThemeProvider>

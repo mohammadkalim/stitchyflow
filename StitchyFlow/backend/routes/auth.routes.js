@@ -37,7 +37,7 @@ router.post('/login', async (req, res) => {
     
     // Direct query instead of stored procedure
     const [users] = await db.query(
-      "SELECT user_id, email, password_hash, first_name, last_name, role, status, approval_status FROM users WHERE email = ? AND status IN ('active', 'pending')",
+      "SELECT user_id, email, password_hash, first_name, last_name, role, status, approval_status FROM users WHERE email = ?",
       [email]
     );
     
@@ -51,9 +51,44 @@ router.post('/login', async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ success: false, error: { message: 'Invalid credentials' } });
     }
+
+    // Check if account is suspended
+    if (user.status === 'suspended') {
+      return res.status(403).json({
+        success: false,
+        error: { message: 'Your account has been suspended. Please contact support.' },
+        code: 'ACCOUNT_SUSPENDED'
+      });
+    }
+
+    // Check if account is inactive
+    if (user.status === 'inactive') {
+      return res.status(403).json({
+        success: false,
+        error: { message: 'Your account is inactive. Please contact support.' },
+        code: 'ACCOUNT_INACTIVE'
+      });
+    }
     
     // Update last login
     await db.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?', [user.user_id]);
+
+    // Create session record
+    const ua = req.headers['user-agent'] || '';
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || null;
+    const deviceType = /mobile/i.test(ua) ? 'mobile' : /tablet|ipad/i.test(ua) ? 'tablet' : 'desktop';
+    const browser = ua.match(/(Chrome|Firefox|Safari|Edge|Opera)\/[\d.]+/)?.[0]?.split('/')[0] || 'Unknown';
+    const os = ua.match(/(Windows NT|Mac OS X|Linux|Android|iOS)/)?.[0] || 'Unknown';
+    const sessionToken = require('crypto').randomBytes(32).toString('hex');
+    await db.query(
+      `INSERT INTO user_sessions (user_id, session_token, ip_address, user_agent, device_type, browser, os, status, last_activity, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'active', NOW(), DATE_ADD(NOW(), INTERVAL 8 HOUR))`,
+      [user.user_id, sessionToken, ip, ua.substring(0, 500), deviceType, browser, os]
+    );
+    await db.query(
+      `INSERT INTO session_logs (user_id, action, ip_address, user_agent, details) VALUES (?, 'LOGIN', ?, ?, ?)`,
+      [user.user_id, ip, ua.substring(0, 500), `${user.first_name} ${user.last_name} logged in`]
+    );
 
     // Audit log
     await auditLog({
@@ -98,6 +133,34 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, error: { message: error.message, code: error.code } });
+  }
+});
+
+// Logout — marks session as inactive
+router.post('/logout', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token) {
+      let decoded;
+      try { decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET); } catch (_) {}
+      if (decoded?.userId) {
+        const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || null;
+        // Mark most recent active session as inactive
+        await db.query(
+          `UPDATE user_sessions SET status='inactive', updated_at=NOW()
+           WHERE user_id=? AND status='active' ORDER BY created_at DESC LIMIT 1`,
+          [decoded.userId]
+        );
+        await db.query(
+          `INSERT INTO session_logs (user_id, action, ip_address, details) VALUES (?, 'LOGOUT', ?, 'User logged out')`,
+          [decoded.userId, ip]
+        );
+      }
+    }
+    res.json({ success: true, message: 'Logged out successfully' });
+  } catch (err) {
+    res.json({ success: true, message: 'Logged out' });
   }
 });
 

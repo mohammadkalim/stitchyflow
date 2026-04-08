@@ -244,7 +244,7 @@ function Login() {
             border: '1px solid #e8eaed'
           }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: '#202124', mb: 1.5, fontSize: '0.875rem' }}>
-              Demo Credentials
+              Admin Credentials
             </Typography>
             <Typography variant="body2" sx={{ color: '#5f6368', fontSize: '0.8125rem', mb: 0.5 }}>
               <strong>Master Admin:</strong>

@@ -50,6 +50,16 @@ print_warning() {
     echo -e "${YELLOW}⚠${NC} $1"
 }
 
+# Function to get PID listening on a port
+get_port_pid() {
+    lsof -ti :$1 -sTCP:LISTEN 2>/dev/null | head -n 1
+}
+
+# Function to get process working directory from PID
+get_pid_cwd() {
+    lsof -a -p "$1" -d cwd 2>/dev/null | awk 'NR==2 {print $NF}'
+}
+
 # Function to check if port is in use
 check_port() {
     lsof -i :$1 > /dev/null 2>&1
@@ -62,38 +72,59 @@ start_service() {
     local port=$2
     local directory=$3
     local command=$4
+    local expected_dir
+    expected_dir="$(cd "$directory" 2>/dev/null && pwd)"
     
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${WHITE}${BOLD}Starting ${service_name}...${NC}"
     
     if check_port $port; then
-        print_warning "${service_name} is already running on port ${port}"
-        return 0
+        local port_pid
+        local port_cwd
+        port_pid="$(get_port_pid "$port")"
+        port_cwd="$(get_pid_cwd "$port_pid")"
+
+        # If the process is from a deleted/wrong path, stop and restart it from current workspace.
+        if [[ -z "$port_cwd" || "$port_cwd" == *"/.Trash/"* || "$port_cwd" != "$expected_dir" ]]; then
+            print_warning "${service_name} is running from unexpected path. Restarting..."
+            if [[ -n "$port_pid" ]]; then
+                kill "$port_pid" > /dev/null 2>&1
+                sleep 1
+            fi
+        else
+            print_warning "${service_name} is already running on port ${port}"
+            return 0
+        fi
     else
         if [ ! -d "$directory" ]; then
             print_error "Directory not found: ${directory}"
             return 1
         fi
-        
-        # Start the service in background from the directory
-        (cd "$directory" && eval "$command" > /dev/null 2>&1 &)
-        
-        # Wait for service to start (React apps need more time)
-        local max_wait=60
-        local waited=0
-        print_info "Waiting for ${service_name} to start..."
-        while ! check_port $port && [ $waited -lt $max_wait ]; do
-            sleep 2
-            waited=$((waited + 2))
-        done
-        
-        if check_port $port; then
-            print_status "${service_name} started successfully on port ${port}"
-            return 0
-        else
-            print_error "Failed to start ${service_name}"
-            return 1
-        fi
+    fi
+
+    if [ ! -d "$directory" ]; then
+        print_error "Directory not found: ${directory}"
+        return 1
+    fi
+
+    # Start the service in background from the directory
+    (cd "$directory" && eval "$command" > /dev/null 2>&1 &)
+
+    # Wait for service to start (React apps need more time)
+    local max_wait=60
+    local waited=0
+    print_info "Waiting for ${service_name} to start..."
+    while ! check_port $port && [ $waited -lt $max_wait ]; do
+        sleep 2
+        waited=$((waited + 2))
+    done
+
+    if check_port $port; then
+        print_status "${service_name} started successfully on port ${port}"
+        return 0
+    else
+        print_error "Failed to start ${service_name}"
+        return 1
     fi
 }
 

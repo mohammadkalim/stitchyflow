@@ -32,10 +32,31 @@ function Login() {
       const { accessToken, user } = response.data.data;
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
+
+      // Check if account was previously suspended and is now active (re-activated)
+      const wasActivated = localStorage.getItem('accountWasActivated');
+      if (wasActivated === user.email) {
+        localStorage.removeItem('accountWasActivated');
+        showPopup('🎉 Your account has been activated! Welcome back.', 'success');
+        setTimeout(() => {
+          if (user.role === 'tailor') navigate('/tailor-dashboard');
+          else navigate('/customer-dashboard');
+        }, 2500);
+        return;
+      }
+
       if (user.role === 'tailor') navigate('/tailor-dashboard');
       else navigate('/customer-dashboard');
     } catch (error) {
-      showPopup(error.response?.data?.error?.message || 'Login failed. Please try again.');
+      const code = error.response?.data?.code;
+      const msg  = error.response?.data?.error?.message || 'Login failed. Please try again.';
+      if (code === 'ACCOUNT_SUSPENDED') {
+        // Store email so we can show activated popup when they log in after reactivation
+        localStorage.setItem('accountWasActivated', formData.email);
+        showPopup('🚫 Your account has been suspended. Please contact support for assistance.', 'suspended');
+      } else {
+        showPopup(msg);
+      }
     }
   };
 
@@ -233,63 +254,82 @@ function Login() {
         </Button>
       </Typography>
 
-      {/* Custom Alert Dialog */}
+      {/* Custom Alert Dialog — handles error / success / suspended */}
       <Dialog open={popup.open} onClose={closePopup}
         PaperProps={{
           sx: {
-            borderRadius: '20px',
-            p: 0,
-            minWidth: 340,
-            maxWidth: 400,
-            boxShadow: '0 24px 64px rgba(0,0,0,0.14)',
-            overflow: 'hidden',
+            borderRadius: '24px', p: 0, minWidth: 360, maxWidth: 420,
+            boxShadow: '0 32px 80px rgba(0,0,0,0.18)', overflow: 'hidden',
           }
         }}>
         <DialogContent sx={{ p: 0 }}>
           {/* Top accent bar */}
           <Box sx={{
             height: 5,
-            bgcolor: popup.type === 'success' ? '#16a34a' : '#ef4444',
-            borderRadius: '20px 20px 0 0',
+            bgcolor: popup.type === 'success' ? '#16a34a' : popup.type === 'suspended' ? '#dc2626' : '#ef4444',
+            borderRadius: '24px 24px 0 0',
           }} />
 
-          <Box sx={{ px: 3.5, pt: 3, pb: 3.5 }}>
+          <Box sx={{ px: 4, pt: 3.5, pb: 4 }}>
             {/* Icon + Title */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
               <Box sx={{
-                width: 42, height: 42, borderRadius: '12px',
-                bgcolor: popup.type === 'success' ? '#dcfce7' : '#fee2e2',
+                width: 52, height: 52, borderRadius: '14px', flexShrink: 0,
+                bgcolor: popup.type === 'success' ? '#dcfce7' : popup.type === 'suspended' ? '#fee2e2' : '#fef2f2',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
+                boxShadow: popup.type === 'success' ? '0 4px 12px rgba(22,163,74,0.2)' : '0 4px 12px rgba(220,38,38,0.2)',
               }}>
                 {popup.type === 'success'
-                  ? <CheckCircleOutlineIcon sx={{ color: '#16a34a', fontSize: 24 }} />
-                  : <ErrorOutlineIcon sx={{ color: '#ef4444', fontSize: 24 }} />}
+                  ? <CheckCircleOutlineIcon sx={{ color: '#16a34a', fontSize: 28 }} />
+                  : <ErrorOutlineIcon sx={{ color: '#dc2626', fontSize: 28 }} />}
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1rem' }}>
-                {popup.type === 'success' ? 'Success' : 'Authentication Failed'}
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.05rem', lineHeight: 1.3 }}>
+                  {popup.type === 'success' ? '✅ Account Activated!' : popup.type === 'suspended' ? '🚫 Account Suspended' : 'Login Failed'}
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                  {popup.type === 'success' ? 'Welcome back to StitchyFlow' : popup.type === 'suspended' ? 'Access Restricted' : 'Authentication Error'}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Divider */}
+            <Box sx={{ height: 1, bgcolor: '#f1f5f9', mb: 2 }} />
+
+            {/* Message */}
+            <Box sx={{
+              p: 2, borderRadius: '12px', mb: 3,
+              bgcolor: popup.type === 'success' ? '#f0fdf4' : popup.type === 'suspended' ? '#fef2f2' : '#fef2f2',
+              border: `1px solid ${popup.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
+            }}>
+              <Typography variant="body2" sx={{ color: popup.type === 'success' ? '#15803d' : '#b91c1c', lineHeight: 1.7, fontWeight: 500 }}>
+                {popup.message}
               </Typography>
             </Box>
 
-            {/* Message */}
-            <Typography variant="body2" sx={{ color: '#6b7280', lineHeight: 1.6, mb: 3, pl: '58px' }}>
-              {popup.message}
-            </Typography>
+            {popup.type === 'suspended' && (
+              <Box sx={{ p: 2, borderRadius: '12px', bgcolor: '#fffbeb', border: '1px solid #fde68a', mb: 3 }}>
+                <Typography variant="caption" sx={{ color: '#92400e', fontWeight: 600, display: 'block', mb: 0.5 }}>
+                  What to do next?
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#78350f', lineHeight: 1.6 }}>
+                  Contact your administrator to review and restore your account access.
+                </Typography>
+              </Box>
+            )}
 
-            {/* OK Button */}
+            {/* Button */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button onClick={closePopup} variant="contained" sx={{
-                bgcolor: popup.type === 'success' ? '#16a34a' : '#2563eb',
-                color: '#fff', fontWeight: 700,
-                borderRadius: '10px', px: 3.5, py: 1,
-                textTransform: 'none', fontSize: '0.9rem',
-                boxShadow: 'none',
+                bgcolor: popup.type === 'success' ? '#16a34a' : popup.type === 'suspended' ? '#dc2626' : '#2563eb',
+                color: '#fff', fontWeight: 700, borderRadius: '12px', px: 4, py: 1.2,
+                textTransform: 'none', fontSize: '0.9rem', boxShadow: 'none',
                 '&:hover': {
-                  bgcolor: popup.type === 'success' ? '#15803d' : '#1d4ed8',
+                  bgcolor: popup.type === 'success' ? '#15803d' : popup.type === 'suspended' ? '#b91c1c' : '#1d4ed8',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 },
               }}>
-                OK
+                {popup.type === 'success' ? 'Continue' : 'Understood'}
               </Button>
             </Box>
           </Box>

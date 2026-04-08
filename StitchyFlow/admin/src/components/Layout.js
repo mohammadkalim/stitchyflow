@@ -33,7 +33,13 @@ import {
   Psychology as AIErrorIcon,
   Google as GoogleAuthIcon,
   ManageSearch as LogsManagementIcon,
-  GppGood as AuditLogsIcon
+  GppGood as AuditLogsIcon,
+  DevicesOther as SessionsIcon,
+  CheckCircleOutline as ActiveSessionIcon,
+  PauseCircleOutline as InactiveSessionIcon,
+  DeleteOutline as DeletedSessionIcon,
+  HourglassEmpty as PendingSessionIcon,
+  HistoryToggleOff as SessionLogsIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -83,12 +89,21 @@ const logsSubItems = [
   { text: 'Audit Logs', icon: <AuditLogsIcon />,  path: '/logs/audit' },
 ];
 
+const sessionsSubItems = [
+  { text: 'Active Sessions',   icon: <ActiveSessionIcon />,   path: '/sessions/active' },
+  { text: 'Inactive Sessions', icon: <InactiveSessionIcon />, path: '/sessions/inactive' },
+  { text: 'Sessions Logs',     icon: <SessionLogsIcon />,     path: '/sessions/logs' },
+  { text: 'Deleted Sessions',  icon: <DeletedSessionIcon />,  path: '/sessions/deleted' },
+  { text: 'Pending Sessions',  icon: <PendingSessionIcon />,  path: '/sessions/pending' },
+];
+
 function Layout({ children, title }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [adminOpen, setAdminOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
   const [businessOpen, setBusinessOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -437,6 +452,67 @@ function Layout({ children, title }) {
                             fontWeight: location.pathname === item.path ? 600 : 500
                           } 
                         }} 
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+
+            {/* ── Sessions Management ── */}
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => setSessionsOpen(!sessionsOpen)}
+                sx={{
+                  minHeight: 44, borderRadius: '8px', px: 2, py: 1,
+                  bgcolor: (sessionsSubItems.some(i => location.pathname === i.path) || location.pathname === '/sessions') ? '#E3F2FD' : 'transparent',
+                  color: (sessionsSubItems.some(i => location.pathname === i.path) || location.pathname === '/sessions') ? '#1976d2' : '#666',
+                  '&:hover': { bgcolor: '#f5f5f5' }
+                }}
+              >
+                <ListItemIcon sx={{
+                  minWidth: 36,
+                  color: (sessionsSubItems.some(i => location.pathname === i.path) || location.pathname === '/sessions') ? '#1976d2' : '#999',
+                  '& svg': { fontSize: 20 }
+                }}>
+                  <SessionsIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Sessions"
+                  sx={{ '& .MuiTypography-root': { fontSize: '0.875rem', fontWeight: (sessionsSubItems.some(i => location.pathname === i.path) || location.pathname === '/sessions') ? 600 : 500 } }}
+                />
+                <Chip
+                  label="5"
+                  size="small"
+                  sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600, bgcolor: '#e0f2fe', color: '#0284c7', mr: 1 }}
+                />
+                {sessionsOpen ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+              </ListItemButton>
+            </ListItem>
+
+            <Collapse in={sessionsOpen} timeout="auto" unmountOnExit>
+              <List disablePadding sx={{ pl: 2 }}>
+                {sessionsSubItems.map((item) => (
+                  <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => navigate(item.path)}
+                      sx={{
+                        minHeight: 40, borderRadius: '8px', px: 2, py: 0.75,
+                        bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                        color: location.pathname === item.path ? '#1976d2' : '#666',
+                        '&:hover': { bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5' }
+                      }}
+                    >
+                      <ListItemIcon sx={{
+                        minWidth: 32,
+                        color: location.pathname === item.path ? '#1976d2' : '#999',
+                        '& svg': { fontSize: 18 }
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        sx={{ '& .MuiTypography-root': { fontSize: '0.8125rem', fontWeight: location.pathname === item.path ? 600 : 500 } }}
                       />
                     </ListItemButton>
                   </ListItem>
