@@ -525,4 +525,77 @@ router.post('/test', authenticateToken, async (req, res) => {
   }
 });
 
+// Send Test Email using provided SMTP configuration
+router.post('/test-email', authenticateToken, async (req, res) => {
+  try {
+    const {
+      server_address,
+      username,
+      password,
+      port,
+      encryption,
+      test_email
+    } = req.body;
+
+    if (!server_address || !username || !password || !test_email) {
+      return res.json({
+        success: false,
+        error: { message: 'Server, username, password and test email are required' }
+      });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: server_address,
+      port: parseInt(port) || 465,
+      secure: encryption === 'SSL' || (parseInt(port) === 465),
+      auth: {
+        user: username,
+        pass: password
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    await transporter.verify();
+
+    await transporter.sendMail({
+      from: `"StitchyFlow SMTP Test" <${username}>`,
+      to: test_email,
+      subject: 'SMTP Test Email - StitchyFlow',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; background: #f5f7fb;">
+          <div style="background: #ffffff; border-radius: 12px; padding: 26px; border: 1px solid #e6ebf5;">
+            <h2 style="margin: 0 0 14px; color: #1f2a44;">SMTP Test Successful</h2>
+            <p style="margin: 0 0 10px; color: #42526b; line-height: 1.6;">
+              This is a test email from StitchyFlow Admin Panel.
+            </p>
+            <p style="margin: 0 0 10px; color: #42526b; line-height: 1.6;">
+              SMTP server: <strong>${server_address}</strong><br/>
+              Port: <strong>${port || 465}</strong><br/>
+              Encryption: <strong>${encryption || 'SSL'}</strong>
+            </p>
+            <p style="margin: 18px 0 0; font-size: 12px; color: #7b8799;">
+              If you received this, your SMTP configuration is working.
+            </p>
+          </div>
+        </div>
+      `
+    });
+
+    res.json({
+      success: true,
+      message: `Test email sent successfully to ${test_email}`
+    });
+  } catch (error) {
+    console.error('SMTP Test Email Error:', error);
+    res.json({
+      success: false,
+      error: {
+        message: 'SMTP test email failed: ' + (error.message || 'Unknown error')
+      }
+    });
+  }
+});
+
 module.exports = router;

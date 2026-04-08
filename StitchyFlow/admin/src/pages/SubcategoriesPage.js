@@ -1,0 +1,559 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog, DialogActions,
+  DialogContent, DialogTitle, Divider, FormControlLabel, Grid, IconButton, InputAdornment,
+  MenuItem, Paper, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination,
+  TableRow, TextField, Tooltip, Typography
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Label as LabelIcon,
+  PostAdd as PostAddIcon,
+  Search as SearchIcon
+} from '@mui/icons-material';
+import Layout from '../components/Layout';
+import { api } from '../utils/api';
+import {
+  dialogCancelButtonSx,
+  dialogFieldSx,
+  dialogPaperSx,
+  dialogSaveButtonSx,
+  inputSx,
+  pageCardSx,
+  primaryButtonSx,
+  switchSx,
+  tableBodyCellSx,
+  tableHeadCellSx
+} from './caSub/caSubPageStyles';
+
+const initialForm = { category_id: '', name: '', description: '', is_active: true };
+
+const ROWS_PER_PAGE = 20;
+
+function SubcategoriesPage() {
+  const [rows, setRows] = useState([]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(initialForm);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('success');
+
+  const filteredRows = useMemo(() => rows.filter((r) =>
+    (r.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.category_name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.description || '').toLowerCase().includes(search.toLowerCase())
+  ), [rows, search]);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * ROWS_PER_PAGE;
+    return filteredRows.slice(start, start + ROWS_PER_PAGE);
+  }, [filteredRows, page]);
+
+  const activeCount = useMemo(() => rows.filter((r) => !!r.is_active).length, [rows]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [subRes, catRes] = await Promise.all([
+        api.get('/ca-sub/subcategories'),
+        api.get('/ca-sub/categories')
+      ]);
+      setRows(subRes.data?.data || []);
+      setCategories(catRes.data?.data || []);
+    } catch (error) {
+      setMessage(error.response?.data?.error?.message || 'Failed to load subcategories');
+      setMessageType('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(filteredRows.length / ROWS_PER_PAGE) - 1);
+    if (page > maxPage) setPage(maxPage);
+  }, [filteredRows.length, page]);
+
+  const handleSeedDemo = async () => {
+    if (!window.confirm(
+      'Add demo data?\n\nThis inserts 90 sample categories and 90 subcategories (StitchyDemoCat001–090 / StitchyDemoSub001–090). Rows that already exist are skipped.'
+    )) return;
+    setSeeding(true);
+    try {
+      const res = await api.post('/ca-sub/seed-demo');
+      setMessage(res.data?.message || 'Demo data added.');
+      setMessageType('success');
+      loadData();
+    } catch (error) {
+      setMessage(error.response?.data?.error?.message || 'Failed to add demo data');
+      setMessageType('error');
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!form.category_id || !form.name.trim()) {
+      setMessage('Category and subcategory name are required');
+      setMessageType('error');
+      return;
+    }
+    setSaving(true);
+    const wasEditing = Boolean(editingId);
+    try {
+      if (editingId) {
+        await api.put(`/ca-sub/subcategories/${editingId}`, form);
+      } else {
+        await api.post('/ca-sub/subcategories', form);
+      }
+      setOpen(false);
+      setForm(initialForm);
+      setEditingId(null);
+      setMessage(wasEditing ? 'Subcategory updated successfully' : 'Subcategory created successfully');
+      setMessageType('success');
+      loadData();
+    } catch (error) {
+      setMessage(error.response?.data?.error?.message || 'Failed to save subcategory');
+      setMessageType('error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this subcategory?')) return;
+    try {
+      await api.delete(`/ca-sub/subcategories/${id}`);
+      setMessage('Subcategory deleted successfully');
+      setMessageType('success');
+      loadData();
+    } catch (error) {
+      setMessage(error.response?.data?.error?.message || 'Failed to delete subcategory');
+      setMessageType('error');
+    }
+  };
+
+  const openAdd = () => {
+    setEditingId(null);
+    setForm(initialForm);
+    setOpen(true);
+  };
+
+  if (loading) {
+    return (
+      <Layout title="CA/SUB - Subcategory">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 320 }}>
+          <CircularProgress sx={{ color: '#1976d2' }} />
+        </Box>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout title="CA/SUB - Subcategory">
+      <Card elevation={0} sx={pageCardSx}>
+        <Box
+          sx={{
+            height: 4,
+            background: 'linear-gradient(90deg, #1565c0 0%, #42a5f5 50%, #64b5f6 100%)'
+          }}
+        />
+        <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { sm: 'flex-start' },
+              justifyContent: 'space-between',
+              gap: 2,
+              mb: 3
+            }}
+          >
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+              <Box
+                sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%)',
+                  border: '1px solid #9fa8da',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <LabelIcon sx={{ fontSize: 30, color: '#3949ab' }} />
+              </Box>
+              <Box>
+                <Typography variant="overline" sx={{ color: '#546e7a', letterSpacing: '0.12em', fontWeight: 700 }}>
+                  CA / SUB
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: '#0d2137', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                  Subcategories
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#607d8b', mt: 0.5, maxWidth: 560 }}>
+                  Map each subcategory to a parent category. Ideal for nested catalogue navigation.
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1.5,
+                alignItems: 'center',
+                justifyContent: { xs: 'stretch', sm: 'flex-end' }
+              }}
+            >
+              <Tooltip title="Inserts 90 demo categories + 90 subcategories (skips existing StitchyDemo* rows)." arrow>
+                <span>
+                  <Button
+                    variant="outlined"
+                    startIcon={<PostAddIcon />}
+                    onClick={handleSeedDemo}
+                    disabled={seeding}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      borderRadius: '12px',
+                      borderColor: '#90caf9',
+                      color: '#1565c0',
+                      px: 2,
+                      '&:hover': { borderColor: '#42a5f5', bgcolor: 'rgba(25, 118, 210, 0.06)' }
+                    }}
+                  >
+                    {seeding ? 'Adding…' : 'Add demo data'}
+                  </Button>
+                </span>
+              </Tooltip>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={openAdd}
+                sx={primaryButtonSx}
+              >
+                Add subcategory
+              </Button>
+            </Box>
+          </Box>
+
+          {message && (
+            <Alert severity={messageType} sx={{ mb: 2.5, borderRadius: '12px' }} onClose={() => setMessage('')}>
+              {message}
+            </Alert>
+          )}
+
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {[
+              { label: 'Total', value: rows.length, bg: '#e3f2fd', border: '#90caf9', color: '#0d47a1' },
+              { label: 'Active', value: activeCount, bg: '#e8f5e9', border: '#a5d6a7', color: '#1b5e20' },
+              { label: 'Parent categories', value: categories.length, bg: '#fff8e1', border: '#ffe082', color: '#f57f17' }
+            ].map((k) => (
+              <Grid item xs={12} sm={4} key={k.label}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    borderRadius: '14px',
+                    border: `1px solid ${k.border}`,
+                    background: k.bg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#546e7a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    {k.label}
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 800, color: k.color }}>
+                    {k.value}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid item xs={12} md={8}>
+              <TextField
+                fullWidth
+                placeholder="Search by category, name or description…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                sx={inputSx}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: '#90a4ae' }} />
+                    </InputAdornment>
+                  )
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Paper
+                elevation={0}
+                sx={{
+                  height: '100%',
+                  minHeight: 56,
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: '12px',
+                  border: '1px solid #90caf9',
+                  background: 'linear-gradient(135deg, #f8fbff 0%, #e3f2fd 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <Typography variant="body2" sx={{ color: '#1565c0', fontWeight: 700 }}>
+                  Matching
+                </Typography>
+                <Typography variant="h6" sx={{ color: '#0d47a1', fontWeight: 800 }}>
+                  {filteredRows.length}
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ mb: 2, borderColor: '#e3f2fd' }} />
+
+          <TableContainer
+            component={Paper}
+            elevation={0}
+            sx={{ borderRadius: '14px', border: '1px solid #e3f2fd', overflow: 'hidden' }}
+          >
+            <Table size="medium">
+              <TableHead>
+                <TableRow sx={{ background: 'linear-gradient(180deg, #f5faff 0%, #eef6fc 100%)' }}>
+                  <TableCell sx={tableHeadCellSx}>Category</TableCell>
+                  <TableCell sx={tableHeadCellSx}>Subcategory</TableCell>
+                  <TableCell sx={tableHeadCellSx}>Description</TableCell>
+                  <TableCell sx={tableHeadCellSx}>Status</TableCell>
+                  <TableCell align="right" sx={tableHeadCellSx}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 6, border: 'none' }}>
+                      <Typography sx={{ fontWeight: 700, color: '#0d2137' }}>No subcategories match your search</Typography>
+                      <Typography variant="body2" sx={{ color: '#78909c', mt: 0.5 }}>
+                        Adjust filters or add a subcategory linked to a category.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedRows.map((r) => (
+                  <TableRow key={r.id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                    <TableCell sx={{ ...tableBodyCellSx, fontWeight: 600, color: '#1565c0' }}>{r.category_name}</TableCell>
+                    <TableCell sx={{ ...tableBodyCellSx, fontWeight: 600, color: '#0d2137' }}>{r.name}</TableCell>
+                    <TableCell sx={{ ...tableBodyCellSx, color: '#546e7a', maxWidth: 280 }}>{r.description || '—'}</TableCell>
+                    <TableCell sx={tableBodyCellSx}>
+                      <Chip
+                        size="small"
+                        label={r.is_active ? 'Active' : 'Inactive'}
+                        sx={{
+                          fontWeight: 700,
+                          bgcolor: r.is_active ? '#e8f5e9' : '#eceff1',
+                          color: r.is_active ? '#2e7d32' : '#546e7a',
+                          border: '1px solid',
+                          borderColor: r.is_active ? '#c8e6c9' : '#cfd8dc'
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell align="right" sx={tableBodyCellSx}>
+                      <IconButton
+                        size="small"
+                        sx={{ color: '#1565c0', '&:hover': { bgcolor: 'rgba(21,101,192,0.08)' } }}
+                        onClick={() => {
+                          setEditingId(r.id);
+                          setForm({
+                            category_id: r.category_id,
+                            name: r.name,
+                            description: r.description || '',
+                            is_active: !!r.is_active
+                          });
+                          setOpen(true);
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="error" onClick={() => handleDelete(r.id)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {filteredRows.length > 0 && (
+              <TablePagination
+                component="div"
+                rowsPerPageOptions={[ROWS_PER_PAGE]}
+                count={filteredRows.length}
+                rowsPerPage={ROWS_PER_PAGE}
+                page={page}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                onRowsPerPageChange={() => {}}
+                labelRowsPerPage="Rows per page"
+              />
+            )}
+          </TableContainer>
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        fullWidth
+        maxWidth={false}
+        scroll="paper"
+        PaperProps={{ sx: dialogPaperSx }}
+      >
+        <DialogTitle
+          sx={{
+            pb: 2,
+            pt: 3.5,
+            px: { xs: 2.5, sm: 4 },
+            borderBottom: '1px solid #e3f2fd',
+            background: 'linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%)'
+          }}
+        >
+          <Typography variant="overline" sx={{ color: '#1565c0', fontWeight: 800, letterSpacing: '0.14em', display: 'block', mb: 0.75 }}>
+            Subcategory
+          </Typography>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0d2137', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
+            {editingId ? 'Edit subcategory' : 'New subcategory'}
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#607d8b', mt: 1.25, fontWeight: 400, maxWidth: 640, lineHeight: 1.55 }}>
+            {editingId
+              ? 'Adjust the parent category or name below. Save when you are ready to apply changes.'
+              : 'Pick a parent category, then add a distinct subcategory name. Descriptions help your team stay aligned.'}
+          </Typography>
+        </DialogTitle>
+        <DialogContent
+          dividers
+          sx={{
+            borderColor: '#e3f2fd',
+            px: { xs: 2.5, sm: 4 },
+            py: { xs: 3, sm: 3.5 },
+            bgcolor: '#fafcff'
+          }}
+        >
+          <Grid container spacing={3} sx={{ mt: 0 }}>
+            <Grid item xs={12}>
+              <TextField
+                select
+                fullWidth
+                label="Parent category"
+                value={form.category_id}
+                onChange={(e) => setForm((p) => ({ ...p, category_id: e.target.value }))}
+                sx={dialogFieldSx}
+              >
+                {categories.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                sx={dialogFieldSx}
+                fullWidth
+                label="Subcategory name"
+                value={form.name}
+                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                sx={dialogFieldSx}
+                fullWidth
+                multiline
+                rows={5}
+                label="Description"
+                placeholder="Optional — clarify how this subcategory differs from siblings."
+                value={form.description}
+                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  px: 2.5,
+                  py: 2,
+                  borderRadius: '14px',
+                  border: '1px solid #cfe2fc',
+                  bgcolor: '#f5f9ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 2
+                }}
+              >
+                <Box>
+                  <Typography sx={{ fontWeight: 700, color: '#0d2137', fontSize: '0.95rem' }}>Visibility</Typography>
+                  <Typography variant="body2" sx={{ color: '#78909c', mt: 0.35, maxWidth: 420 }}>
+                    Inactive subcategories stay in the database but can be hidden from selection lists.
+                  </Typography>
+                </Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={form.is_active}
+                      onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))}
+                      sx={switchSx}
+                    />
+                  }
+                  label={<Typography sx={{ fontWeight: 700, color: '#37474f', fontSize: '1rem' }}>Active</Typography>}
+                  sx={{ m: 0 }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            px: { xs: 2.5, sm: 4 },
+            py: 2.75,
+            gap: 2,
+            borderTop: '1px solid #e3f2fd',
+            bgcolor: '#f5f9ff',
+            justifyContent: 'flex-end',
+            flexWrap: 'wrap'
+          }}
+        >
+          <Button onClick={() => setOpen(false)} sx={dialogCancelButtonSx}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            variant="contained"
+            size="large"
+            sx={dialogSaveButtonSx}
+          >
+            {saving ? 'Saving…' : 'Save subcategory'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Layout>
+  );
+}
+
+export default SubcategoriesPage;

@@ -3,12 +3,13 @@ import {
   Card, CardContent, Typography, Box, TextField, Button, Switch, FormControlLabel,
   Grid, Alert, CircularProgress, Divider, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, IconButton, Chip, Dialog, DialogTitle,
-  DialogContent, DialogActions
+  DialogContent, DialogActions, Tooltip, Collapse
 } from '@mui/material';
 import {
   Email as EmailIcon, Save as SaveIcon, Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon, Delete as DeleteIcon, Edit as EditIcon,
-  Add as AddIcon, Link as LinkIcon, LinkOff as LinkOffIcon, Star as StarIcon
+  Delete as DeleteIcon, Edit as EditIcon,
+  Add as AddIcon, Link as LinkIcon, LinkOff as LinkOffIcon, Star as StarIcon,
+  HelpOutline as HelpOutlineIcon, Send as SendIcon
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 
@@ -32,8 +33,12 @@ function SMTPSettings() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [testingEmail, setTestingEmail] = useState(false);
   const [message, setMessage] = useState(null);
   const [messageType, setMessageType] = useState('success');
+  const [showHelp, setShowHelp] = useState(false);
+  const [emailTestDialogOpen, setEmailTestDialogOpen] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
 
   useEffect(() => {
     fetchSMTPSettings();
@@ -171,6 +176,53 @@ function SMTPSettings() {
     }
   };
 
+  const handleTestEmailSMTP = async () => {
+    if (!testEmailAddress?.trim()) {
+      setMessage('Please enter email address for test email');
+      setMessageType('error');
+      return;
+    }
+    if (!formData.server_address || !formData.username || !formData.password) {
+      setMessage('Please fill SMTP server, username and password before testing email');
+      setMessageType('error');
+      return;
+    }
+
+    const cleanEmail = testEmailAddress.trim();
+
+    setTestingEmail(true);
+    setMessage(null);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_URL}/smtp/test-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...formData,
+          test_email: cleanEmail
+        })
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setMessage(result.message || 'Test email sent successfully');
+        setMessageType('success');
+        setEmailTestDialogOpen(false);
+        setTestEmailAddress('');
+      } else {
+        setMessage(result.error?.message || 'Failed to send test email');
+        setMessageType('error');
+      }
+    } catch (error) {
+      setMessage('Network error: Unable to send test email');
+      setMessageType('error');
+    } finally {
+      setTestingEmail(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       server_address: '',
@@ -294,7 +346,7 @@ function SMTPSettings() {
   return (
     <Layout title="Administration - SMTP Settings">
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12}>
           <Card sx={{ 
             borderRadius: '16px', 
             boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
@@ -329,11 +381,12 @@ function SMTPSettings() {
                   startIcon={<AddIcon />}
                   sx={{
                     borderRadius: '12px',
-                    px: 3,
-                    py: 1.2,
+                    px: 3.2,
+                    py: 1.25,
                     textTransform: 'none',
                     fontWeight: 600,
-                    background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)'
+                    background: 'linear-gradient(135deg, #2196F3 0%, #1976d2 100%)',
+                    boxShadow: '0 8px 20px rgba(33, 150, 243, 0.28)'
                   }}
                 >
                   Add More SMTP
@@ -424,68 +477,6 @@ function SMTPSettings() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ 
-            p: 3, 
-            borderRadius: '16px', 
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%)',
-            border: '1px solid rgba(0,0,0,0.05)'
-          }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: '#1a1a2e' }}>
-              Configuration Guide
-            </Typography>
-            
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#2196F3' }}>
-                Gmail SMTP Settings
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>
-                Server: smtp.gmail.com
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>
-                Port (SSL): 465
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>
-                Port (TLS): 587
-              </Typography>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#2196F3' }}>
-                Important Notes
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
-                • Use App Password for Gmail accounts with 2FA enabled
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
-                • Enable "Less secure apps" for accounts without 2FA
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#666' }}>
-                • Test connection before saving to verify settings
-              </Typography>
-            </Box>
-          </Paper>
-
-          <Paper sx={{ 
-            p: 3, 
-            mt: 2,
-            borderRadius: '16px', 
-            background: '#e8f5e9',
-            border: '1px solid rgba(76, 175, 80, 0.2)'
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <CheckCircleIcon sx={{ color: '#4CAF50' }} />
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#2e7d32' }}>
-                Current Status
-              </Typography>
-            </Box>
-            <Typography variant="body2" sx={{ color: '#666' }}>
-              Default SMTP is used automatically for all outgoing emails.
-            </Typography>
-          </Paper>
-        </Grid>
       </Grid>
 
       <Dialog
@@ -497,31 +488,73 @@ function SMTPSettings() {
         }}
         PaperProps={{
           sx: {
-            borderRadius: '16px',
+            borderRadius: '20px',
             width: '100%',
-            maxWidth: '760px'
+            maxWidth: '980px',
+            border: '1px solid #dbe4f0',
+            boxShadow: '0 24px 60px rgba(15, 23, 42, 0.24)',
+            background: 'linear-gradient(180deg, #ffffff 0%, #f9fbff 100%)'
           }
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: '#1a1a2e' }}>
-          {editingId ? 'Edit SMTP Configuration' : 'Add More SMTP'}
+        <DialogTitle sx={{ fontWeight: 700, color: '#1a1a2e', pb: 1.5, px: 3.5, pt: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              {editingId ? 'Edit SMTP Configuration' : 'Add More SMTP'}
+            </Typography>
+            <Tooltip title="SMTP configuration help">
+              <Button
+                size="small"
+                variant="text"
+                onMouseEnter={() => setShowHelp(true)}
+                onClick={() => setShowHelp((prev) => !prev)}
+                startIcon={<HelpOutlineIcon />}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: '10px',
+                  px: 1.5,
+                  color: '#2563eb',
+                  '&:hover': { background: '#eaf2ff' }
+                }}
+              >
+                Help
+              </Button>
+            </Tooltip>
+          </Box>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ px: 3.5, py: 2.5 }}>
+          <Collapse in={showHelp} timeout={250}>
+            <Paper
+              sx={{
+                p: 2.5,
+                mb: 2.5,
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%)',
+                border: '1px solid #d8e6ff'
+              }}
+            >
+              <Typography sx={{ fontWeight: 700, color: '#1f2a44', mb: 1.2 }}>Configuration Guide</Typography>
+              <Typography variant="body2" sx={{ color: '#46536a', mb: 0.6 }}>Server: smtp.gmail.com</Typography>
+              <Typography variant="body2" sx={{ color: '#46536a', mb: 0.6 }}>Port SSL: 465 | TLS: 587</Typography>
+              <Typography variant="body2" sx={{ color: '#46536a' }}>Use app password for Gmail accounts with 2FA enabled.</Typography>
+            </Paper>
+          </Collapse>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12} md={6}>
-              <TextField fullWidth label="SMTP Server Address" name="server_address" value={formData.server_address} onChange={handleChange} required />
+              <TextField fullWidth label="SMTP Server Address" name="server_address" value={formData.server_address} onChange={handleChange} required sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', backgroundColor: '#fff' } }} />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField fullWidth label="Username / Email" name="username" type="email" value={formData.username} onChange={handleChange} required />
+              <TextField fullWidth label="Username / Email" name="username" type="email" value={formData.username} onChange={handleChange} required sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', backgroundColor: '#fff' } }} />
             </Grid>
             <Grid item xs={12} md={6}>
-              <TextField fullWidth label="Password / App Password" name="password" type="password" value={formData.password} onChange={handleChange} required />
+              <TextField fullWidth label="Password / App Password" name="password" type="password" value={formData.password} onChange={handleChange} required sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', backgroundColor: '#fff' } }} />
             </Grid>
             <Grid item xs={12} md={3}>
-              <TextField fullWidth label="Port" name="port" type="number" value={formData.port} onChange={handleChange} required />
+              <TextField fullWidth label="Port" name="port" type="number" value={formData.port} onChange={handleChange} required sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', backgroundColor: '#fff' } }} />
             </Grid>
             <Grid item xs={12} md={3}>
-              <TextField fullWidth select SelectProps={{ native: true }} label="Encryption" name="encryption" value={formData.encryption} onChange={handleChange} required>
+              <TextField fullWidth select SelectProps={{ native: true }} label="Encryption" name="encryption" value={formData.encryption} onChange={handleChange} required sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', backgroundColor: '#fff' } }}>
                 <option value="SSL">SSL</option>
                 <option value="TLS">TLS</option>
                 <option value="None">None</option>
@@ -536,17 +569,62 @@ function SMTPSettings() {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
+        <DialogActions sx={{ p: 2.8, borderTop: '1px solid #e7edf7' }}>
           <Button onClick={() => {
             setShowForm(false);
             setEditingId(null);
             resetForm();
-          }} variant="outlined" sx={{ borderRadius: '10px', textTransform: 'none' }}>Cancel</Button>
-          <Button onClick={handleTestConnection} variant="outlined" disabled={testing || saving} startIcon={testing ? <CircularProgress size={20} /> : <RefreshIcon />} sx={{ borderRadius: '10px', textTransform: 'none' }}>
-            {testing ? 'Testing...' : 'Test'}
+          }} variant="outlined" sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 600, px: 2.4 }}>Cancel</Button>
+          <Button onClick={handleTestConnection} variant="outlined" disabled={testing || saving} startIcon={testing ? <CircularProgress size={20} /> : <RefreshIcon />} sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 600, px: 2.4 }}>
+            {testing ? 'Testing...' : 'Test SMTP'}
           </Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={saving} startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} sx={{ borderRadius: '10px', textTransform: 'none' }}>
+          <Button
+            onClick={() => setEmailTestDialogOpen(true)}
+            variant="outlined"
+            disabled={testingEmail || saving}
+            startIcon={<SendIcon />}
+            sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 600, px: 2.4 }}
+          >
+            Test Email SMTP
+          </Button>
+          <Button onClick={handleSubmit} variant="contained" disabled={saving} startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 700, px: 2.6, background: 'linear-gradient(135deg, #2196F3 0%, #1565c0 100%)', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.28)' }}>
             {saving ? 'Saving...' : (editingId ? 'Update SMTP' : 'Add SMTP')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={emailTestDialogOpen}
+        onClose={() => setEmailTestDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '18px',
+            minWidth: '460px',
+            border: '1px solid #dde7f5',
+            boxShadow: '0 20px 50px rgba(15, 23, 42, 0.28)',
+            background: 'linear-gradient(180deg, #ffffff 0%, #f9fbff 100%)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>Test Email SMTP</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: '#666', mb: 1.6 }}>
+            Enter an email address to receive a test email from this SMTP configuration.
+          </Typography>
+          <TextField
+            fullWidth
+            type="email"
+            label="Email Address"
+            value={testEmailAddress}
+            onChange={(e) => setTestEmailAddress(e.target.value)}
+            placeholder="example@email.com"
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', backgroundColor: '#fff' } }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2.2, borderTop: '1px solid #e7edf7' }}>
+          <Button onClick={() => setEmailTestDialogOpen(false)} variant="outlined" sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 600, px: 2.4 }}>Cancel</Button>
+          <Button onClick={handleTestEmailSMTP} variant="contained" disabled={testingEmail} startIcon={testingEmail ? <CircularProgress size={20} color="inherit" /> : <SendIcon />} sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 700, px: 2.4, background: 'linear-gradient(135deg, #2196F3 0%, #1565c0 100%)', boxShadow: '0 8px 16px rgba(33, 150, 243, 0.28)' }}>
+            {testingEmail ? 'Sending...' : 'Send Test Email'}
           </Button>
         </DialogActions>
       </Dialog>

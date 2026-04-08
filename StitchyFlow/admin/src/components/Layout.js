@@ -39,7 +39,9 @@ import {
   PauseCircleOutline as InactiveSessionIcon,
   DeleteOutline as DeletedSessionIcon,
   HourglassEmpty as PendingSessionIcon,
-  HistoryToggleOff as SessionLogsIcon
+  HistoryToggleOff as SessionLogsIcon,
+  AccountTree as CASubIcon,
+  Label as SubcategoryIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -97,6 +99,11 @@ const sessionsSubItems = [
   { text: 'Pending Sessions',  icon: <PendingSessionIcon />,  path: '/sessions/pending' },
 ];
 
+const caSubItems = [
+  { text: 'Category', icon: <CategoryIcon />, path: '/ca-sub/category' },
+  { text: 'Subcategory', icon: <SubcategoryIcon />, path: '/ca-sub/subcategory' }
+];
+
 function Layout({ children, title }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [adminOpen, setAdminOpen] = useState(false);
@@ -104,6 +111,7 @@ function Layout({ children, title }) {
   const [businessOpen, setBusinessOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [sessionsOpen, setSessionsOpen] = useState(false);
+  const [caSubOpen, setCaSubOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -498,6 +506,68 @@ function Layout({ children, title }) {
                       onClick={() => navigate(item.path)}
                       sx={{
                         minHeight: 40, borderRadius: '8px', px: 2, py: 0.75,
+                        bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                        color: location.pathname === item.path ? '#1976d2' : '#666',
+                        '&:hover': { bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5' }
+                      }}
+                    >
+                      <ListItemIcon sx={{
+                        minWidth: 32,
+                        color: location.pathname === item.path ? '#1976d2' : '#999',
+                        '& svg': { fontSize: 18 }
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        sx={{ '& .MuiTypography-root': { fontSize: '0.8125rem', fontWeight: location.pathname === item.path ? 600 : 500 } }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+
+            {/* CA/SUB with Submenu */}
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => setCaSubOpen(!caSubOpen)}
+                sx={{
+                  minHeight: 44,
+                  borderRadius: '8px',
+                  px: 2,
+                  py: 1,
+                  bgcolor: caSubItems.some(item => location.pathname === item.path) ? '#E3F2FD' : 'transparent',
+                  color: caSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#666',
+                  '&:hover': { bgcolor: '#f5f5f5' }
+                }}
+              >
+                <ListItemIcon sx={{
+                  minWidth: 36,
+                  color: caSubItems.some(item => location.pathname === item.path) ? '#1976d2' : '#999',
+                  '& svg': { fontSize: 20 }
+                }}>
+                  <CASubIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="CA/SUB"
+                  sx={{ '& .MuiTypography-root': { fontSize: '0.875rem', fontWeight: caSubItems.some(item => location.pathname === item.path) ? 600 : 500 } }}
+                />
+                {caSubOpen ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+              </ListItemButton>
+            </ListItem>
+
+            <Collapse in={caSubOpen} timeout="auto" unmountOnExit>
+              <List disablePadding sx={{ pl: 2 }}>
+                {caSubItems.map((item) => (
+                  <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => navigate(item.path)}
+                      sx={{
+                        minHeight: 40,
+                        borderRadius: '8px',
+                        px: 2,
+                        py: 0.75,
                         bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
                         color: location.pathname === item.path ? '#1976d2' : '#666',
                         '&:hover': { bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5' }

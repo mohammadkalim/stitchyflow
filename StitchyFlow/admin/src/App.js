@@ -44,6 +44,8 @@ import InactiveSessions from './pages/sessions/InactiveSessions';
 import SessionLogs from './pages/sessions/SessionLogs';
 import DeletedSessions from './pages/sessions/DeletedSessions';
 import PendingSessions from './pages/sessions/PendingSessions';
+import CategoriesPage from './pages/CategoriesPage';
+import SubcategoriesPage from './pages/SubcategoriesPage';
 
 const theme = createTheme({
   palette: {
@@ -111,6 +113,8 @@ function App() {
           <Route path="/sessions/logs"      element={<PrivateRoute><SessionLogs /></PrivateRoute>} />
           <Route path="/sessions/deleted"   element={<PrivateRoute><DeletedSessions /></PrivateRoute>} />
           <Route path="/sessions/pending"   element={<PrivateRoute><PendingSessions /></PrivateRoute>} />
+          <Route path="/ca-sub/category"    element={<PrivateRoute><CategoriesPage /></PrivateRoute>} />
+          <Route path="/ca-sub/subcategory" element={<PrivateRoute><SubcategoriesPage /></PrivateRoute>} />
         </Routes>
       </Router>
     </ThemeProvider>

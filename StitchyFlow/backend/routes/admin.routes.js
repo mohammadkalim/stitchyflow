@@ -12,6 +12,40 @@ const router = express.Router();
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 
+const ADMIN_SETTINGS_SCHEMA = {
+  site_name: { type: 'string', default: 'StitchyFlow', description: 'Platform name shown in admin panel' },
+  admin_email: { type: 'string', default: 'admin@stitchyflow.com', description: 'Primary admin email address' },
+  support_email: { type: 'string', default: 'support@stitchyflow.com', description: 'Support contact email' },
+  allow_registration: { type: 'boolean', default: true, description: 'Allow new user registration' },
+  email_verification: { type: 'boolean', default: true, description: 'Require email verification for accounts' },
+  maintenance_mode: { type: 'boolean', default: false, description: 'Enable platform maintenance mode' },
+  max_login_attempts: { type: 'integer', default: 5, description: 'Maximum login attempts before lockout' },
+  session_timeout_hours: { type: 'integer', default: 8, description: 'Session timeout duration in hours' },
+  password_reset_expire_minutes: { type: 'integer', default: 30, description: 'Password reset token expiry time in minutes' },
+  verification_code_expire_minutes: { type: 'integer', default: 10, description: 'Verification code expiry time in minutes' }
+};
+
+function toStorageValue(type, value, fallback) {
+  if (type === 'boolean') {
+    return (typeof value === 'boolean' ? value : fallback) ? 'true' : 'false';
+  }
+  if (type === 'integer') {
+    const parsed = Number.isFinite(Number(value)) ? parseInt(value, 10) : fallback;
+    return String(parsed);
+  }
+  return String(value ?? fallback ?? '');
+}
+
+function fromStorageValue(type, value, fallback) {
+  if (value === undefined || value === null) return fallback;
+  if (type === 'boolean') return String(value).toLowerCase() === 'true' || value === '1';
+  if (type === 'integer') {
+    const parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+  }
+  return value;
+}
+
 // Get Analytics
 router.get('/analytics', authenticateToken, async (req, res) => {
   try {
@@ -419,6 +453,64 @@ router.put('/settings/verification-expire', authenticateToken, async (req, res) 
       message: 'Verification code expire time updated successfully',
       data: { expireMinutes }
     });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Get Admin Settings
+router.get('/settings', authenticateToken, async (req, res) => {
+  try {
+    const keys = Object.keys(ADMIN_SETTINGS_SCHEMA);
+    const placeholders = keys.map(() => '?').join(',');
+    const [rows] = await db.query(
+      `SELECT setting_key, setting_value, setting_type
+       FROM system_settings
+       WHERE setting_key IN (${placeholders})`,
+      keys
+    );
+
+    const rowMap = rows.reduce((acc, row) => {
+      acc[row.setting_key] = row;
+      return acc;
+    }, {});
+
+    const data = {};
+    for (const key of keys) {
+      const schema = ADMIN_SETTINGS_SCHEMA[key];
+      const row = rowMap[key];
+      data[key] = fromStorageValue(schema.type, row?.setting_value, schema.default);
+    }
+
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Save Admin Settings
+router.put('/settings', authenticateToken, async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const keys = Object.keys(ADMIN_SETTINGS_SCHEMA);
+
+    for (const key of keys) {
+      const schema = ADMIN_SETTINGS_SCHEMA[key];
+      const incoming = payload[key];
+      const storedValue = toStorageValue(schema.type, incoming, schema.default);
+      await db.query(
+        `INSERT INTO system_settings (setting_key, setting_value, setting_type, description)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           setting_value = VALUES(setting_value),
+           setting_type = VALUES(setting_type),
+           description = VALUES(description),
+           updated_at = CURRENT_TIMESTAMP`,
+        [key, storedValue, schema.type, schema.description]
+      );
+    }
+
+    res.json({ success: true, message: 'Admin settings saved successfully' });
   } catch (error) {
     res.status(500).json({ success: false, error: { message: error.message } });
   }
