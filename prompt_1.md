@@ -146,3 +146,34 @@ Admin panel passoword ********** admin123 ***********
 
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+
+
+------
+
+a) please Read the Full @Docs foder and please start the Slash Ads System creation 
+
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

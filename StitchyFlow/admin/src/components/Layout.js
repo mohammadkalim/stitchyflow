@@ -63,7 +63,8 @@ const otherMenuItems = [
   { text: 'Measurements', icon: <MeasurementsIcon />, path: '/measurements', badge: 'NEW' },
   { text: 'Payments', icon: <PaymentIcon />, path: '/payments' },
   { text: 'Reports', icon: <ReportsIcon />, path: '/reports' },
-  { text: 'Fabric Inventory', icon: <AirCoatsIcon />, path: '/air-coats' }
+  { text: 'Fabric Inventory', icon: <AirCoatsIcon />, path: '/air-coats' },
+  { text: 'Email Templates', icon: <EmailTemplateIcon />, path: '/email-templates' }
 ];
 
 const businessSubItems = [
@@ -79,7 +80,6 @@ const businessSubItems = [
 ];
 
 const adminSubItems = [
-  { text: 'Email Templates', icon: <EmailTemplateIcon />, path: '/email-templates' },
   { text: 'SMTP Settings', icon: <SMTPIcon />, path: '/smtp-settings' },
   { text: 'Admin Settings', icon: <AdminSettingsIcon />, path: '/admin-settings' },
   { text: 'Site Settings', icon: <SiteSettingsIcon />, path: '/site-settings' },

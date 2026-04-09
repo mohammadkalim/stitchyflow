@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog, DialogActions,
-  DialogContent, DialogTitle, FormControlLabel, Grid, IconButton, Paper, Switch,
-  TextField, Typography
+  DialogContent, DialogTitle, Divider, FormControlLabel, Grid, IconButton, Paper, Switch,
+  TextField, Tooltip, Typography
 } from '@mui/material';
 import {
   Add as AddIcon,
   Article as ArticleIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import { api } from '../utils/api';
@@ -59,15 +60,24 @@ async function emailTemplatesRequest(requestForBase) {
   throw lastErr;
 }
 
+/** create = new row, view = read-only, edit = update form */
 function EmailTemplatesPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState('create');
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
+
+  const closeDialog = () => {
+    setOpen(false);
+    setDialogMode('create');
+    setEditingId(null);
+    setForm(initialForm);
+  };
 
   const loadRows = async () => {
     setLoading(true);
@@ -100,12 +110,14 @@ function EmailTemplatesPage() {
 
   const openAdd = () => {
     setEditingId(null);
+    setDialogMode('create');
     setForm(initialForm);
     setOpen(true);
   };
 
-  const openEdit = (row) => {
+  const openView = (row) => {
     setEditingId(row.id);
+    setDialogMode('view');
     setForm({
       slug: row.slug,
       name: row.name,
@@ -116,6 +128,22 @@ function EmailTemplatesPage() {
     });
     setOpen(true);
   };
+
+  const openEdit = (row) => {
+    setEditingId(row.id);
+    setDialogMode('edit');
+    setForm({
+      slug: row.slug,
+      name: row.name,
+      description: row.description || '',
+      subject: row.subject,
+      body_html: row.body_html,
+      is_active: !!row.is_active
+    });
+    setOpen(true);
+  };
+
+  const goEditFromView = () => setDialogMode('edit');
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.subject.trim() || !form.body_html.trim()) {
@@ -139,9 +167,7 @@ function EmailTemplatesPage() {
           : 'Email template created.'
       );
       setMessageType('success');
-      setOpen(false);
-      setForm(initialForm);
-      setEditingId(null);
+      closeDialog();
       loadRows();
     } catch (error) {
       setMessage(error.response?.data?.error?.message || 'Failed to save');
@@ -151,18 +177,28 @@ function EmailTemplatesPage() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, { closeAfter = false } = {}) => {
     if (!window.confirm('Delete this template? System emails for this slug will fall back to built-in defaults until you add a template again.')) return;
     try {
       await emailTemplatesRequest((base) => api.delete(`${base}/${id}`));
       setMessage('Template deleted.');
       setMessageType('success');
+      if (closeAfter) closeDialog();
       loadRows();
     } catch (error) {
       setMessage(error.response?.data?.error?.message || 'Failed to delete');
       setMessageType('error');
     }
   };
+
+  const crudChips = (
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1.5 }}>
+      <Chip size="small" label="Create" sx={{ fontWeight: 700, bgcolor: dialogMode === 'create' ? '#e3f2fd' : '#f5f5f5', color: '#1565c0' }} />
+      <Chip size="small" label="Read" sx={{ fontWeight: 700, bgcolor: dialogMode === 'view' ? '#e8f5e9' : '#f5f5f5', color: '#2e7d32' }} />
+      <Chip size="small" label="Update" sx={{ fontWeight: 700, bgcolor: dialogMode === 'edit' ? '#fff3e0' : '#f5f5f5', color: '#ef6c00' }} />
+      <Chip size="small" label="Delete" sx={{ fontWeight: 700, bgcolor: '#f5f5f5', color: '#c62828' }} />
+    </Box>
+  );
 
   if (loading) {
     return (
@@ -198,13 +234,14 @@ function EmailTemplatesPage() {
               </Box>
               <Box>
                 <Typography variant="overline" sx={{ color: '#546e7a', letterSpacing: '0.12em', fontWeight: 700 }}>
-                  Administration
+                  System email
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 800, color: '#0d2137', letterSpacing: '-0.02em' }}>
                   Email Templates
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#607d8b', mt: 0.5, maxWidth: 560 }}>
-                  Edit subjects and HTML for system emails. Use placeholders like {`{{firstName}}`}, {`{{code}}`}, {`{{loginUrl}}`} where applicable.
+                <Typography variant="body2" sx={{ color: '#607d8b', mt: 0.5, maxWidth: 640 }}>
+                  CRUD: <strong>Create</strong> with Add template · <strong>Read</strong> with the eye icon · <strong>Update</strong> with the pencil · <strong>Delete</strong> with the trash. Placeholders:{' '}
+                  {`{{firstName}}`}, {`{{code}}`}, {`{{loginUrl}}`}, etc.
                 </Typography>
               </Box>
             </Box>
@@ -288,12 +325,21 @@ function EmailTemplatesPage() {
                         }}
                       />
                       <Box>
-                        <IconButton size="small" sx={{ color: '#1565c0' }} onClick={() => openEdit(row)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" color="error" onClick={() => handleDelete(row.id)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                        <Tooltip title="View (read)">
+                          <IconButton size="small" sx={{ color: '#2e7d32' }} onClick={() => openView(row)}>
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit (update)">
+                          <IconButton size="small" sx={{ color: '#1565c0' }} onClick={() => openEdit(row)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton size="small" color="error" onClick={() => handleDelete(row.id)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
                     </Box>
                   </Box>
@@ -313,7 +359,7 @@ function EmailTemplatesPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth={false} scroll="paper" PaperProps={{ sx: dialogPaperSx }}>
+      <Dialog open={open} onClose={closeDialog} fullWidth maxWidth={false} scroll="paper" PaperProps={{ sx: dialogPaperSx }}>
         <DialogTitle
           sx={{
             pb: 1,
@@ -324,116 +370,219 @@ function EmailTemplatesPage() {
           }}
         >
           <Typography variant="overline" sx={{ color: '#1565c0', fontWeight: 800, letterSpacing: '0.12em' }}>
-            Email template
+            Email template · CRUD
           </Typography>
           <Typography variant="h5" sx={{ fontWeight: 800, color: '#0d2137', mt: 0.5 }}>
-            {editingId ? 'Edit template' : 'New template'}
+            {dialogMode === 'create' && 'Create (new template)'}
+            {dialogMode === 'view' && 'Read (view only)'}
+            {dialogMode === 'edit' && 'Update (edit template)'}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#607d8b', mt: 1, maxWidth: 720 }}>
-            Slug identifies which system email uses this template (e.g. registration_verification). HTML supports {`{{placeholder}}`} tokens.
+          {crudChips}
+          <Typography variant="body2" sx={{ color: '#607d8b', mt: 1.5, maxWidth: 720 }}>
+            {dialogMode === 'view'
+              ? 'Review subject and HTML below. Use Edit to change (Update) or Delete to remove this template.'
+              : 'Slug identifies which system email uses this template (e.g. registration_verification). HTML supports {{placeholder}} tokens.'}
           </Typography>
         </DialogTitle>
         <DialogContent dividers sx={{ borderColor: '#e3f2fd', px: { xs: 2, sm: 4 }, py: 3, bgcolor: '#fafcff' }}>
-          <Grid container spacing={2.5}>
-            {!editingId && (
+          {dialogMode === 'view' ? (
+            <Box>
+              <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: '12px', bgcolor: '#fff', borderColor: '#b8d4f0' }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                  Slug · ID #{editingId}
+                </Typography>
+                <Typography sx={{ fontWeight: 800, color: '#0d2137', fontFamily: 'ui-monospace, monospace' }}>{form.slug}</Typography>
+              </Paper>
+              <Typography variant="subtitle2" color="text.secondary" fontWeight={700} gutterBottom>
+                Display name
+              </Typography>
+              <Typography sx={{ mb: 2, fontWeight: 700 }}>{form.name}</Typography>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" color="text.secondary" fontWeight={700} gutterBottom>
+                Description / hints
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 2, color: '#455a64', whiteSpace: 'pre-wrap' }}>
+                {form.description || '—'}
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" color="text.secondary" fontWeight={700} gutterBottom>
+                Email subject
+              </Typography>
+              <Typography sx={{ mb: 2, fontWeight: 600 }}>{form.subject}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Typography variant="subtitle2" color="text.secondary" fontWeight={700}>
+                  HTML preview
+                </Typography>
+                <Chip size="small" label={form.is_active ? 'Active' : 'Inactive'} color={form.is_active ? 'success' : 'default'} sx={{ fontWeight: 700 }} />
+              </Box>
+              <Paper
+                variant="outlined"
+                sx={{
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  borderColor: '#90caf9',
+                  maxHeight: { xs: 280, sm: 360 },
+                  bgcolor: '#fff'
+                }}
+              >
+                <Box
+                  component="iframe"
+                  title="Email HTML preview"
+                  sandbox="allow-same-origin"
+                  srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:12px;font-size:14px;}</style></head><body>${form.body_html || ''}</body></html>`}
+                  sx={{ width: '100%', height: { xs: 260, sm: 340 }, border: 'none', display: 'block' }}
+                />
+              </Paper>
+              <Typography variant="caption" sx={{ display: 'block', mt: 1.5, color: '#78909c' }}>
+                Raw HTML is shown inside a sandboxed preview. Edit the template to change markup (Update).
+              </Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={2.5}>
+              {!editingId && (
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    required
+                    label="Slug"
+                    placeholder="my_template_key"
+                    value={form.slug}
+                    onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+                    helperText="Lowercase letters, numbers, underscore (3–64 chars)"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }}
+                  />
+                </Grid>
+              )}
+              {!!editingId && (
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Slug"
+                    value={form.slug}
+                    onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }}
+                  />
+                </Grid>
+              )}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   required
-                  label="Slug"
-                  placeholder="my_template_key"
-                  value={form.slug}
-                  onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
-                  helperText="Lowercase letters, numbers, underscore (3–64 chars)"
+                  label="Display name"
+                  value={form.name}
+                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }}
                 />
               </Grid>
-            )}
-            {editingId && (
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Slug"
-                  value={form.slug}
-                  onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+                  label="Description / placeholder hints"
+                  value={form.description}
+                  onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }}
                 />
               </Grid>
-            )}
-            <Grid item xs={12} sm={editingId ? 6 : 6}>
-              <TextField
-                fullWidth
-                required
-                label="Display name"
-                value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }}
-              />
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Email subject"
+                  value={form.subject}
+                  onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  required
+                  multiline
+                  minRows={14}
+                  label="HTML body"
+                  value={form.body_html}
+                  onChange={(e) => setForm((p) => ({ ...p, body_html: e.target.value }))}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff', fontFamily: 'ui-monospace, monospace', fontSize: '0.85rem' } }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={form.is_active}
+                      onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))}
+                      sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#1976d2' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#1976d2' } }}
+                    />
+                  }
+                  label={<Typography sx={{ fontWeight: 600, color: '#37474f' }}>Active (inactive = not used for sending)</Typography>}
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description / placeholder hints"
-                value={form.description}
-                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                label="Email subject"
-                value={form.subject}
-                onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                multiline
-                minRows={14}
-                label="HTML body"
-                value={form.body_html}
-                onChange={(e) => setForm((p) => ({ ...p, body_html: e.target.value }))}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff', fontFamily: 'ui-monospace, monospace', fontSize: '0.85rem' } }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={form.is_active}
-                    onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))}
-                    sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#1976d2' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#1976d2' } }}
-                  />
-                }
-                label={<Typography sx={{ fontWeight: 600, color: '#37474f' }}>Active (inactive = not used for sending)</Typography>}
-              />
-            </Grid>
-          </Grid>
+          )}
         </DialogContent>
-        <DialogActions sx={{ px: { xs: 2, sm: 4 }, py: 2.5, borderTop: '1px solid #e3f2fd', bgcolor: '#f5f9ff', justifyContent: 'flex-end', gap: 1 }}>
-          <Button onClick={() => setOpen(false)} sx={{ textTransform: 'none', fontWeight: 600, color: '#546e7a' }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            disabled={saving}
-            onClick={handleSave}
-            sx={{
-              textTransform: 'none',
-              borderRadius: '12px',
-              px: 4,
-              py: 1.25,
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)'
-            }}
-          >
-            {saving ? 'Saving…' : 'Save template'}
-          </Button>
+        <DialogActions
+          sx={{
+            px: { xs: 2, sm: 4 },
+            py: 2.5,
+            borderTop: '1px solid #e3f2fd',
+            bgcolor: '#f5f9ff',
+            justifyContent: 'flex-end',
+            gap: 1,
+            flexWrap: 'wrap'
+          }}
+        >
+          {dialogMode === 'view' ? (
+            <>
+              <Button onClick={closeDialog} sx={{ textTransform: 'none', fontWeight: 600, color: '#546e7a' }}>
+                Close
+              </Button>
+              <Button
+                color="error"
+                variant="outlined"
+                startIcon={<DeleteIcon />}
+                onClick={() => editingId && handleDelete(editingId, { closeAfter: true })}
+                sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '12px' }}
+              >
+                Delete
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<EditIcon />}
+                onClick={goEditFromView}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: '12px',
+                  px: 3,
+                  py: 1.1,
+                  fontWeight: 700,
+                  background: 'linear-gradient(135deg, #ef6c00 0%, #e65100 100%)'
+                }}
+              >
+                Edit (update)
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={closeDialog} sx={{ textTransform: 'none', fontWeight: 600, color: '#546e7a' }}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                disabled={saving}
+                onClick={handleSave}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: '12px',
+                  px: 4,
+                  py: 1.25,
+                  fontWeight: 700,
+                  background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)'
+                }}
+              >
+                {saving ? 'Saving…' : dialogMode === 'create' ? 'Create template' : 'Save changes'}
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
     </Layout>
