@@ -32,3 +32,6 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+# User-uploaded splash ad images (local dev)
+backend/uploads/

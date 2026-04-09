@@ -2,7 +2,7 @@
  * API base: use REACT_APP_API_URL in production (full URL, no trailing slash).
  * In development, default is relative `/api/v1` so Create React App proxies to `package.json` "proxy" (port 5000).
  */
-function getApiBase() {
+export function getApiBase() {
   const env = process.env.REACT_APP_API_URL;
   if (env && env.trim()) {
     return env.replace(/\/$/, '');

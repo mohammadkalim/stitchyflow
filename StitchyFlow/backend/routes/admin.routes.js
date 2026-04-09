@@ -519,4 +519,7 @@ router.put('/settings', authenticateToken, async (req, res) => {
 // Email templates CRUD (same as /api/v1/email-templates) — admin panel uses this path first.
 router.use('/email-templates', require('./email_templates.routes')());
 
+// Splash ads — admin UI can call /api/v1/admin/ads/... if /api/v1/ads is not registered.
+router.use('/ads', require('./ads.routes')());
+
 module.exports = router;

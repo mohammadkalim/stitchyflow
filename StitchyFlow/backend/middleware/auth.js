@@ -49,7 +49,9 @@ const authenticateToken = async (req, res, next) => {
 
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    const userRole = String(req.user?.role ?? '').toLowerCase();
+    const ok = roles.some((r) => String(r).toLowerCase() === userRole);
+    if (!ok) {
       return res.status(403).json({ success: false, error: { message: 'Access denied' } });
     }
     next();

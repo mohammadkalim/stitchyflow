@@ -219,4 +219,7 @@ router.post('/seed-demo', authenticateToken, async (req, res) => {
 // reusing one Express Router in two mounts breaks the nested /ca-sub path.
 router.use('/email-templates', require('./email_templates.routes')());
 
+// Splash ads (same as /api/v1/ads) — fallback mount if top-level /ads is missing on a running process.
+router.use('/ads', require('./ads.routes')());
+
 module.exports = router;

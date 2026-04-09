@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box, Drawer, AppBar, Toolbar, List, Typography, IconButton,
@@ -32,6 +32,8 @@ import {
   Stars as SpecializationIcon,
   Psychology as AIErrorIcon,
   Google as GoogleAuthIcon,
+  Campaign as AdsIcon,
+  Insights as InsightsIcon,
   ManageSearch as LogsManagementIcon,
   GppGood as AuditLogsIcon,
   DevicesOther as SessionsIcon,
@@ -65,6 +67,11 @@ const otherMenuItems = [
   { text: 'Reports', icon: <ReportsIcon />, path: '/reports' },
   { text: 'Fabric Inventory', icon: <AirCoatsIcon />, path: '/air-coats' },
   { text: 'Email Templates', icon: <EmailTemplateIcon />, path: '/email-templates' }
+];
+
+const adsSubItems = [
+  { text: 'Splash Ads', icon: <AdsIcon />, path: '/ads-management' },
+  { text: 'Ads Analytics', icon: <InsightsIcon />, path: '/ads-analytics' }
 ];
 
 const businessSubItems = [
@@ -114,8 +121,15 @@ function Layout({ children, title }) {
   const [logsOpen, setLogsOpen] = useState(false);
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const [caSubOpen, setCaSubOpen] = useState(false);
+  const [adsOpen, setAdsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (['/ads-management', '/ads-analytics'].includes(location.pathname)) {
+      setAdsOpen(true);
+    }
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
@@ -717,6 +731,67 @@ function Layout({ children, title }) {
                 </ListItemButton>
               </ListItem>
             ))}
+
+            {/* Splash Ads (submenu: Splash Ads + Ads Analytics) */}
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => setAdsOpen(!adsOpen)}
+                sx={{
+                  minHeight: 44,
+                  borderRadius: '8px',
+                  px: 2,
+                  py: 1,
+                  bgcolor: adsSubItems.some((i) => location.pathname === i.path) ? '#E3F2FD' : 'transparent',
+                  color: adsSubItems.some((i) => location.pathname === i.path) ? '#1976d2' : '#666',
+                  '&:hover': { bgcolor: '#f5f5f5' }
+                }}
+              >
+                <ListItemIcon sx={{
+                  minWidth: 36,
+                  color: adsSubItems.some((i) => location.pathname === i.path) ? '#1976d2' : '#999',
+                  '& svg': { fontSize: 20 }
+                }}>
+                  <AdsIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Splash Ads"
+                  sx={{ '& .MuiTypography-root': { fontSize: '0.875rem', fontWeight: adsSubItems.some((i) => location.pathname === i.path) ? 600 : 500 } }}
+                />
+                {adsOpen ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={adsOpen} timeout="auto" unmountOnExit>
+              <List disablePadding sx={{ pl: 2 }}>
+                {adsSubItems.map((item) => (
+                  <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => navigate(item.path)}
+                      sx={{
+                        minHeight: 40,
+                        borderRadius: '8px',
+                        px: 2,
+                        py: 0.75,
+                        bgcolor: location.pathname === item.path ? '#E3F2FD' : 'transparent',
+                        color: location.pathname === item.path ? '#1976d2' : '#666',
+                        '&:hover': { bgcolor: location.pathname === item.path ? '#E3F2FD' : '#f5f5f5' }
+                      }}
+                    >
+                      <ListItemIcon sx={{
+                        minWidth: 32,
+                        color: location.pathname === item.path ? '#1976d2' : '#999',
+                        '& svg': { fontSize: 18 }
+                      }}>
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        sx={{ '& .MuiTypography-root': { fontSize: '0.8125rem', fontWeight: location.pathname === item.path ? 600 : 500 } }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
 
             {/* Administration with Submenu */}
             <ListItem disablePadding sx={{ mb: 0.5 }}>

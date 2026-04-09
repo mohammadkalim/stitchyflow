@@ -5,8 +5,14 @@ const morgan = require('morgan');
 const passport = require('passport');
 require('dotenv').config();
 
+const path = require('path');
+const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const uploadsRoot = path.join(__dirname, 'uploads');
+fs.mkdirSync(path.join(uploadsRoot, 'ads'), { recursive: true });
+app.use('/uploads', express.static(uploadsRoot));
 
 // Middleware
 app.use(helmet());
@@ -18,6 +24,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(passport.initialize());
+
+// Splash ad image upload — register before /api/v1/admin and /api/v1/ca-sub so
+// POST …/admin/ads/upload-image and …/ca-sub/ads/upload-image hit this handler (not 404).
+const adsUploadRouter = require('./routes/ads_upload.routes');
+app.use('/api/v1/ads', adsUploadRouter);
+app.use('/api/v1/admin/ads', adsUploadRouter);
+app.use('/api/v1/ca-sub/ads', adsUploadRouter);
 
 // Routes
 app.use('/api/v1/auth', require('./routes/auth.routes'));
@@ -36,6 +49,7 @@ app.use('/api/v1/tailor-approval', require('./routes/tailor_approval.routes'));
 app.use('/api/v1/sessions',      require('./routes/sessions.routes'));
 app.use('/api/v1/catalog', require('./routes/catalog.public.routes'));
 app.use('/api/v1/email-templates', require('./routes/email_templates.routes')());
+app.use('/api/v1/ads', require('./routes/ads.routes')());
 app.use('/api/v1/ca-sub', require('./routes/ca_sub.routes'));
 
 // Health check
@@ -84,4 +98,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`✓ StitchyFlow Backend API running on port ${PORT}`);
   console.log(`✓ Environment: ${process.env.NODE_ENV}`);
+  console.log(`✓ Splash ad upload routes: POST …/upload-image on /api/v1/ads, /api/v1/admin/ads, /api/v1/ca-sub/ads`);
 });

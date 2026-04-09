@@ -8,7 +8,14 @@
  */
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+/** Ensures paths like /admin/ads resolve under /api/v1 (common misconfig: REACT_APP_API_URL without /api/v1). */
+function normalizeApiBase() {
+  const raw = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1').trim().replace(/\/$/, '');
+  if (/\/api\/v\d+$/i.test(raw)) return raw;
+  return `${raw}/api/v1`;
+}
+
+const API_BASE_URL = normalizeApiBase();
 
 export const api = axios.create({
   baseURL: API_BASE_URL
@@ -38,7 +45,12 @@ api.interceptors.response.use(
       }));
     }
 
-    if (status === 401 || status === 403) {
+    // 401 = unauthenticated → login. 403 = often "no permission" → show error, do not redirect (so Save errors are visible).
+    // Exception: suspended account should still clear session.
+    if (status === 401) {
+      localStorage.removeItem('adminToken');
+      window.location.href = '/login';
+    } else if (status === 403 && error.response?.data?.code === 'ACCOUNT_SUSPENDED') {
       localStorage.removeItem('adminToken');
       window.location.href = '/login';
     }

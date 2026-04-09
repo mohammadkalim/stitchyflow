@@ -8,6 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import SplashScreen, { SPLASH_MS } from '../pages/SplashScreen';
+import SplashAdOverlay from './SplashAdOverlay';
 
 function SplashGate() {
   const navigate = useNavigate();
@@ -33,7 +34,12 @@ function SplashGate() {
     return <SplashScreen durationMs={SPLASH_MS} />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <SplashAdOverlay />
+      <Outlet />
+    </>
+  );
 }
 
 export default SplashGate;

@@ -177,3 +177,39 @@ Admin panel passoword ********** admin123 ***********
 
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+------
+
+
+please i am create a my Splash Ads System Admin panal create a 1 moudle of a Splash Ads Manigment System and please Allchzeae working men ho please men Ad this Admin panal se chalayoo http://localhost:4000/dashboard and this main website per show kare http://localhost:3000/ and please gaga bhe ho kha kha Splash Ads chale Home page http://localhost:3000/home, http://localhost:3000/marketplace/custom-dresses,http://localhost:3000/about,http://localhost:3000/marketplace/fabric-selection,http://localhost:3000/tailor-dashboard,http://localhost:3000/customer-dashboard, please yaha show kare and please jojo gaga Select kare and Ad chal jye and please Add Properly create Admin panal System Properly sidebar create a 1 page of Ads and please sidebar men os page ko khole and sidebar men os page ke andar 2 pages of Slash Ads , Ads Analitys 
+
+
+_______ Datbase _________
+
+
+please Database create a Table of Ads Analitys and Splash Ads 
+
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

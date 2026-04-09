@@ -47,6 +47,8 @@ import PendingSessions from './pages/sessions/PendingSessions';
 import CategoriesPage from './pages/CategoriesPage';
 import SubcategoriesPage from './pages/SubcategoriesPage';
 import EmailTemplatesPage from './pages/EmailTemplatesPage';
+import AdsManagement from './pages/AdsManagement';
+import AdsAnalytics from './pages/AdsAnalytics';
 
 const theme = createTheme({
   palette: {
@@ -95,6 +97,8 @@ function App() {
           <Route path="/site-settings" element={<PrivateRoute><SiteSettings /></PrivateRoute>} />
           <Route path="/site-maintenance" element={<PrivateRoute><SiteMaintenanceMode /></PrivateRoute>} />
           <Route path="/add-more-smtp" element={<PrivateRoute><AddMoreSMTP /></PrivateRoute>} />
+          <Route path="/ads-management" element={<PrivateRoute><AdsManagement /></PrivateRoute>} />
+          <Route path="/ads-analytics" element={<PrivateRoute><AdsAnalytics /></PrivateRoute>} />
           <Route path="/business" element={<PrivateRoute><Business /></PrivateRoute>} />
           <Route path="/business/tailer-verifications" element={<PrivateRoute><TailerVerifications /></PrivateRoute>} />
           <Route path="/business/tailors-shops" element={<PrivateRoute><TailorsShops /></PrivateRoute>} />
