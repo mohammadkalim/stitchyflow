@@ -80,33 +80,24 @@ function Dashboard() {
     <Layout title="Dashboard">
       <Box>
         {/* Header Section */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexWrap: 'wrap', gap: 2, mb: 3 }}>
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.5, fontSize: { xs: '1.4rem', sm: '2rem' } }}>
               Dashboard
             </Typography>
             <Typography variant="body2" sx={{ color: '#666' }}>
               Welcome back, Admin! Here's your daily overview.
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ color: '#999' }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Typography variant="caption" sx={{ color: '#999', display: { xs: 'none', sm: 'block' } }}>
               Updated: {new Date().toLocaleTimeString()}
             </Typography>
             <Button
               startIcon={<RefreshIcon />}
               variant="outlined"
               size="small"
-              sx={{ 
-                borderRadius: '8px', 
-                textTransform: 'none',
-                borderColor: '#e0e0e0',
-                color: '#666',
-                '&:hover': {
-                  borderColor: '#bdbdbd',
-                  bgcolor: '#f5f5f5'
-                }
-              }}
+              sx={{ borderRadius: '8px', textTransform: 'none', borderColor: '#e0e0e0', color: '#666', '&:hover': { borderColor: '#bdbdbd', bgcolor: '#f5f5f5' } }}
             >
               Refresh
             </Button>
@@ -114,18 +105,9 @@ function Dashboard() {
               startIcon={<DownloadIcon />}
               variant="contained"
               size="small"
-              sx={{ 
-                borderRadius: '8px', 
-                textTransform: 'none',
-                background: '#5B5FED',
-                boxShadow: 'none',
-                '&:hover': { 
-                  background: '#4A4DD8',
-                  boxShadow: '0 2px 8px rgba(91, 95, 237, 0.3)'
-                }
-              }}
+              sx={{ borderRadius: '8px', textTransform: 'none', background: '#5B5FED', boxShadow: 'none', '&:hover': { background: '#4A4DD8' } }}
             >
-              Download Report
+              Download
             </Button>
           </Box>
         </Box>

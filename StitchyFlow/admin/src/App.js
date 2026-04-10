@@ -60,6 +60,36 @@ const theme = createTheme({
       default: '#ffffff',
       paper: '#ffffff'
     }
+  },
+  breakpoints: {
+    values: { xs: 0, sm: 600, md: 900, lg: 1200, xl: 1536 }
+  },
+  components: {
+    MuiTableContainer: {
+      styleOverrides: {
+        root: {
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+        }
+      }
+    },
+    MuiDialog: {
+      defaultProps: { fullWidth: true },
+      styleOverrides: {
+        paper: {
+          '@media (max-width:600px)': {
+            margin: 8,
+            width: 'calc(100% - 16px)',
+            maxWidth: '100%',
+          }
+        }
+      }
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: { textTransform: 'none' }
+      }
+    }
   }
 });
 

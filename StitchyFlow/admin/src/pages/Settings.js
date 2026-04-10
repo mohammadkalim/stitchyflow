@@ -740,7 +740,7 @@ function Settings() {
   return (
     <Layout title="Settings">
       {/* Page Header */}
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
             Settings
@@ -767,16 +767,17 @@ function Settings() {
         </Box>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', flexDirection: { xs: 'column', md: 'row' } }}>
         {/* Left Sidebar Nav */}
         <Paper sx={{
-          width: 220, flexShrink: 0,
+          width: { xs: '100%', md: 220 }, flexShrink: 0,
           borderRadius: '12px',
           border: '1px solid #e5e7eb',
           boxShadow: 'none',
           overflow: 'hidden',
           p: 1,
         }}>
+          <Box sx={{ display: 'flex', flexWrap: { xs: 'wrap', md: 'nowrap' }, flexDirection: { xs: 'row', md: 'column' } }}>
           {NAV_ITEMS.map((item) => {
             const active = activeTab === item.key;
             return (
@@ -788,24 +789,29 @@ function Settings() {
                   px: 2, py: 1.2,
                   borderRadius: '8px',
                   cursor: 'pointer',
-                  mb: 0.5,
+                  mb: { xs: 0, md: 0.5 },
+                  mr: { xs: 0.5, md: 0 },
                   bgcolor: active ? '#eff6ff' : 'transparent',
                   color: active ? '#2196F3' : '#374151',
-                  borderLeft: active ? '3px solid #2196F3' : '3px solid transparent',
+                  borderLeft: { xs: 'none', md: active ? '3px solid #2196F3' : '3px solid transparent' },
+                  borderBottom: { xs: active ? '2px solid #2196F3' : '2px solid transparent', md: 'none' },
                   fontWeight: active ? 600 : 400,
                   transition: 'all 0.15s',
                   '&:hover': { bgcolor: active ? '#eff6ff' : '#f9fafb' },
+                  minWidth: { xs: 'auto', md: 'unset' },
+                  flex: { xs: '0 0 auto', md: 'unset' },
                 }}
               >
                 <Box sx={{ color: active ? '#2196F3' : '#9ca3af', display: 'flex' }}>
                   {item.icon}
                 </Box>
-                <Typography variant="body2" sx={{ fontWeight: active ? 600 : 400, color: 'inherit' }}>
+                <Typography variant="body2" sx={{ fontWeight: active ? 600 : 400, color: 'inherit', whiteSpace: 'nowrap' }}>
                   {item.label}
                 </Typography>
               </Box>
             );
           })}
+          </Box>
         </Paper>
 
         {/* Right Content Panel */}

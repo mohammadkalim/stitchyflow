@@ -1,0 +1,64 @@
+/*
+ * Global Responsive Styles — Admin Panel
+ * Developer by: Muhammad Kalim
+ * Product of LogixInventor (PVT) Ltd.
+ */
+
+/* Make all MUI TableContainers scroll horizontally on small screens */
+.MuiTableContainer-root {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text overflow in table cells on mobile */
+.MuiTableCell-root {
+  white-space: nowrap;
+}
+
+/* Allow wrapping in description/label cells */
+.MuiTableCell-root.wrap-cell {
+  white-space: normal;
+}
+
+/* Responsive dialog — full screen on mobile */
+@media (max-width: 600px) {
+  .MuiDialog-paper {
+    margin: 8px !important;
+    width: calc(100% - 16px) !important;
+    max-width: 100% !important;
+    border-radius: 16px !important;
+  }
+
+  /* Stack filter rows on mobile */
+  .filter-row {
+    flex-direction: column !important;
+  }
+
+  /* Full width inputs on mobile */
+  .filter-row .MuiFormControl-root,
+  .filter-row .MuiTextField-root {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+}
+
+/* Smooth scrollbar for sidebar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bdbdbd;
+}
+
+/* Prevent horizontal overflow on main body */
+body {
+  overflow-x: hidden;
+}

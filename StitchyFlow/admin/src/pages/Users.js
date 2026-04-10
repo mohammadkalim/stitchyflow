@@ -403,20 +403,20 @@ function Users() {
   return (
     <Layout title="User Management">
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-          <PeopleIcon sx={{ fontSize: 32, color: '#2563EB' }} />
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B' }}>
+          <PeopleIcon sx={{ fontSize: { xs: 24, sm: 32 }, color: '#2563EB' }} />
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#1E293B', fontSize: { xs: '1.3rem', sm: '2rem' } }}>
             User Management
           </Typography>
         </Box>
-        <Typography variant="body1" sx={{ color: '#64748B' }}>
+        <Typography variant="body1" sx={{ color: '#64748B', fontSize: { xs: '0.85rem', sm: '1rem' } }}>
           Manage users, vendors, and their verification status for StitchyFlow platform
         </Typography>
       </Box>
 
       {/* Stats Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 3, mb: 4 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: { xs: 1.5, sm: 3 }, mb: 3 }}>
         <Paper sx={{ p: 3, borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ width: 56, height: 56, borderRadius: '12px', bgcolor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -468,13 +468,13 @@ function Users() {
 
 
       {/* Filters Section */}
-      <Paper sx={{ p: 3, mb: 3, borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3, borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
-            placeholder="Search users by name, email, or phone..."
+            placeholder="Search users..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ flexGrow: 1, minWidth: 300 }}
+            sx={{ flexGrow: 1, minWidth: { xs: '100%', sm: 200 } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -590,13 +590,13 @@ function Users() {
 
       {/* Users Table */}
       <Paper sx={{ borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-        <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0' }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E293B' }}>Users</Typography>
+        <Box sx={{ p: { xs: 2, sm: 3 }, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E293B', fontSize: { xs: '1rem', sm: '1.25rem' } }}>Users</Typography>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={openAdd}
-            sx={{ bgcolor: '#2563EB', borderRadius: '12px', textTransform: 'none', fontWeight: 600, px: 3, '&:hover': { bgcolor: '#1D4ED8' } }}
+            sx={{ bgcolor: '#2563EB', borderRadius: '12px', textTransform: 'none', fontWeight: 600, px: { xs: 2, sm: 3 }, '&:hover': { bgcolor: '#1D4ED8' } }}
           >
             Add
           </Button>
