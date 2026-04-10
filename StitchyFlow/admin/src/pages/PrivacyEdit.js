@@ -85,7 +85,9 @@ function SimpleToolbar({ targetId }) {
       });
 
       const imageUrl = res.data.data.imageUrl;
-      const fullUrl = `http://localhost:5000${imageUrl}`;
+      const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+      const baseUrl = apiBase.replace('/api/v1', '');
+      const fullUrl = `${baseUrl}${imageUrl}`;
 
       document.getElementById(targetId)?.focus();
       document.execCommand('insertImage', false, fullUrl);

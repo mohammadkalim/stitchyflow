@@ -1,16 +1,17 @@
 /**
- * About Page - Dynamic content from database
+ * Sitemap Page - Dynamic content from database
  * Developer by: Muhammad Kalim
  * Phone/WhatsApp: +92 333 3836851
  * Product of LogixInventor (PVT) Ltd.
  * Email: info@logixinventor.com
  * Website: www.logixinventor.com
  */
+
 import React, { useState, useEffect } from 'react';
 import { Box, Container, Typography, CircularProgress, Paper, Alert } from '@mui/material';
 import { gex } from '../../utils/api';
 
-function About() {
+function Sitemap() {
   const [pageData, setPageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,15 +20,15 @@ function About() {
     const fetchPageData = async () => {
       try {
         setLoading(true);
-        const response = await gex('/privacy-pages/about');
+        const response = await gex('/privacy-pages/sitemap');
         if (response.success && response.data) {
           setPageData(response.data);
         } else {
-          setError('Failed to load about page');
+          setError('Failed to load sitemap');
         }
       } catch (err) {
-        console.error('Error fetching about page:', err);
-        setError('Failed to load about page. Please try again later.');
+        console.error('Error fetching sitemap:', err);
+        setError('Failed to load sitemap. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -55,7 +56,7 @@ function About() {
   if (!pageData) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="info">About page not found.</Alert>
+        <Alert severity="info">Sitemap not found.</Alert>
       </Container>
     );
   }
@@ -133,4 +134,4 @@ function About() {
   );
 }
 
-export default About;
+export default Sitemap;

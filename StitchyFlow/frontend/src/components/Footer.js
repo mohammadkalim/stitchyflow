@@ -238,10 +238,14 @@ function Footer() {
           </Box>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
-            {['Privacy', 'Terms', 'Sitemap'].map((item) => (
-              <Box key={item} onClick={() => {}}
+            {[
+              { label: 'Privacy', path: '/privacy' },
+              { label: 'Terms', path: '/terms' },
+              { label: 'Sitemap', path: '/sitemap' },
+            ].map((item) => (
+              <Box key={item.label} onClick={() => navigate(item.path)}
                 sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', cursor: 'pointer', '&:hover': { color: '#fff' } }}>
-                {item}
+                {item.label}
               </Box>
             ))}
           </Box>

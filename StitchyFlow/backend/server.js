@@ -17,6 +17,7 @@ const uploadsRoot = path.join(__dirname, 'uploads');
 fs.mkdirSync(path.join(uploadsRoot, 'ads'), { recursive: true });
 fs.mkdirSync(path.join(uploadsRoot, 'chat'), { recursive: true });
 fs.mkdirSync(path.join(uploadsRoot, 'slider'), { recursive: true });
+fs.mkdirSync(path.join(uploadsRoot, 'privacy'), { recursive: true });
 app.use('/uploads', express.static(uploadsRoot));
 
 // Middleware

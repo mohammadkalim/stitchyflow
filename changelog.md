@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-04-10 21:54:00 PKT
+
+- Dynamic Frontend Pages: **implemented live database-driven pages for About, Privacy Policy, Terms & Conditions, and Sitemap**
+  - Created new frontend components: `PrivacyPolicy.js`, `TermsConditions.js`, `Sitemap.js` in `frontend/src/pages/legal/`
+  - Updated `About.js` to fetch content dynamically from database instead of static content
+  - All pages fetch data from `/api/v1/privacy-pages/:key` endpoint and display live from database
+  - Added routes in `App.js`: `/privacy`, `/terms`, `/sitemap` for the new pages
+  - Updated `Footer.js` links to navigate to `/privacy`, `/terms`, `/sitemap` pages
+  - All pages are fully mobile responsive using Material-UI responsive sx props (xs, md breakpoints)
+  - Pages display rich HTML content with proper styling for headings, paragraphs, lists, links, and images
+  - Loading states with circular progress indicators for better UX
+  - Error handling with alert messages for failed API calls
+  - Images in content are responsive with max-width 100% and proper styling
+  - Backend server.js updated to create `uploads/privacy` directory for image storage
+  - Admin panel PrivacyEdit.js updated to use dynamic API base URL instead of hardcoded localhost:5000
+  - Database table `privacy_pages` populated with default content for all four pages
+  - All changes made in Admin Panel reflect immediately on main website (live database updates)
+  - Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
 ## 2026-04-10 20:16:00 PKT
 
 - Privacy Edit feature: **verified and confirmed fully functional**
