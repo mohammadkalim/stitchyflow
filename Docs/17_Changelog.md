@@ -20,7 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-language support
 - Payment gateway integration
 - SMS notifications
-- Social media integration
+
+---
+
+## [1.4.0] - 2026-04-10
+
+### Added - Social Media Links Management (Full Stack)
+- Admin panel Settings page → Social Media tab: full CRUD (Add, Edit, Delete, Toggle active)
+- Each link supports: platform, label, URL, icon color, show in header, show in footer, footer position (left/right), sort order, active status
+- `social_media_links` database table with seed data (Facebook, Instagram, Twitter, YouTube, LinkedIn, TikTok)
+- Backend REST API: GET, POST, PUT, DELETE, PATCH toggle — `/api/v1/social-media`
+- Frontend `Header.js` now dynamically fetches and displays active social icons marked `show_header=true`
+- Frontend `Footer.js` now dynamically fetches and displays active social icons split by `footer_position` (left in brand column, right in contact column)
+- Fallback static icons in footer if no DB links are configured
 
 ---
 
