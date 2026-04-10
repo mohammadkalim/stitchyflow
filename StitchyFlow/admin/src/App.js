@@ -51,6 +51,7 @@ import SubcategoriesPage from './pages/SubcategoriesPage';
 import EmailTemplatesPage from './pages/EmailTemplatesPage';
 import AdsManagement from './pages/AdsManagement';
 import AdsAnalytics from './pages/AdsAnalytics';
+import SliderMedia from './pages/SliderMedia';
 
 const theme = createTheme({
   palette: {
@@ -125,6 +126,7 @@ function App() {
           <Route path="/sessions/pending"   element={<PrivateRoute><PendingSessions /></PrivateRoute>} />
           <Route path="/ca-sub/category"    element={<PrivateRoute><CategoriesPage /></PrivateRoute>} />
           <Route path="/ca-sub/subcategory" element={<PrivateRoute><SubcategoriesPage /></PrivateRoute>} />
+          <Route path="/slider-media"       element={<PrivateRoute><SliderMedia /></PrivateRoute>} />
         </Routes>
       </Router>
     </ThemeProvider>

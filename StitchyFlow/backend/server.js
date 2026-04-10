@@ -16,6 +16,7 @@ const PORT = process.env.PORT || 5000;
 const uploadsRoot = path.join(__dirname, 'uploads');
 fs.mkdirSync(path.join(uploadsRoot, 'ads'), { recursive: true });
 fs.mkdirSync(path.join(uploadsRoot, 'chat'), { recursive: true });
+fs.mkdirSync(path.join(uploadsRoot, 'slider'), { recursive: true });
 app.use('/uploads', express.static(uploadsRoot));
 
 // Middleware
@@ -56,6 +57,7 @@ app.use('/api/v1/email-templates', require('./routes/email_templates.routes')())
 app.use('/api/v1/ads', require('./routes/ads.routes')());
 app.use('/api/v1/ca-sub', require('./routes/ca_sub.routes'));
 app.use('/api/v1/chat', require('./routes/chat.routes'));
+app.use('/api/v1/slider-media', require('./routes/slider_media.routes'));
 
 // Health check
 app.get('/health', (req, res) => {

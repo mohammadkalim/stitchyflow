@@ -46,9 +46,9 @@ import {
   HistoryToggleOff as SessionLogsIcon,
   AccountTree as CASubIcon,
   Label as SubcategoryIcon,
-  Article as EmailTemplateIcon
+  Article as EmailTemplateIcon,
+  Slideshow as SlideshowIcon
 } from '@mui/icons-material';
-
 const drawerWidth = 240;
 
 const menuItems = [
@@ -797,8 +797,29 @@ function Layout({ children, title }) {
               </List>
             </Collapse>
 
-            {/* Administration with Submenu */}
+            {/* Slider Media */}
             <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                onClick={() => navigate('/slider-media')}
+                sx={{
+                  minHeight: 44, borderRadius: '8px', px: 2, py: 1,
+                  bgcolor: location.pathname === '/slider-media' ? '#f3e8ff' : 'transparent',
+                  color: location.pathname === '/slider-media' ? '#7c3aed' : '#666',
+                  '&:hover': { bgcolor: location.pathname === '/slider-media' ? '#f3e8ff' : '#f5f5f5' }
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 36, color: location.pathname === '/slider-media' ? '#7c3aed' : '#999', '& svg': { fontSize: 20 } }}>
+                  <SlideshowIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Slider Media"
+                  sx={{ '& .MuiTypography-root': { fontSize: '0.875rem', fontWeight: location.pathname === '/slider-media' ? 600 : 500 } }}
+                />
+                <Chip label="NEW" size="small" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 600, bgcolor: '#7c3aed', color: '#fff' }} />
+              </ListItemButton>
+            </ListItem>
+
+            {/* Administration with Submenu */}            <ListItem disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => setAdminOpen(!adminOpen)}
                 sx={{
