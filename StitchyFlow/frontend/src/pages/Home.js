@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box, Typography, Button, Container, Grid, Card, CardContent,
   Avatar, Rating, TextField, MenuItem, InputAdornment, Paper,
@@ -19,7 +19,7 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { apiFetch } from '../utils/api';
+import { apiFetch, gex } from '../utils/api';
 
 const btnStyles = `
   @keyframes shimmer {
@@ -125,13 +125,18 @@ function Home() {
     return s?.name || '';
   }, [subcategory, subcategories]);
 
+  const reviewsRef = useRef(null);
+  const handleViewAllReviews = () => {
+    reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         setCategoriesLoading(true);
         setCategoriesError('');
-        const res = await apiFetch('/catalog/categories');
+        const res = await gex('/catalog/categories');
         if (!cancelled) setCategories(Array.isArray(res?.data) ? res.data : []);
       } catch (err) {
         if (!cancelled) {
@@ -163,7 +168,7 @@ function Home() {
     (async () => {
       try {
         setSubcategoriesLoading(true);
-        const res = await apiFetch(`/catalog/subcategories?category_id=${encodeURIComponent(category)}`);
+        const res = await gex(`/catalog/subcategories?category_id=${encodeURIComponent(category)}`);
         if (!cancelled) setSubcategories(Array.isArray(res?.data) ? res.data : []);
       } catch {
         if (!cancelled) setSubcategories([]);
@@ -655,7 +660,7 @@ function Home() {
       </Box>
 
       {/* What Our Customers Say */}
-      <Box sx={{ py: 8, bgcolor: '#f0f4ff' }}>
+      <Box ref={reviewsRef} sx={{ py: 8, bgcolor: '#f0f4ff' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 5 }}>
             <Typography variant="h4" sx={{ fontWeight: 800, color: '#1a1a2e', mb: 1 }}>
@@ -697,6 +702,7 @@ function Home() {
 
           <Box sx={{ textAlign: 'center', mt: 5 }}>
             <Button variant="text" endIcon={<ArrowForwardIcon />}
+              onClick={handleViewAllReviews}
               sx={{ color: '#2563eb', fontWeight: 600, textTransform: 'none', fontSize: '0.95rem' }}>
               View all reviews
             </Button>

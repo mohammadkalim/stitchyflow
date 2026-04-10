@@ -5,7 +5,6 @@ import {
   Dialog, DialogContent, CircularProgress, Alert
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
@@ -17,6 +16,13 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import Header from '../components/Header';
 import { apiFetch } from '../utils/api';
+import {
+  normalizePhone,
+  validateEmail,
+  validatePassword,
+  validatePhone,
+  passwordRequirements,
+} from '../utils/validators';
 
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
@@ -100,38 +106,56 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      return showPopup('Please enter both first name and last name.');
+    }
+    if (!validateEmail(formData.email)) {
+      return showPopup('Please enter a valid email address.');
+    }
+    if (!validatePhone(formData.phone)) {
+      return showPopup('Please enter a valid phone number with 10 to 15 digits.');
+    }
+    if (!validatePassword(formData.password)) {
+      return showPopup(`Password is too weak. ${passwordRequirements}`);
+    }
     if (formData.password !== formData.confirmPassword) {
       return showPopup('Passwords do not match. Please try again.');
     }
     if (!agreed) {
       return showPopup('Please agree to the Terms of Service and Privacy Policy.');
     }
-    
+
     setLoading(true);
     try {
-      // Send verification code
-      const response = await axios.post('http://localhost:5000/api/v1/verification/register/send-code', {
-        email: formData.email,
+      const payload = {
+        email: formData.email.trim(),
         password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        phone: normalizePhone(formData.phone),
         role: formData.role,
-        customerType: formData.customerType
+        customerType: formData.customerType,
+      };
+
+      const response = await apiFetch('/verification/register/send-code', {
+        method: 'POST',
+        body: JSON.stringify(payload),
       });
-      
-      if (response.data.success) {
-        // Navigate to verification page
+
+      if (response?.success) {
         navigate('/verify-code', {
           state: {
-            email: formData.email,
-            formData: formData,
-            expiresIn: response.data.data.expiresIn
-          }
+            email: formData.email.trim(),
+            formData,
+            expiresIn: response.data?.expiresIn,
+          },
         });
+      } else {
+        showPopup('Unable to send verification code. Please try again.');
       }
     } catch (error) {
-      showPopup(error.response?.data?.error?.message || 'Failed to send verification code. Please try again.');
+      showPopup(error.message || 'Failed to send verification code. Please try again.');
     } finally {
       setLoading(false);
     }

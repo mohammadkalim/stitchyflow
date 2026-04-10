@@ -4,7 +4,7 @@ import {
   CircularProgress, Link, Chip
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { apiFetch } from '../utils/api';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -92,13 +92,13 @@ function VerifyCode() {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/verification/register/verify', {
-        email,
-        code: fullCode
+      const response = await apiFetch('/verification/register/verify', {
+        method: 'POST',
+        body: JSON.stringify({ email, code: fullCode }),
       });
 
-      if (response.data.success) {
-        const { accessToken, user } = response.data.data;
+      if (response.success) {
+        const { accessToken, user } = response.data;
         localStorage.setItem('token', accessToken);
         localStorage.setItem('user', JSON.stringify(user));
         
@@ -113,12 +113,12 @@ function VerifyCode() {
         }
       }
     } catch (error) {
-      const errorData = error.response?.data?.error;
-      if (errorData?.code === 'CODE_EXPIRED') {
+      const message = error?.message || 'Invalid verification code. Please try again.';
+      if (/CODE_EXPIRED/i.test(message)) {
         setIsExpired(true);
         showPopup('Verification code has expired. Please request a new code.');
       } else {
-        showPopup(errorData?.message || 'Invalid verification code. Please try again.');
+        showPopup(message);
       }
     } finally {
       setLoading(false);
@@ -128,18 +128,19 @@ function VerifyCode() {
   const handleResend = async () => {
     setResendLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/verification/register/resend-code', {
-        email
+      const response = await apiFetch('/verification/register/resend-code', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
       });
 
-      if (response.data.success) {
-        setTimeLeft(response.data.data.expiresIn);
+      if (response.success) {
+        setTimeLeft(response.data.expiresIn);
         setIsExpired(false);
         setCode(['', '', '', '', '', '']);
         showPopup('New verification code sent to your email!', 'success');
       }
     } catch (error) {
-      showPopup(error.response?.data?.error?.message || 'Failed to resend code');
+      showPopup(error.message || 'Failed to resend code');
     } finally {
       setResendLoading(false);
     }

@@ -5,7 +5,8 @@ import {
   Dialog, DialogContent
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { apiFetch } from '../utils/api';
+import { validateEmail } from '../utils/validators';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -27,13 +28,24 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateEmail(formData.email)) {
+      return showPopup('Please enter a valid email address.');
+    }
+    if (!formData.password) {
+      return showPopup('Please enter your password.');
+    }
+
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/auth/login', formData);
-      const { accessToken, user } = response.data.data;
+      const response = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(formData),
+      });
+
+      const { accessToken, user } = response.data;
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
 
-      // Check if account was previously suspended and is now active (re-activated)
       const wasActivated = localStorage.getItem('accountWasActivated');
       if (wasActivated === user.email) {
         localStorage.removeItem('accountWasActivated');
@@ -48,15 +60,8 @@ function Login() {
       if (user.role === 'tailor') navigate('/tailor-dashboard');
       else navigate('/customer-dashboard');
     } catch (error) {
-      const code = error.response?.data?.code;
-      const msg  = error.response?.data?.error?.message || 'Login failed. Please try again.';
-      if (code === 'ACCOUNT_SUSPENDED') {
-        // Store email so we can show activated popup when they log in after reactivation
-        localStorage.setItem('accountWasActivated', formData.email);
-        showPopup('🚫 Your account has been suspended. Please contact support for assistance.', 'suspended');
-      } else {
-        showPopup(msg);
-      }
+      const msg = error.message || 'Login failed. Please try again.';
+      showPopup(msg);
     }
   };
 
@@ -231,7 +236,7 @@ function Login() {
             bgcolor: '#fff',
             '&:hover': { bgcolor: '#f9fafb', borderColor: '#d1d5db' },
           }}
-            onClick={() => window.location.href = 'http://localhost:5000/api/v1/auth/google'}
+            onClick={() => window.location.href = '/api/v1/auth/google'}
             startIcon={
               <Box component="img"
                 src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"

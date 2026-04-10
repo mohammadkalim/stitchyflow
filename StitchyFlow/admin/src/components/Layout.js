@@ -19,6 +19,7 @@ import {
   Email as SMTPIcon,
   Language as SiteSettingsIcon,
   Build as MaintenanceIcon,
+  Refresh as RefreshIcon,
   Person as PersonIcon,
   Business as BusinessIcon,
   VerifiedUser as VerificationIcon,
@@ -34,6 +35,7 @@ import {
   Google as GoogleAuthIcon,
   Campaign as AdsIcon,
   Insights as InsightsIcon,
+  Chat as ChatIcon,
   ManageSearch as LogsManagementIcon,
   GppGood as AuditLogsIcon,
   DevicesOther as SessionsIcon,
@@ -65,6 +67,7 @@ const otherMenuItems = [
   { text: 'Measurements', icon: <MeasurementsIcon />, path: '/measurements', badge: 'NEW' },
   { text: 'Payments', icon: <PaymentIcon />, path: '/payments' },
   { text: 'Reports', icon: <ReportsIcon />, path: '/reports' },
+  { text: 'Chat Management', icon: <ChatIcon />, path: '/chat', badge: 'NEW' },
   { text: 'Fabric Inventory', icon: <AirCoatsIcon />, path: '/air-coats' },
   { text: 'Email Templates', icon: <EmailTemplateIcon />, path: '/email-templates' }
 ];
@@ -89,6 +92,7 @@ const businessSubItems = [
 const adminSubItems = [
   { text: 'SMTP Settings', icon: <SMTPIcon />, path: '/smtp-settings' },
   { text: 'Admin Settings', icon: <AdminSettingsIcon />, path: '/admin-settings' },
+  { text: 'Admin Refresh Tokens', icon: <RefreshIcon />, path: '/admin-refresh-tokens', badge: 'NEW' },
   { text: 'Site Settings', icon: <SiteSettingsIcon />, path: '/site-settings' },
   { text: 'Site Maintenance', icon: <MaintenanceIcon />, path: '/site-maintenance' },
   { text: 'AI Error Handling', icon: <AIErrorIcon />, path: '/ai-error-handling', badge: 'AI' },

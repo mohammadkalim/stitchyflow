@@ -295,6 +295,54 @@ CREATE TABLE ads_analytics (
     UNIQUE KEY ads_page_unique (ad_id, page)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 1.14 follows Table
+CREATE TABLE follows (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    follower_id INT NOT NULL,
+    following_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_follow (follower_id, following_id),
+    FOREIGN KEY (follower_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (following_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_follower (follower_id),
+    INDEX idx_following (following_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 1.15 conversations Table
+CREATE TABLE conversations (
+    conversation_id INT PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT NOT NULL,
+    tailor_id INT NOT NULL,
+    last_message TEXT,
+    last_message_type ENUM('text','image','pdf') DEFAULT 'text',
+    unread_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_conversation (customer_id, tailor_id),
+    FOREIGN KEY (customer_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (tailor_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_customer (customer_id),
+    INDEX idx_tailor (tailor_id),
+    INDEX idx_updated (updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 1.16 messages Table
+CREATE TABLE messages (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    conversation_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    message_type ENUM('text','image','pdf') DEFAULT 'text',
+    body TEXT,
+    file_url VARCHAR(1024),
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_conversation (conversation_id),
+    INDEX idx_sender (sender_id),
+    INDEX idx_is_read (is_read)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- =====================================================
 -- SECTION 2: CHECK CONSTRAINTS
 -- =====================================================

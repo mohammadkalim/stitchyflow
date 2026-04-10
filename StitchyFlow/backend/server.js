@@ -3,15 +3,19 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const passport = require('passport');
+const http = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const path = require('path');
 const fs = require('fs');
+const db = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 const uploadsRoot = path.join(__dirname, 'uploads');
 fs.mkdirSync(path.join(uploadsRoot, 'ads'), { recursive: true });
+fs.mkdirSync(path.join(uploadsRoot, 'chat'), { recursive: true });
 app.use('/uploads', express.static(uploadsRoot));
 
 // Middleware
@@ -51,6 +55,7 @@ app.use('/api/v1/catalog', require('./routes/catalog.public.routes'));
 app.use('/api/v1/email-templates', require('./routes/email_templates.routes')());
 app.use('/api/v1/ads', require('./routes/ads.routes')());
 app.use('/api/v1/ca-sub', require('./routes/ca_sub.routes'));
+app.use('/api/v1/chat', require('./routes/chat.routes'));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -95,8 +100,55 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, error: { message: 'Internal server error' } });
 });
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:3000', 'http://localhost:4000', process.env.FRONTEND_URL, process.env.ADMIN_URL].filter(Boolean),
+    credentials: true
+  }
+});
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  socket.on('join_conversation', ({ conversationId }) => {
+    if (conversationId) {
+      socket.join(`conversation_${conversationId}`);
+    }
+  });
+
+  socket.on('leave_conversation', ({ conversationId }) => {
+    if (conversationId) {
+      socket.leave(`conversation_${conversationId}`);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    // Socket disconnected
+  });
+});
+
+async function cleanupExpiredRefreshTokens() {
+  try {
+    const [result] = await db.query(
+      'DELETE FROM refresh_tokens WHERE expires_at <= NOW()'
+    );
+    if (result && result.affectedRows > 0) {
+      console.log(`✓ Cleaned ${result.affectedRows} expired refresh token(s)`);
+    }
+  } catch (error) {
+    console.error('Failed to clean expired refresh tokens:', error.message);
+  }
+}
+
+function scheduleRefreshTokenCleanup(intervalMs = 1000 * 60 * 60) {
+  cleanupExpiredRefreshTokens();
+  setInterval(cleanupExpiredRefreshTokens, intervalMs);
+}
+
+server.listen(PORT, () => {
   console.log(`✓ StitchyFlow Backend API running on port ${PORT}`);
   console.log(`✓ Environment: ${process.env.NODE_ENV}`);
   console.log(`✓ Splash ad upload routes: POST …/upload-image on /api/v1/ads, /api/v1/admin/ads, /api/v1/ca-sub/ads`);
+  scheduleRefreshTokenCleanup();
 });

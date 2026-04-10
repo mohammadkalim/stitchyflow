@@ -11,6 +11,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
+const fs = require('fs');
+const path = require('path');
 
 const ADMIN_SETTINGS_SCHEMA = {
   site_name: { type: 'string', default: 'StitchyFlow', description: 'Platform name shown in admin panel' },
@@ -44,6 +46,303 @@ function fromStorageValue(type, value, fallback) {
     return Number.isNaN(parsed) ? fallback : parsed;
   }
   return value;
+}
+
+const STORAGE_TABLES = [
+  { key: 'refresh_tokens', label: 'Refresh Tokens' },
+  { key: 'session_logs', label: 'Session Logs' },
+  { key: 'user_sessions', label: 'User Sessions' },
+  { key: 'messages', label: 'Chat Messages' },
+  { key: 'ai_error_logs', label: 'AI Error Logs' },
+  { key: 'audit_logs', label: 'Audit Logs' }
+];
+
+function normalizePublicFileUrl(fileUrl = '') {
+  const value = String(fileUrl || '').trim();
+  if (!value) return '';
+  if (value.startsWith('/')) return value;
+  const uploadsIndex = value.indexOf('/uploads/');
+  if (uploadsIndex >= 0) return value.slice(uploadsIndex);
+  return '';
+}
+
+async function collectDirectoryUsageStats(baseDir) {
+  const totals = { bytes: 0, files: 0 };
+  const walk = async (currentDir) => {
+    let entries = [];
+    try {
+      entries = await fs.promises.readdir(currentDir, { withFileTypes: true });
+    } catch (error) {
+      return;
+    }
+
+    await Promise.all(entries.map(async (entry) => {
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(fullPath);
+        return;
+      }
+      if (!entry.isFile()) return;
+      try {
+        const stat = await fs.promises.stat(fullPath);
+        totals.bytes += stat.size;
+        totals.files += 1;
+      } catch (error) {
+        // Ignore inaccessible file stats; continue scanning.
+      }
+    }));
+  };
+
+  await walk(baseDir);
+  return totals;
+}
+
+async function getStorageOverview() {
+  const tableNames = STORAGE_TABLES.map((item) => item.key);
+  const placeholders = tableNames.map(() => '?').join(',');
+  const [tableStorageRows] = await db.query(
+    `SELECT
+       table_name,
+       COALESCE(data_length, 0) + COALESCE(index_length, 0) AS used_bytes,
+       COALESCE(data_free, 0) AS free_bytes,
+       COALESCE(data_length, 0) + COALESCE(index_length, 0) + COALESCE(data_free, 0) AS total_allocated
+     FROM information_schema.TABLES
+     WHERE table_schema = DATABASE()
+       AND table_name IN (${placeholders})`,
+    tableNames
+  );
+
+  const [dbTotals] = await db.query(
+    `SELECT
+       COALESCE(SUM(data_length + index_length), 0) AS used_bytes,
+       COALESCE(SUM(data_free), 0) AS free_bytes
+     FROM information_schema.TABLES
+     WHERE table_schema = DATABASE()`
+  );
+
+  const tableStorageMap = tableStorageRows.reduce((acc, row) => {
+    acc[row.table_name] = row;
+    return acc;
+  }, {});
+
+  const tableCountMap = {};
+  await Promise.all(
+    STORAGE_TABLES.map(async ({ key }) => {
+      const [rows] = await db.query(`SELECT COUNT(*) AS total_rows FROM ${key}`);
+      tableCountMap[key] = Number(rows[0]?.total_rows || 0);
+    })
+  );
+
+  const backendRoot = path.join(__dirname, '..');
+  const uploadsRoot = path.join(backendRoot, 'uploads');
+  const chatDir = path.join(uploadsRoot, 'chat');
+  const adsDir = path.join(uploadsRoot, 'ads');
+  const [chatUsage, adsUsage] = await Promise.all([
+    collectDirectoryUsageStats(chatDir),
+    collectDirectoryUsageStats(adsDir)
+  ]);
+
+  const dbUsedBytes = Number(dbTotals[0]?.used_bytes || 0);
+  const dbFreeBytes = Number(dbTotals[0]?.free_bytes || 0);
+  const dbAllocatedBytes = dbUsedBytes + dbFreeBytes;
+  const filesUsedBytes = chatUsage.bytes + adsUsage.bytes;
+  const storageUsedBytes = dbUsedBytes + filesUsedBytes;
+  const storageAllocatedBytes = dbAllocatedBytes + filesUsedBytes;
+  const storagePercentUsed = storageAllocatedBytes > 0
+    ? Number(((storageUsedBytes / storageAllocatedBytes) * 100).toFixed(1))
+    : 0;
+
+  const modules = STORAGE_TABLES.map(({ key, label }) => {
+    const row = tableStorageMap[key] || {};
+    const usedBytes = Number(row.used_bytes || 0);
+    const freeBytes = Number(row.free_bytes || 0);
+    const allocated = Number(row.total_allocated || (usedBytes + freeBytes));
+    const percentUsed = allocated > 0 ? Number(((usedBytes / allocated) * 100).toFixed(1)) : 0;
+    return {
+      key,
+      label,
+      rows: tableCountMap[key] || 0,
+      used_bytes: usedBytes,
+      free_bytes: freeBytes,
+      percent_used: percentUsed
+    };
+  });
+
+  modules.push(
+    {
+      key: 'uploads_chat',
+      label: 'Chat Upload Files',
+      rows: chatUsage.files,
+      used_bytes: chatUsage.bytes,
+      free_bytes: 0,
+      percent_used: 100
+    },
+    {
+      key: 'uploads_ads',
+      label: 'Ads Upload Files',
+      rows: adsUsage.files,
+      used_bytes: adsUsage.bytes,
+      free_bytes: 0,
+      percent_used: 100
+    }
+  );
+
+  return {
+    storage: {
+      used_bytes: storageUsedBytes,
+      free_bytes: Math.max(storageAllocatedBytes - storageUsedBytes, 0),
+      allocated_bytes: storageAllocatedBytes,
+      percent_used: storagePercentUsed
+    },
+    modules
+  };
+}
+
+async function cleanupStorage(payload = {}) {
+  const cleanup = {
+    expired_refresh_tokens: payload.expired_refresh_tokens !== false,
+    old_session_logs_days: Number(payload.old_session_logs_days || 60),
+    old_ai_error_logs_days: Number(payload.old_ai_error_logs_days || 60),
+    orphan_chat_files: payload.orphan_chat_files !== false
+  };
+
+  const result = {
+    refresh_tokens_deleted: 0,
+    session_logs_deleted: 0,
+    ai_error_logs_deleted: 0,
+    orphan_chat_files_deleted: 0,
+    warnings: []
+  };
+
+  if (cleanup.expired_refresh_tokens) {
+    const [deleted] = await db.query('DELETE FROM refresh_tokens WHERE expires_at <= NOW()');
+    result.refresh_tokens_deleted = Number(deleted.affectedRows || 0);
+  }
+
+  if (cleanup.old_session_logs_days >= 7) {
+    const [deleted] = await db.query(
+      'DELETE FROM session_logs WHERE created_at < (NOW() - INTERVAL ? DAY)',
+      [cleanup.old_session_logs_days]
+    );
+    result.session_logs_deleted = Number(deleted.affectedRows || 0);
+  } else {
+    result.warnings.push('Skipping session_logs cleanup: minimum retention is 7 days.');
+  }
+
+  if (cleanup.old_ai_error_logs_days >= 7) {
+    const [deleted] = await db.query(
+      'DELETE FROM ai_error_logs WHERE created_at < (NOW() - INTERVAL ? DAY)',
+      [cleanup.old_ai_error_logs_days]
+    );
+    result.ai_error_logs_deleted = Number(deleted.affectedRows || 0);
+  } else {
+    result.warnings.push('Skipping ai_error_logs cleanup: minimum retention is 7 days.');
+  }
+
+  if (cleanup.orphan_chat_files) {
+    const [messageFiles] = await db.query(
+      "SELECT file_url FROM messages WHERE file_url IS NOT NULL AND file_url != ''"
+    );
+    const referenced = new Set(
+      messageFiles
+        .map((row) => normalizePublicFileUrl(row.file_url))
+        .filter(Boolean)
+        .map((item) => path.basename(item))
+    );
+
+    const chatUploadRoot = path.join(__dirname, '..', 'uploads', 'chat');
+    let entries = [];
+    try {
+      entries = await fs.promises.readdir(chatUploadRoot, { withFileTypes: true });
+    } catch (error) {
+      result.warnings.push('Chat uploads directory is not available.');
+    }
+
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      if (referenced.has(entry.name)) continue;
+      try {
+        await fs.promises.unlink(path.join(chatUploadRoot, entry.name));
+        result.orphan_chat_files_deleted += 1;
+      } catch (error) {
+        result.warnings.push(`Failed to delete chat file: ${entry.name}`);
+      }
+    }
+  }
+
+  return result;
+}
+
+async function getRefreshTokenMetrics() {
+  const [tokenCounts] = await db.query(
+    `SELECT
+       COUNT(*) AS total_tokens,
+       SUM(expires_at > NOW()) AS active_tokens,
+       SUM(expires_at <= NOW()) AS expired_tokens
+     FROM refresh_tokens`
+  );
+
+  const [activityCounts] = await db.query(
+    `SELECT
+       SUM(action = 'LOGIN') AS login_count,
+       SUM(action = 'LOGOUT') AS logout_count
+     FROM session_logs
+     WHERE action IN ('LOGIN', 'LOGOUT')`
+  );
+
+  const [recentActivity] = await db.query(
+    `SELECT sl.action, sl.ip_address, sl.user_agent, sl.details, sl.created_at,
+            CONCAT(u.first_name, ' ', u.last_name) AS user_name, u.email
+     FROM session_logs sl
+     LEFT JOIN users u ON sl.user_id = u.user_id
+     WHERE sl.action IN ('LOGIN', 'LOGOUT')
+     ORDER BY sl.created_at DESC
+     LIMIT 10`
+  );
+
+  const [storageInfo] = await db.query(
+    `SELECT
+       COALESCE(data_length, 0) + COALESCE(index_length, 0) AS used_bytes,
+       COALESCE(data_free, 0) AS free_bytes,
+       COALESCE(data_length, 0) + COALESCE(index_length, 0) + COALESCE(data_free, 0) AS total_allocated
+     FROM information_schema.TABLES
+     WHERE table_schema = DATABASE() AND table_name = 'refresh_tokens'`
+  );
+
+  const usedBytes = Number(storageInfo[0]?.used_bytes || 0);
+  const freeBytes = Number(storageInfo[0]?.free_bytes || 0);
+  const totalAllocated = Number(storageInfo[0]?.total_allocated || 0);
+  let percentUsed = 0;
+  if (totalAllocated > 0) {
+    percentUsed = Number(((usedBytes / totalAllocated) * 100).toFixed(1));
+  }
+
+  // InnoDB may report zero free space for a small table that is not actually full.
+  // Avoid a misleading 100% full alert when the refresh_tokens table is tiny.
+  if (freeBytes === 0 && totalAllocated <= 2 * 1024 * 1024) {
+    percentUsed = 0;
+  }
+
+  return {
+    total_tokens: tokenCounts[0]?.total_tokens || 0,
+    active_tokens: Number(tokenCounts[0]?.active_tokens || 0),
+    expired_tokens: Number(tokenCounts[0]?.expired_tokens || 0),
+    login_count: Number(activityCounts[0]?.login_count || 0),
+    logout_count: Number(activityCounts[0]?.logout_count || 0),
+    storage: {
+      used_bytes: usedBytes,
+      free_bytes: freeBytes,
+      percent_used: percentUsed
+    },
+    history: recentActivity.map((row) => ({
+      action: row.action,
+      created_at: row.created_at,
+      ip_address: row.ip_address,
+      user_agent: row.user_agent,
+      details: row.details,
+      user_name: row.user_name || row.email || 'Unknown'
+    }))
+  };
 }
 
 // Get Analytics
@@ -483,6 +782,91 @@ router.get('/settings', authenticateToken, async (req, res) => {
     }
 
     res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Get Refresh Token Health and Login/Logout Activity
+router.get('/settings/refresh-tokens', authenticateToken, async (req, res) => {
+  try {
+    const data = await getRefreshTokenMetrics();
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+router.get('/refresh-tokens', authenticateToken, async (req, res) => {
+  try {
+    const data = await getRefreshTokenMetrics();
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Full storage overview for admin panel
+router.get('/storage/overview', authenticateToken, async (req, res) => {
+  try {
+    const data = await getStorageOverview();
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Full storage cleanup for admin panel
+router.post('/storage/cleanup', authenticateToken, async (req, res) => {
+  try {
+    const before = await getStorageOverview();
+    const cleanup = await cleanupStorage(req.body || {});
+    const after = await getStorageOverview();
+    const bytesFreed = Math.max(Number(before.storage.used_bytes || 0) - Number(after.storage.used_bytes || 0), 0);
+
+    res.json({
+      success: true,
+      message: 'Storage cleanup completed successfully.',
+      data: {
+        cleanup,
+        bytes_freed: bytesFreed,
+        before,
+        after
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Cleanup expired refresh tokens
+router.delete('/settings/refresh-tokens/cleanup', authenticateToken, async (req, res) => {
+  try {
+    const [result] = await db.query(
+      'DELETE FROM refresh_tokens WHERE expires_at <= NOW()'
+    );
+
+    res.json({
+      success: true,
+      message: 'Expired refresh tokens cleaned successfully.',
+      deleted_count: result.affectedRows
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+router.delete('/refresh-tokens/cleanup', authenticateToken, async (req, res) => {
+  try {
+    const [result] = await db.query(
+      'DELETE FROM refresh_tokens WHERE expires_at <= NOW()'
+    );
+
+    res.json({
+      success: true,
+      message: 'Expired refresh tokens cleaned successfully.',
+      deleted_count: result.affectedRows
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: { message: error.message } });
   }

@@ -5,7 +5,7 @@ import {
   CircularProgress, Divider
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { apiFetch } from '../utils/api';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -58,15 +58,15 @@ function ForgotPassword() {
 
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/v1/password/check-user/${email}`);
-      if (response.data.success && response.data.data.exists) {
-        setUserData(response.data.data.user);
+      const response = await apiFetch(`/password/check-user/${encodeURIComponent(email)}`);
+      if (response.success && response.data?.exists) {
+        setUserData(response.data.user);
         setActiveStep(1);
       } else {
         showPopup('No account found with this email address');
       }
     } catch (error) {
-      showPopup(error.response?.data?.error?.message || 'Failed to verify email');
+      showPopup(error.message || 'Failed to verify email');
     } finally {
       setLoading(false);
     }
@@ -81,16 +81,16 @@ function ForgotPassword() {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/password/validate', {
-        email,
-        oldPassword
+      const response = await apiFetch('/password/validate', {
+        method: 'POST',
+        body: JSON.stringify({ email, oldPassword }),
       });
 
-      if (response.data.success) {
+      if (response.success) {
         setActiveStep(2);
       }
     } catch (error) {
-      showPopup(error.response?.data?.error?.message || 'Old password is incorrect');
+      showPopup(error.message || 'Old password is incorrect');
     } finally {
       setLoading(false);
     }
@@ -120,20 +120,19 @@ function ForgotPassword() {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/v1/password/update', {
-        email,
-        oldPassword,
-        newPassword
+      const response = await apiFetch('/password/update', {
+        method: 'POST',
+        body: JSON.stringify({ email, oldPassword, newPassword }),
       });
 
-      if (response.data.success) {
+      if (response.success) {
         showPopup('Password updated successfully! Please login with your new password.', 'success');
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       }
     } catch (error) {
-      showPopup(error.response?.data?.error?.message || 'Failed to update password');
+      showPopup(error.message || 'Failed to update password');
     } finally {
       setLoading(false);
     }

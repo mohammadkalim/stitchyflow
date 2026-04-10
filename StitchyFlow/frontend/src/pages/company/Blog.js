@@ -5,6 +5,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PageTemplate from '../../components/PageTemplate';
+import { gex } from '../../utils/api';
 
 const features = [
   { icon: '✂️', title: 'Tailoring Tips', desc: 'Expert advice on measurements, fabric care, and getting the best from your tailor.' },
@@ -32,26 +33,19 @@ function BusinessSlider() {
   const timerRef = useRef(null);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/v1/business/public/shops')
-      .then(r => r.json())
-      .then(data => {
-        if (data.success && data.data.length > 0) {
+    let cancelled = false;
+    const loadShops = async () => {
+      try {
+        const data = await gex('/business/public/shops');
+        if (!cancelled && data.success && Array.isArray(data.data) && data.data.length > 0) {
           setShops(data.data);
-        } else {
-          // Use placeholder data if no shops yet
-          setShops(PLACEHOLDER_IMAGES.map((img, i) => ({
-            shop_id: i,
-            shop_name: ['Royal Stitch Boutique', 'Al-Noor Tailor House', 'Bridal Dreams Studio',
-              'Classic Cuts', 'Fashion Hub', 'Elite Tailors'][i] || `Shop ${i + 1}`,
-            owner_name: ['Kamran Butt', 'Tariq Mehmood', 'Nadia Iqbal',
-              'Ahmed Khan', 'Sara Ali', 'Usman Malik'][i] || 'Owner',
-            city: ['Lahore', 'Karachi', 'Islamabad', 'Faisalabad', 'Rawalpindi', 'Multan'][i] || 'Pakistan',
-            shop_image: img,
-            business_type_name: 'Tailoring',
-          })));
+          return;
         }
-      })
-      .catch(() => {
+      } catch {
+        // ignore, use fallback data below
+      }
+
+      if (!cancelled) {
         setShops(PLACEHOLDER_IMAGES.map((img, i) => ({
           shop_id: i,
           shop_name: ['Royal Stitch Boutique', 'Al-Noor Tailor House', 'Bridal Dreams Studio',
@@ -60,8 +54,18 @@ function BusinessSlider() {
           shop_image: img,
           business_type_name: 'Tailoring',
         })));
-      })
-      .finally(() => setLoading(false));
+      }
+    };
+
+    loadShops().finally(() => {
+      if (!cancelled) {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Auto-advance

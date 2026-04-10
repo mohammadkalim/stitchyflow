@@ -19,8 +19,10 @@ import FlowerBand from './pages/FlowerBand';
 import Payments from './pages/Payments';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import ChatManagement from './pages/ChatManagement';
 import SMTPSettings from './pages/SMTPSettings';
 import AdminSettings from './pages/AdminSettings';
+import AdminRefreshTokens from './pages/AdminRefreshTokens';
 import SiteSettings from './pages/SiteSettings';
 import SiteMaintenanceMode from './pages/SiteMaintenanceMode';
 import AddMoreSMTP from './pages/AddMoreSMTP';
@@ -94,10 +96,12 @@ function App() {
           <Route path="/email-templates" element={<PrivateRoute><EmailTemplatesPage /></PrivateRoute>} />
           <Route path="/smtp-settings" element={<PrivateRoute><SMTPSettings /></PrivateRoute>} />
           <Route path="/admin-settings" element={<PrivateRoute><AdminSettings /></PrivateRoute>} />
+          <Route path="/admin-refresh-tokens" element={<PrivateRoute><AdminRefreshTokens /></PrivateRoute>} />
           <Route path="/site-settings" element={<PrivateRoute><SiteSettings /></PrivateRoute>} />
           <Route path="/site-maintenance" element={<PrivateRoute><SiteMaintenanceMode /></PrivateRoute>} />
           <Route path="/add-more-smtp" element={<PrivateRoute><AddMoreSMTP /></PrivateRoute>} />
           <Route path="/ads-management" element={<PrivateRoute><AdsManagement /></PrivateRoute>} />
+          <Route path="/chat" element={<PrivateRoute><ChatManagement /></PrivateRoute>} />
           <Route path="/ads-analytics" element={<PrivateRoute><AdsAnalytics /></PrivateRoute>} />
           <Route path="/business" element={<PrivateRoute><Business /></PrivateRoute>} />
           <Route path="/business/tailer-verifications" element={<PrivateRoute><TailerVerifications /></PrivateRoute>} />

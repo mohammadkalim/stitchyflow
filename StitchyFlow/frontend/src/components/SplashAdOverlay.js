@@ -16,7 +16,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ImageNotSupportedOutlinedIcon from '@mui/icons-material/ImageNotSupportedOutlined';
-import { getApiBase } from '../utils/api';
+import { getApiBase, gex } from '../utils/api';
 
 const ADS_PREFIXES = ['/admin/ads', '/ca-sub/ads', '/ads'];
 
@@ -65,16 +65,13 @@ function formatDestinationLabel(url) {
 }
 
 async function fetchAdsForPage(pathname) {
-  const base = getApiBase();
   const q = `?page=${encodeURIComponent(pathname)}`;
   for (const prefix of ADS_PREFIXES) {
-    const url = `${base}${prefix}${q}`;
     try {
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const json = await res.json();
-      if (json.success && json.data?.length) {
-        return { data: json.data, adsRoot: `${base}${prefix}` };
+      const json = await gex(`${prefix}${q}`);
+      if (json.success && Array.isArray(json.data) && json.data.length) {
+        const adsRoot = `${getApiBase()}${prefix}`;
+        return { data: json.data, adsRoot };
       }
     } catch {
       /* try next */

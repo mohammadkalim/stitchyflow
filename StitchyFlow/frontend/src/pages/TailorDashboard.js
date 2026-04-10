@@ -6,6 +6,7 @@ import {
   Tooltip, CircularProgress, Badge,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { apiFetch } from '../utils/api';
 import Header from '../components/Header';
 import OverviewSection from './tailor/OverviewSection';
 import MyBusinessesSection from './tailor/MyBusinessesSection';
@@ -87,12 +88,9 @@ function TailorDashboard() {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [showRejected, setShowRejected] = useState(false);
 
-  const fetchApprovalStatus = useCallback(async (token) => {
+  const fetchApprovalStatus = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/v1/tailor-approval/status', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+      const data = await apiFetch('/tailor-approval/status');
       if (data.success) {
         const s = data.data.approval_status;
         setApprovalStatus(s);
@@ -108,9 +106,8 @@ function TailorDashboard() {
     const u = JSON.parse(stored);
     if (u.role !== 'tailor') { navigate('/login'); return; }
     setUser(u);
-    const token = localStorage.getItem('token');
-    fetchApprovalStatus(token);
-    const iv = setInterval(() => fetchApprovalStatus(token), 15000);
+    fetchApprovalStatus();
+    const iv = setInterval(() => fetchApprovalStatus(), 15000);
     return () => clearInterval(iv);
   }, [navigate, fetchApprovalStatus]);
 

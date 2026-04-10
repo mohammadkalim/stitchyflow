@@ -213,3 +213,94 @@ Admin panel passoword ********** admin123 ***********
 
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+
+--------
+
+To help you build this feature, I have crafted a comprehensive prompt you can use with AI coding assistants (like Gemini, Claude, or GPT-4). This prompt specifically targets the complex logic of file handling, permissions, and real-time feedback. The Developer Prompt Task: Build a real-time one-on-one chat system using React, Node.js/Express, Socket.io, and MySQL. Core Feature Requirements: 1. Follow-to-Chat Logic: Only a logged-in User who "Follows" a Shop Tailer can initiate a chat with that Tailer Shop. Implement a middleware check for this relationship in the MySQL follows table. 2. Real-time Messaging: Use Socket.io with private "Rooms" based on conversation_id. 3. File Attachments (Images & PDFs): * Allow image and PDF uploads (limit: 1MB). * Auto-Resize: If an image exceeds 1024x1024, use the sharp library (Node.js) to auto-resize it before saving. 4. Notifications & Sound: * Implement Facebook-style browser notifications when a Customer receives a message and the tab is not active. * Trigger a "New Message" sound alert for both the Business Owner and User upon receiving a message. 5. Unread Count: Update an "unread" badge in real-time, similar to Facebook Messenger. Technical Stack Details: * Backend: Node.js, Express, Socket.io, Multer (for uploads), Sharp (for image processing). * Database: MySQL (using Sequelize ORM preferred). * Frontend: React, Socket.io-client, Howler.js (for sound handling). Recommended System Architecture To make this work seamlessly, your data flow should look like this: 1. MySQL Schema (The Foundation) You will need a specific table structure to handle the "Follow-to-Chat" and "Attachments" logic: Table Key Columns Customer id, username, role (user or business_owner) Follows follower_id, following_id (used to authorize chat) Conversations id, user_id, business_id, last_message Messages id, conversation_id, sender_id, message_type (text/file), file_url, is_read 2. Image Processing Logic (Node.js) Using the sharp library, you can ensure your server stays performant even if users upload huge photos: const sharp = require('sharp'); // Inside your upload controller if (file.mimetype.startsWith('image/')) {
+
+please Admin panal sidebar create a Chat Manigment please this page ke andar All user and  Tailer  Chats show kare please and Admin Delete and Manig kar sak ta hai 
+please create a Full chat System
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+
+---------
+
+please Admin panal Settings page ke andar 1 page create kare Admin Refresh Tokens amd please os page ke andar Admin panal gitne bhe bar login logout ho who show kare and please waha Stroge bhe show kare please gab Stroge 89 ho and please gab Stroge Full ho gye to please Admin panal bouht bouh sloe ho gye and please gab ham stroge cleane kar de to please Admin panal fast ho gye bilkul fast runnnong men a gye 
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+
+----------
+
+
+please Admin panal  sidebar create a 1 page of Slyder Meadia and please os page ke andar main website ke All pages show kare and please waha se koi bhe page ke Slyder men image upload kar sake and please But Home page nahe and please All main website ke ages show kare and About ke page men like Slyder men koi image bhe upload kar sake andcolor bhe kar sake Animaitions bhe kar sake 
+
+
+________ Database ________
+
+please Database create a 2 row page and please create a 1 Table og Slyder Meadia please os page ke andar All chze show kare live Database se
+
+
+
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+

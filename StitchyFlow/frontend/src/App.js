@@ -47,6 +47,7 @@ function App() {
             <Route path="/verify-code" element={<VerifyCode />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/marketplace/custom-dresses" element={<CustomDresses />} />
+            <Route path="/marketplace/suits-blazer" element={<Navigate to="/marketplace/suits-blazers" replace />} />
             <Route path="/marketplace/suits-blazers" element={<SuitsBlazer />} />
             <Route path="/marketplace/bridal-wear" element={<BridalWear />} />
             <Route path="/marketplace/traditional-wear" element={<TraditionalWear />} />
@@ -61,6 +62,7 @@ function App() {
             <Route path="/customer-dashboard" element={<CustomerDashboard />} />
             <Route path="/tailor-dashboard" element={<TailorDashboard />} />
             <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
+            <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>
       </Router>

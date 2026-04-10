@@ -44,3 +44,7 @@ export async function apiFetch(path, options = {}) {
   }
   return data;
 }
+
+export async function gex(path, options = {}) {
+  return apiFetch(path, { method: 'GET', ...options });
+}

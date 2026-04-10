@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { apiFetch } from '../utils/api';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -157,17 +158,10 @@ function CustomerDashboard() {
 
   const fetchTotpStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      const res = await fetch('http://localhost:5000/api/v1/totp/status', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.success) {
-        const enabled = data.data?.totpEnabled === true || data.data?.totpEnabled == 1;
-        setTwoFA(enabled);
-        setTotpVerified(enabled);
-      }
+      const data = await apiFetch('/totp/status');
+      const enabled = data.data?.totpEnabled === true || data.data?.totpEnabled == 1;
+      setTwoFA(enabled);
+      setTotpVerified(enabled);
     } catch (e) {
       console.error('TOTP status fetch failed:', e);
     }
@@ -192,25 +186,28 @@ function CustomerDashboard() {
 
   const fetchStats = async (u) => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
       const userId = u.userId || u.user_id;
-
-      // Fetch orders
-      const res = await fetch(`http://localhost:5000/api/v1/orders?customerId=${userId}`, { headers });
-      const data = await res.json();
-
-      // Fetch total tailors count
       let totalTailors = 0;
-      try {
-        const tRes = await fetch('http://localhost:5000/api/v1/users?role=tailor', { headers });
-        const tData = await tRes.json();
-        if (tData.success && Array.isArray(tData.data)) totalTailors = tData.data.length;
-        else if (tData.success && tData.data?.total) totalTailors = tData.data.total;
-      } catch (_) {}
+      let orderList = [];
 
-      if (data.success && Array.isArray(data.data)) {
-        const orderList = data.data;
+      const [ordersResult, tailorsResult] = await Promise.allSettled([
+        apiFetch(`/orders?customerId=${encodeURIComponent(userId)}`),
+        apiFetch('/users?role=tailor'),
+      ]);
+
+      if (ordersResult.status === 'fulfilled' && ordersResult.value.success) {
+        orderList = Array.isArray(ordersResult.value.data) ? ordersResult.value.data : [];
+      }
+
+      if (tailorsResult.status === 'fulfilled' && tailorsResult.value.success) {
+        if (Array.isArray(tailorsResult.value.data)) {
+          totalTailors = tailorsResult.value.data.length;
+        } else if (tailorsResult.value.data?.total) {
+          totalTailors = tailorsResult.value.data.total;
+        }
+      }
+
+      if (orderList.length > 0) {
         setOrders(orderList);
         const completed = orderList.filter(o => o.status === 'completed').length;
         const pending   = orderList.filter(o => o.status === 'pending').length;
@@ -231,7 +228,6 @@ function CustomerDashboard() {
           cancelled,
         });
 
-        // Build notifications from recent orders
         const notifs = orderList.slice(0, 5).map(o => ({
           id: o.order_id,
           title: `Order #${o.order_number}`,
@@ -260,24 +256,18 @@ function CustomerDashboard() {
       return setPwMsg({ type: 'error', text: 'Password must be at least 6 characters.' });
     }
     try {
-      const res = await fetch('http://localhost:5000/api/v1/password/update', {
+      await apiFetch('/password/update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: user.email,
           oldPassword: pwForm.current,
           newPassword: pwForm.newPw,
         }),
       });
-      const data = await res.json();
-      if (data.success) {
-        setPwMsg({ type: 'success', text: 'Password changed successfully.' });
-        setPwForm({ current: '', newPw: '', confirm: '' });
-      } else {
-        setPwMsg({ type: 'error', text: data.error?.message || 'Failed to change password.' });
-      }
-    } catch {
-      setPwMsg({ type: 'error', text: 'Network error. Please try again.' });
+      setPwMsg({ type: 'success', text: 'Password changed successfully.' });
+      setPwForm({ current: '', newPw: '', confirm: '' });
+    } catch (error) {
+      setPwMsg({ type: 'error', text: error.message || 'Failed to change password.' });
     }
   };
 
@@ -294,30 +284,20 @@ function CustomerDashboard() {
       setTotpLoading(true);
       setTwoFAMsg(null);
       try {
-        const res = await fetch('http://localhost:5000/api/v1/totp/setup', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (data.success) {
-          setTotpSetup(data.data);
-          setTwoFA(true);
-          setTotpVerified(false);
-          setTotpCode('');
-        } else {
-          setTwoFAMsg({ type: 'error', text: data.error?.message || 'Failed to setup 2FA.' });
-        }
-      } catch {
-        setTwoFAMsg({ type: 'error', text: 'Network error. Please try again.' });
+        const data = await apiFetch('/totp/setup');
+        setTotpSetup(data.data);
+        setTwoFA(true);
+        setTotpVerified(false);
+        setTotpCode('');
+      } catch (error) {
+        setTwoFAMsg({ type: 'error', text: error.message || 'Failed to setup 2FA.' });
       } finally {
         setTotpLoading(false);
       }
     } else {
       // Disable TOTP
       try {
-        await fetch('http://localhost:5000/api/v1/totp/disable', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await apiFetch('/totp/disable', { method: 'POST' });
       } catch (_) {}
       setTwoFA(false);
       setTotpSetup(null);
@@ -334,28 +314,20 @@ function CustomerDashboard() {
     setTotpLoading(true);
     setTwoFAMsg(null);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/v1/totp/verify', {
+      const data = await apiFetch('/totp/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ token: totpCode }),
       });
-      const data = await res.json();
-      if (data.success) {
-        setTotpVerified(true);
-        setTotpSetup(null);
-        setTotpCode('');
-        setTwoFAMsg({ type: 'success', text: '2FA enabled. Your account is now more secure.' });
-        // Show backup codes
-        if (data.data?.backupCodes) {
-          setBackupCodes(data.data.backupCodes);
-          setShowBackupCodes(true);
-        }
-      } else {
-        setTwoFAMsg({ type: 'error', text: data.error?.message || 'Invalid code.' });
+      setTotpVerified(true);
+      setTotpSetup(null);
+      setTotpCode('');
+      setTwoFAMsg({ type: 'success', text: '2FA enabled. Your account is now more secure.' });
+      if (data.data?.backupCodes) {
+        setBackupCodes(data.data.backupCodes);
+        setShowBackupCodes(true);
       }
-    } catch {
-      setTwoFAMsg({ type: 'error', text: 'Network error. Please try again.' });
+    } catch (error) {
+      setTwoFAMsg({ type: 'error', text: error.message || 'Invalid code.' });
     } finally {
       setTotpLoading(false);
     }
