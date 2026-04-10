@@ -350,3 +350,34 @@ Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
 ---------
 
 
+please My Admin panal this Settings http://localhost:4000/settings page ke andar create a 1 page of Privicy Edit and please page ke andar mere main websute ke ye sahi pages show kare About StitchyFlow
+Privacy
+Terms
+Sitemap and please ye Saab pages ke text images Edit kar sake pleae this page UI/UX was a Blue and please create a Professional and corporate and mordern UI/UX and please All Features working as well 
+
+_______ Database _______
+
+please Database create a 1 Table of " Privicy Edit " and please All Data save on Database and All Data is showing live DB
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
