@@ -238,3 +238,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Maintained by:** Muhammad Kalim  
 **Company:** LogixInventor (PVT) Ltd.  
 **Contact:** info@logixinventor.com | +92 333 3836851
+
+---
+
+## [2026-04-10] — Privacy & Pages Editor
+
+### Added
+- **Database:** New `privacy_pages` table with 4 seeded records (about, privacy, terms, sitemap)
+- **Backend:** `GET/PUT /api/v1/privacy-pages` and `GET /api/v1/privacy-pages/:key` REST API
+- **Admin Panel:** `PrivacyEdit` page — tabbed editor for About, Privacy Policy, Terms & Conditions, Sitemap
+- **Settings Page:** New "Privacy & Pages" tab added to `/settings` sidebar navigation
+- Rich-text inline editor with toolbar (Bold, Italic, Underline, H2, H3, Lists, Links)
+- Live preview toggle per page
+- SEO meta title & meta description fields per page
+- Active/Inactive toggle per page with DB persistence
+- Professional blue corporate UI/UX matching admin panel theme

@@ -11,8 +11,38 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const sharp = require('sharp');
 
 const VALID_KEYS = ['about', 'privacy', 'terms', 'sitemap'];
+
+// ── Image upload configuration ───────────────────────────────────────────────
+const privacyUploadDir = path.join(__dirname, '..', 'uploads', 'privacy');
+fs.mkdirSync(privacyUploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: privacyUploadDir,
+  filename: (req, file, cb) => {
+    const fileExt = path.extname(file.originalname).toLowerCase();
+    const safeName = path.basename(file.originalname, fileExt).replace(/[^a-zA-Z0-9._-]/g, '_');
+    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}-${safeName}${fileExt}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPG, PNG, WEBP, GIF and SVG images are allowed'));
+    }
+  }
+});
 
 // ── Ensure table exists (auto-create on first use) ────────────────────────────
 async function ensureTable() {
@@ -44,6 +74,33 @@ async function ensureTable() {
     `);
   }
 }
+
+// ── UPLOAD image (admin only) ─────────────────────────────────────────────────
+// POST /api/v1/privacy-pages/upload-image
+router.post('/upload-image', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: { message: 'No image file provided' } });
+    }
+
+    const imageUrl = `/uploads/privacy/${req.file.filename}`;
+
+    // Optimize image if it's JPEG or PNG
+    const filePath = path.join(privacyUploadDir, req.file.filename);
+    if (req.file.mimetype === 'image/jpeg' || req.file.mimetype === 'image/png') {
+      await sharp(filePath)
+        .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 85 })
+        .toFile(filePath.replace(/\.[^.]+$/, '_optimized.jpg'));
+      fs.unlinkSync(filePath);
+      return res.json({ success: true, data: { imageUrl: imageUrl.replace(/\.[^.]+$/, '_optimized.jpg') } });
+    }
+
+    res.json({ success: true, data: { imageUrl } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
 
 // ── GET ALL pages (public — used by frontend) ─────────────────────────────────
 // GET /api/v1/privacy-pages

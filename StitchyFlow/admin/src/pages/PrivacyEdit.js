@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import api from '../utils/api';
 import {
   Box, Typography, Paper, Tabs, Tab, TextField, Switch,
   FormControlLabel, CircularProgress, Snackbar, Alert,
@@ -24,7 +25,6 @@ import {
   Edit as EditIcon,
   Visibility as PreviewIcon,
 } from '@mui/icons-material';
-import { api } from '../utils/api';
 
 // ── Page definitions ──────────────────────────────────────────────────────────
 const PAGES = [
@@ -64,10 +64,39 @@ const PAGES = [
 
 // ── Minimal rich-text toolbar (bold, italic, headings via execCommand) ────────
 function SimpleToolbar({ targetId }) {
+  const [uploading, setUploading] = useState(false);
+
   const exec = (cmd, val = null) => {
     document.getElementById(targetId)?.focus();
     document.execCommand(cmd, false, val);
   };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const res = await api.post('/privacy-pages/upload-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const imageUrl = res.data.data.imageUrl;
+      const fullUrl = `http://localhost:5000${imageUrl}`;
+
+      document.getElementById(targetId)?.focus();
+      document.execCommand('insertImage', false, fullUrl);
+    } catch (err) {
+      alert('Failed to upload image: ' + (err.response?.data?.error?.message || err.message));
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
   const btnStyle = {
     border: '1px solid #BBDEFB',
     borderRadius: 4,
@@ -84,6 +113,7 @@ function SimpleToolbar({ targetId }) {
       display: 'flex', flexWrap: 'wrap', gap: 0.5, p: 1,
       bgcolor: '#F0F7FF', borderBottom: '1px solid #BBDEFB',
       borderRadius: '8px 8px 0 0',
+      alignItems: 'center',
     }}>
       {[
         { label: 'B',  title: 'Bold',          cmd: 'bold' },
@@ -113,6 +143,18 @@ function SimpleToolbar({ targetId }) {
           </button>
         </Tooltip>
       ))}
+      <Tooltip title="Insert Image" arrow>
+        <label htmlFor={`image-upload-${targetId}`} style={btnStyle}>
+          {uploading ? '⏳' : '🖼️'}
+        </label>
+      </Tooltip>
+      <input
+        id={`image-upload-${targetId}`}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleImageUpload}
+      />
     </Box>
   );
 }

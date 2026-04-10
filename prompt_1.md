@@ -381,3 +381,37 @@ Admin panel passoword ********** admin123 ***********
 
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+-------
+
+a) please this All pages Edit About, Privacy Policy, Terms & Conditions, and Sitemap pages please All pages Database is Showing this main website pages About Privacy Policy Terms & Conditions Sitemap his All pages ka Data and text wagera show kare and please Admin kese bhe text ko Edit kar sake and please pir save kare to main websute per show kare please kese bhe text ke barabar men image bhe Add kar sakte ho Admin panal se and please gab save kare to please main webste men show kare 
+
+please All Saved on Database and please All Data is showing live DB
+
+2) please Full Admin panal and main wesbite was create a Mobile Reshponsive All pages and All chze as well
+
+
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

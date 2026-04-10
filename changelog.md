@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-04-10 20:16:00 PKT
+
+- Privacy Edit feature: **verified and confirmed fully functional**
+  - Database table `privacy_pages` created and populated with default data (About, Privacy, Terms, Sitemap)
+  - Backend API endpoints tested and working: GET /api/v1/privacy-pages, PUT /api/v1/privacy-pages/:key, POST /api/v1/privacy-pages/upload-image
+  - Admin panel page accessible at http://localhost:4000/privacy-pages and via Settings → Privacy & Pages tab
+  - Image upload functionality tested with automatic optimization (Sharp library)
+  - Professional blue UI/UX design confirmed with Material-UI components
+  - Rich text editor with formatting tools (Bold, Italic, Underline, Headings, Lists, Links, Images)
+  - SEO fields (meta title, meta description) and Active/Inactive toggle working
+  - All data stored in MySQL database and displayed live from DB
+  - Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
+## 2026-04-10 18:38:00 PKT
+
+- Privacy Edit feature: added **image upload functionality** to rich text editor
+  - Added backend route `POST /api/v1/privacy-pages/upload-image` with authentication
+  - Implemented automatic image optimization (JPEG/PNG resized to 1920x1080, 85% quality)
+  - Added image upload button (🖼️) to toolbar with upload progress indicator (⏳)
+  - Supported formats: JPG, PNG, WEBP, GIF, SVG (max 5MB)
+  - Images stored in `/uploads/privacy/` directory with optimized versions
+  - Updated PrivacyEdit.js component with image upload handler
+  - Created comprehensive documentation in `Docs/Privacy_Edit_Feature.md`
+
 ## 2026-04-02 16:00:00 PKT
 
 - Splash screen: documented animation list in file header; added **eight floating sparkle dots** with drift / opacity motion.

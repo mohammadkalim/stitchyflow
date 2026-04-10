@@ -51,6 +51,7 @@ import EmailTemplatesPage from './pages/EmailTemplatesPage';
 import AdsManagement from './pages/AdsManagement';
 import AdsAnalytics from './pages/AdsAnalytics';
 import SliderMedia from './pages/SliderMedia';
+import PrivacyEdit from './pages/PrivacyEdit';
 const theme = createTheme({
   palette: {
     mode: 'light',
@@ -154,6 +155,7 @@ function App() {
           <Route path="/ca-sub/category"    element={<PrivateRoute><CategoriesPage /></PrivateRoute>} />
           <Route path="/ca-sub/subcategory" element={<PrivateRoute><SubcategoriesPage /></PrivateRoute>} />
           <Route path="/slider-media"       element={<PrivateRoute><SliderMedia /></PrivateRoute>} />
+          <Route path="/privacy-pages"      element={<PrivateRoute><PrivacyEdit /></PrivateRoute>} />
           <Route path="/admin-refresh-tokens" element={<Navigate to="/dashboard" />} />
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>

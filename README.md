@@ -97,6 +97,13 @@ Docs/                 # Complete documentation
 - Daily/Weekly/Monthly reports
 - Clean white theme with blue accents
 - Secure login with JWT authentication
+- **Privacy & Pages Editor:** Edit main website pages (About, Privacy, Terms, Sitemap) with rich text editor and image upload
+  - Professional blue UI/UX design
+  - Rich text formatting (Bold, Italic, Underline, Headings, Lists, Links)
+  - Image upload with automatic optimization
+  - SEO fields (meta title, meta description)
+  - Active/Inactive toggle for each page
+  - All data stored in MySQL database
 
 ### Customer Features
 - **Entry splash:** On each browser load or refresh, a full-screen splash displays first (duration configurable via `REACT_APP_SPLASH_DURATION_MS` in `frontend/.env`, default 5 seconds), then the requested route; visiting `/` redirects to `/home` after the splash.

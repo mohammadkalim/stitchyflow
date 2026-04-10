@@ -57,6 +57,7 @@ import {
   Slideshow as SlideshowIcon,
   Menu as MenuIcon,
   Close as CloseIcon,
+  PrivacyTip as PrivacyIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -261,6 +262,12 @@ function SidebarContent({ location, navigate, onNavigate }) {
         {/* Logs Management */}
         <NavGroup label="Logs Management" icon={<LogsManagementIcon />} items={logsSubItems}
           location={location} navigate={navigate} onNavigate={onNavigate} />
+
+        {/* Privacy & Pages */}
+        <NavItem
+          item={{ text: 'Privacy & Pages', icon: <PrivacyIcon />, path: '/privacy-pages' }}
+          location={location} navigate={navigate} onNavigate={onNavigate}
+        />
 
         {/* Settings */}
         <NavItem
