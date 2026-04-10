@@ -1,15 +1,43 @@
-import React from 'react';
-import { Box, Typography, Grid, IconButton, Container, Divider } from '@mui/material';
+/**
+ * Footer Component — with dynamic social media links from DB
+ * Developer by: Muhammad Kalim
+ * Phone/WhatsApp: +92 333 3836851
+ * Product of LogixInventor (PVT) Ltd.
+ * Email: info@logixinventor.com
+ * Website: www.logixinventor.com
+ */
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Grid, IconButton, Container, Divider, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import TwitterIcon from '@mui/icons-material/Twitter';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import PinterestIcon from '@mui/icons-material/Pinterest';
+import ShareIcon from '@mui/icons-material/Share';
+import LanguageIcon from '@mui/icons-material/Language';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
+
+const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+
+// Map platform name → MUI icon
+function getSocialIcon(platform, size = 18) {
+  const sx = { fontSize: size };
+  const p = (platform || '').toLowerCase();
+  if (p === 'facebook')  return <FacebookIcon sx={sx} />;
+  if (p === 'instagram') return <InstagramIcon sx={sx} />;
+  if (p === 'twitter')   return <TwitterIcon sx={sx} />;
+  if (p === 'youtube')   return <YouTubeIcon sx={sx} />;
+  if (p === 'linkedin')  return <LinkedInIcon sx={sx} />;
+  if (p === 'pinterest') return <PinterestIcon sx={sx} />;
+  if (p === 'tiktok' || p === 'snapchat' || p === 'whatsapp') return <ShareIcon sx={sx} />;
+  return <LanguageIcon sx={sx} />;
+}
 
 const linkSx = {
   color: 'rgba(255,255,255,0.55)',
@@ -23,6 +51,50 @@ const linkSx = {
 
 function Footer() {
   const navigate = useNavigate();
+  const [socialLinks, setSocialLinks] = useState([]);
+
+  /* Fetch social media links for footer from DB */
+  useEffect(() => {
+    fetch(`${API_BASE}/social-media`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          setSocialLinks((data.data || []).filter(l => l.show_footer && l.is_active));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Split footer links by position
+  const leftLinks  = socialLinks.filter(l => l.footer_position === 'left');
+  const rightLinks = socialLinks.filter(l => l.footer_position === 'right');
+
+  // Render a set of social icon buttons
+  const renderSocialIcons = (links) => links.map(link => (
+    <Tooltip key={link.id} title={link.label} arrow>
+      <IconButton
+        size="small"
+        component="a"
+        href={link.url}
+        target="_blank"
+        rel="noreferrer"
+        sx={{
+          color: link.color || 'rgba(255,255,255,0.5)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: '6px', p: 0.6,
+          '&:hover': {
+            color: link.color || '#fff',
+            borderColor: link.color || 'rgba(255,255,255,0.4)',
+            bgcolor: 'rgba(255,255,255,0.06)',
+          },
+          transition: 'all 0.18s',
+        }}
+      >
+        {getSocialIcon(link.platform)}
+      </IconButton>
+    </Tooltip>
+  ));
+
   return (
     <Box component="footer" sx={{ bgcolor: '#0d1b2a', color: '#fff' }}>
       <Container maxWidth="lg" sx={{ pt: 6, pb: 4 }}>
@@ -53,25 +125,27 @@ function Footer() {
               Pakistan's leading tailoring marketplace. We connect customers with verified tailors through our secure, automated marketplace infrastructure.
             </Typography>
 
-            {/* Social Icons */}
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-              {[
-                { icon: <FacebookIcon fontSize="small" />, href: '#' },
-                { icon: <InstagramIcon fontSize="small" />, href: '#' },
-                { icon: <LinkedInIcon fontSize="small" />, href: '#' },
-                { icon: <TwitterIcon fontSize="small" />, href: '#' },
-              ].map((s, i) => (
-                <IconButton key={i} size="small" href={s.href}
-                  sx={{
-                    color: 'rgba(255,255,255,0.5)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '6px', p: 0.6,
-                    '&:hover': { color: '#fff', borderColor: 'rgba(255,255,255,0.4)', bgcolor: 'rgba(255,255,255,0.06)' },
-                  }}>
-                  {s.icon}
-                </IconButton>
-              ))}
-            </Box>
+            {/* Social Icons — Left position from DB */}
+            {leftLinks.length > 0 ? (
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                {renderSocialIcons(leftLinks)}
+              </Box>
+            ) : (
+              /* Fallback static icons if no DB links configured */
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                {[FacebookIcon, InstagramIcon, LinkedInIcon, TwitterIcon].map((Icon, i) => (
+                  <IconButton key={i} size="small"
+                    sx={{
+                      color: 'rgba(255,255,255,0.5)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: '6px', p: 0.6,
+                      '&:hover': { color: '#fff', borderColor: 'rgba(255,255,255,0.4)', bgcolor: 'rgba(255,255,255,0.06)' },
+                    }}>
+                    <Icon fontSize="small" />
+                  </IconButton>
+                ))}
+              </Box>
+            )}
           </Grid>
 
           {/* Col 2 — Marketplace */}
@@ -132,6 +206,13 @@ function Footer() {
                 </Typography>
               </Box>
             </Box>
+
+            {/* Right-position social icons */}
+            {rightLinks.length > 0 && (
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 2 }}>
+                {renderSocialIcons(rightLinks)}
+              </Box>
+            )}
           </Grid>
 
         </Grid>

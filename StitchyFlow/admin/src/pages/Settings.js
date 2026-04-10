@@ -24,7 +24,9 @@ import {
   Percent as PercentIcon,
   Approval as ApprovalIcon,
   Timer as TimerIcon,
+  Share as ShareIcon,
 } from '@mui/icons-material';
+import SocialMediaSettings from './SocialMediaSettings';
 import Layout from '../components/Layout';
 import axios from 'axios';
 import { api } from '../utils/api';
@@ -34,6 +36,7 @@ const NAV_ITEMS = [
   { key: 'security',      label: 'Security',      icon: <SecurityIcon fontSize="small" /> },
   { key: 'notifications', label: 'Notifications', icon: <NotificationsIcon fontSize="small" /> },
   { key: 'payments',      label: 'Payments',      icon: <PaymentsIcon fontSize="small" /> },
+  { key: 'social_media',  label: 'Social Media',  icon: <ShareIcon fontSize="small" /> },
   { key: 'database',      label: 'Database',      icon: <DatabaseIcon fontSize="small" /> },
 ];
 
@@ -815,8 +818,9 @@ function Settings() {
         }}>
           {activeTab === 'general'  && <GeneralPanel settings={settings} onChange={handleChange} />}
           {activeTab === 'security' && <SecurityPanel />}
+          {activeTab === 'social_media' && <SocialMediaSettings />}
           {activeTab === 'database' && <DatabasePanel />}
-          {!['general','security','database'].includes(activeTab) && (
+          {!['general','security','social_media','database'].includes(activeTab) && (
             <PlaceholderPanel label={NAV_ITEMS.find(n => n.key === activeTab)?.label} />
           )}
         </Paper>

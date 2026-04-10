@@ -58,6 +58,7 @@ app.use('/api/v1/ads', require('./routes/ads.routes')());
 app.use('/api/v1/ca-sub', require('./routes/ca_sub.routes'));
 app.use('/api/v1/chat', require('./routes/chat.routes'));
 app.use('/api/v1/slider-media', require('./routes/slider_media.routes'));
+app.use('/api/v1/social-media', require('./routes/social_media.routes'));
 
 // Health check
 app.get('/health', (req, res) => {

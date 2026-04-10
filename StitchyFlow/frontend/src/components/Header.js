@@ -1,7 +1,15 @@
+/**
+ * Header Component — with dynamic social media links from DB
+ * Developer by: Muhammad Kalim
+ * Phone/WhatsApp: +92 333 3836851
+ * Product of LogixInventor (PVT) Ltd.
+ * Email: info@logixinventor.com
+ * Website: www.logixinventor.com
+ */
 import React, { useState, useEffect } from 'react';
 import {
   AppBar, Toolbar, Typography, Button, Box, Container,
-  IconButton, Menu, MenuItem, Divider, Paper, Grid, Fade, Avatar
+  IconButton, Menu, MenuItem, Divider, Paper, Grid, Fade, Avatar, Tooltip
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -9,13 +17,35 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import StraightenIcon from '@mui/icons-material/Straighten';
-import FavoriteIcon from '@mui/icons-material/Favorite';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ContentCutOutlinedIcon from '@mui/icons-material/ContentCutOutlined';
-import ColorLensIcon from '@mui/icons-material/ColorLens';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import PinterestIcon from '@mui/icons-material/Pinterest';
+import ShareIcon from '@mui/icons-material/Share';
+import LanguageIcon from '@mui/icons-material/Language';
+
+const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+
+// Map platform name → MUI icon component
+function getSocialIcon(platform, color, size = 18) {
+  const sx = { fontSize: size, color };
+  const p = (platform || '').toLowerCase();
+  if (p === 'facebook')  return <FacebookIcon sx={sx} />;
+  if (p === 'instagram') return <InstagramIcon sx={sx} />;
+  if (p === 'twitter')   return <TwitterIcon sx={sx} />;
+  if (p === 'youtube')   return <YouTubeIcon sx={sx} />;
+  if (p === 'linkedin')  return <LinkedInIcon sx={sx} />;
+  if (p === 'pinterest') return <PinterestIcon sx={sx} />;
+  if (p === 'tiktok' || p === 'snapchat' || p === 'whatsapp') return <ShareIcon sx={sx} />;
+  return <LanguageIcon sx={sx} />;
+}
 
 const NAV_LINKS = [
   { label: 'Tailors',    path: '/marketplace/custom-dresses' },
@@ -32,10 +62,11 @@ const SERVICES_MENU = [
 
 function Header() {
   const navigate = useNavigate();
-  const [megaOpen, setMegaOpen]       = useState(false);
+  const [megaOpen, setMegaOpen]         = useState(false);
   const [mobileAnchor, setMobileAnchor] = useState(null);
-  const [userAnchor, setUserAnchor]   = useState(null);
-  const [user, setUser]               = useState(null);
+  const [userAnchor, setUserAnchor]     = useState(null);
+  const [user, setUser]                 = useState(null);
+  const [socialLinks, setSocialLinks]   = useState([]);
 
   /* Read user from localStorage on mount + on storage changes */
   useEffect(() => {
@@ -48,6 +79,18 @@ function Header() {
     load();
     window.addEventListener('storage', load);
     return () => window.removeEventListener('storage', load);
+  }, []);
+
+  /* Fetch social media links for header from DB */
+  useEffect(() => {
+    fetch(`${API_BASE}/social-media`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          setSocialLinks((data.data || []).filter(l => l.show_header && l.is_active));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleLogout = () => {
@@ -134,6 +177,34 @@ function Header() {
 
             {/* Right Actions */}
             <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
+
+              {/* Dynamic Social Media Icons (header) */}
+              {socialLinks.length > 0 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mr: 0.5 }}>
+                  {socialLinks.map(link => (
+                    <Tooltip key={link.id} title={link.label} arrow>
+                      <IconButton
+                        size="small"
+                        component="a"
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        sx={{
+                          p: 0.6,
+                          borderRadius: '6px',
+                          border: '1px solid #e5e7eb',
+                          color: link.color || '#374151',
+                          '&:hover': { bgcolor: (link.color || '#2563eb') + '15', borderColor: link.color || '#2563eb' },
+                          transition: 'all 0.18s',
+                        }}
+                      >
+                        {getSocialIcon(link.platform, link.color || '#374151', 16)}
+                      </IconButton>
+                    </Tooltip>
+                  ))}
+                  <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 20, alignSelf: 'center' }} />
+                </Box>
+              )}
               {user ? (
                 /* ── Logged-in: avatar + dropdown ── */
                 <>
