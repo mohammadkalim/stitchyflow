@@ -25,8 +25,10 @@ import {
   Approval as ApprovalIcon,
   Timer as TimerIcon,
   Share as ShareIcon,
+  PrivacyTip as PrivacyTipIcon,
 } from '@mui/icons-material';
 import SocialMediaSettings from './SocialMediaSettings';
+import PrivacyEdit from './PrivacyEdit';
 import Layout from '../components/Layout';
 import axios from 'axios';
 import { api } from '../utils/api';
@@ -38,6 +40,7 @@ const NAV_ITEMS = [
   { key: 'payments',      label: 'Payments',      icon: <PaymentsIcon fontSize="small" /> },
   { key: 'social_media',  label: 'Social Media',  icon: <ShareIcon fontSize="small" /> },
   { key: 'database',      label: 'Database',      icon: <DatabaseIcon fontSize="small" /> },
+  { key: 'privacy_edit',  label: 'Privacy & Pages', icon: <PrivacyTipIcon fontSize="small" /> },
 ];
 
 
@@ -826,7 +829,8 @@ function Settings() {
           {activeTab === 'security' && <SecurityPanel />}
           {activeTab === 'social_media' && <SocialMediaSettings />}
           {activeTab === 'database' && <DatabasePanel />}
-          {!['general','security','social_media','database'].includes(activeTab) && (
+          {activeTab === 'privacy_edit' && <PrivacyEdit />}
+          {!['general','security','social_media','database','privacy_edit'].includes(activeTab) && (
             <PlaceholderPanel label={NAV_ITEMS.find(n => n.key === activeTab)?.label} />
           )}
         </Paper>
