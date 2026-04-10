@@ -20,7 +20,7 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 const NAV_LINKS = [
   { label: 'Tailors',    path: '/marketplace/custom-dresses' },
   { label: 'Promotions', path: '/promotions' },
-  { label: 'Insights',   path: '/blog' },
+  { label: 'Insights',   path: '/insights' },
 ];
 
 const SERVICES_MENU = [

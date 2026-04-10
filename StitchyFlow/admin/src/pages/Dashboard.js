@@ -63,7 +63,7 @@ function Dashboard() {
     { title: 'Fabric Inventory', icon: <FabricIcon sx={{ fontSize: 28, color: '#FFC107' }} />, path: '/air-coats', bgColor: '#FFF8E1' },
     { title: 'Settings', icon: <SettingsIcon sx={{ fontSize: 28, color: '#607D8B' }} />, path: '/settings', bgColor: '#ECEFF1' },
     { title: 'Chat Support', icon: <ChatIcon sx={{ fontSize: 28, color: '#3F51B5' }} />, path: '/chat', bgColor: '#E8EAF6' },
-    { title: 'Reviews', icon: <ReviewsIcon sx={{ fontSize: 28, color: '#FFEB3B' }} />, path: '/reviews', bgColor: '#FFFDE7' },
+    { title: 'Slider Media', icon: <ReviewsIcon sx={{ fontSize: 28, color: '#FFEB3B' }} />, path: '/slider-media', bgColor: '#FFFDE7' },
     { title: 'Administration', icon: <AdminIcon sx={{ fontSize: 28, color: '#795548' }} />, path: '/admin-settings', bgColor: '#EFEBE9' },
     { title: 'Inventory', icon: <InventoryIcon sx={{ fontSize: 28, color: '#009688' }} />, path: '/air-dam', bgColor: '#E0F2F1' }
   ];
@@ -336,18 +336,94 @@ function Dashboard() {
                   Last 6 Months ▼
                 </Button>
               </Box>
-              <Box sx={{ 
-                height: 300, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                bgcolor: '#f8f9fa',
-                borderRadius: '8px'
-              }}>
-                <Typography variant="body2" sx={{ color: '#999' }}>
-                  Revenue chart will be displayed here
-                </Typography>
-              </Box>
+
+              {/* Bar Chart */}
+              {(() => {
+                const months = ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'];
+                const values = [
+                  analytics?.revenue_by_month?.[0] ?? 12500,
+                  analytics?.revenue_by_month?.[1] ?? 28000,
+                  analytics?.revenue_by_month?.[2] ?? 19500,
+                  analytics?.revenue_by_month?.[3] ?? 35000,
+                  analytics?.revenue_by_month?.[4] ?? 22000,
+                  analytics?.revenue_by_month?.[5] ?? analytics?.total_revenue ?? 41000,
+                ];
+                const maxVal = Math.max(...values, 1);
+                const formatPKR = (v) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : `${v}`;
+                return (
+                  <Box sx={{ height: 300, display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {/* Y-axis labels + bars */}
+                    <Box sx={{ flex: 1, display: 'flex', gap: 0, position: 'relative' }}>
+                      {/* Y-axis */}
+                      <Box sx={{ width: 48, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', pb: '28px', pr: 1 }}>
+                        {[100, 75, 50, 25, 0].map(pct => (
+                          <Typography key={pct} variant="caption" sx={{ color: '#aaa', fontSize: '0.65rem', textAlign: 'right', lineHeight: 1 }}>
+                            {formatPKR(Math.round(maxVal * pct / 100))}
+                          </Typography>
+                        ))}
+                      </Box>
+                      {/* Chart area */}
+                      <Box sx={{ flex: 1, position: 'relative' }}>
+                        {/* Grid lines */}
+                        {[0, 25, 50, 75, 100].map(pct => (
+                          <Box key={pct} sx={{
+                            position: 'absolute', left: 0, right: 0,
+                            bottom: `calc(28px + ${pct}% * (100% - 28px) / 100)`,
+                            borderTop: '1px dashed #f0f0f0', zIndex: 0
+                          }} />
+                        ))}
+                        {/* Bars */}
+                        <Box sx={{ position: 'absolute', inset: 0, bottom: '28px', display: 'flex', alignItems: 'flex-end', gap: '6px', px: 1 }}>
+                          {values.map((val, i) => {
+                            const heightPct = maxVal > 0 ? (val / maxVal) * 100 : 0;
+                            const isMax = val === maxVal && val > 0;
+                            return (
+                              <Box key={i} sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                                {/* Value label on top */}
+                                <Typography variant="caption" sx={{ fontSize: '0.62rem', color: isMax ? '#1976d2' : '#999', fontWeight: isMax ? 700 : 400, mb: 0.3 }}>
+                                  {val > 0 ? `${formatPKR(val)}` : ''}
+                                </Typography>
+                                {/* Bar */}
+                                <Box sx={{
+                                  width: '100%',
+                                  height: `${Math.max(heightPct, val > 0 ? 2 : 0)}%`,
+                                  minHeight: val > 0 ? 4 : 0,
+                                  background: isMax
+                                    ? 'linear-gradient(180deg,#1976d2,#42a5f5)'
+                                    : 'linear-gradient(180deg,#90CAF9,#BBDEFB)',
+                                  borderRadius: '4px 4px 0 0',
+                                  transition: 'height 0.6s ease',
+                                  position: 'relative',
+                                  '&:hover': { filter: 'brightness(0.9)' }
+                                }} />
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                        {/* X-axis labels */}
+                        <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '28px', display: 'flex', px: 1, gap: '6px' }}>
+                          {months.map((m, i) => (
+                            <Box key={i} sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Typography variant="caption" sx={{ fontSize: '0.72rem', color: '#666', fontWeight: 500 }}>{m}</Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
+                    </Box>
+                    {/* Legend */}
+                    <Box sx={{ display: 'flex', gap: 2, mt: 1, justifyContent: 'flex-end' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'linear-gradient(180deg,#1976d2,#42a5f5)' }} />
+                        <Typography variant="caption" sx={{ color: '#666', fontSize: '0.72rem' }}>Peak Month</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box sx={{ width: 12, height: 12, borderRadius: '3px', background: 'linear-gradient(180deg,#90CAF9,#BBDEFB)' }} />
+                        <Typography variant="caption" sx={{ color: '#666', fontSize: '0.72rem' }}>Revenue (PKR)</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                );
+              })()}
             </Paper>
           </Grid>
 

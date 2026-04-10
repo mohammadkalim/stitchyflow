@@ -22,7 +22,6 @@ import Settings from './pages/Settings';
 import ChatManagement from './pages/ChatManagement';
 import SMTPSettings from './pages/SMTPSettings';
 import AdminSettings from './pages/AdminSettings';
-import AdminRefreshTokens from './pages/AdminRefreshTokens';
 import SiteSettings from './pages/SiteSettings';
 import SiteMaintenanceMode from './pages/SiteMaintenanceMode';
 import AddMoreSMTP from './pages/AddMoreSMTP';
@@ -52,7 +51,6 @@ import EmailTemplatesPage from './pages/EmailTemplatesPage';
 import AdsManagement from './pages/AdsManagement';
 import AdsAnalytics from './pages/AdsAnalytics';
 import SliderMedia from './pages/SliderMedia';
-
 const theme = createTheme({
   palette: {
     mode: 'light',
@@ -97,7 +95,6 @@ function App() {
           <Route path="/email-templates" element={<PrivateRoute><EmailTemplatesPage /></PrivateRoute>} />
           <Route path="/smtp-settings" element={<PrivateRoute><SMTPSettings /></PrivateRoute>} />
           <Route path="/admin-settings" element={<PrivateRoute><AdminSettings /></PrivateRoute>} />
-          <Route path="/admin-refresh-tokens" element={<PrivateRoute><AdminRefreshTokens /></PrivateRoute>} />
           <Route path="/site-settings" element={<PrivateRoute><SiteSettings /></PrivateRoute>} />
           <Route path="/site-maintenance" element={<PrivateRoute><SiteMaintenanceMode /></PrivateRoute>} />
           <Route path="/add-more-smtp" element={<PrivateRoute><AddMoreSMTP /></PrivateRoute>} />
@@ -127,6 +124,8 @@ function App() {
           <Route path="/ca-sub/category"    element={<PrivateRoute><CategoriesPage /></PrivateRoute>} />
           <Route path="/ca-sub/subcategory" element={<PrivateRoute><SubcategoriesPage /></PrivateRoute>} />
           <Route path="/slider-media"       element={<PrivateRoute><SliderMedia /></PrivateRoute>} />
+          <Route path="/admin-refresh-tokens" element={<Navigate to="/dashboard" />} />
+          <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </Router>
     </ThemeProvider>

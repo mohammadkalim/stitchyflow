@@ -19,6 +19,7 @@ function About() {
       heroSubtitle="Pakistan's leading tailoring marketplace — connecting customers with verified, skilled tailors through a secure and automated platform."
       features={features}
       ctaText="Join StitchyFlow"
+      sliderPage="/about"
     />
   );
 }

@@ -7,6 +7,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import SliderBackground from '../components/SliderBanner';
 
 const PLANS = [
   {
@@ -88,15 +89,19 @@ function Promotions() {
       <Header />
 
       {/* Hero */}
-      <Box sx={{
-        mt: '64px',
-        background: 'linear-gradient(135deg, #1a3a8f 0%, #1e4db7 40%, #1565c0 65%, #0d7a6e 100%)',
-        py: { xs: 7, md: 10 },
-        textAlign: 'center',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        <Box sx={{ position: 'absolute', top: -60, right: -60, width: 280, height: 280, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.04)' }} />
-        <Container maxWidth="md">
+      <SliderBackground
+        page="/promotions"
+        fallbackSx={{
+          mt: '64px',
+          background: 'linear-gradient(135deg, #1a3a8f 0%, #1e4db7 40%, #1565c0 65%, #0d7a6e 100%)',
+          py: { xs: 7, md: 10 },
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <Box sx={{ position: 'absolute', top: -60, right: -60, width: 280, height: 280, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.04)', zIndex: 1 }} />
+        <Container maxWidth="md" sx={{ position: 'relative', zIndex: 2, py: { xs: 7, md: 10 } }}>
           <Chip label="Pricing & Promotions" sx={{ bgcolor: 'rgba(255,255,255,0.12)', color: '#fff', fontWeight: 600, mb: 3, fontSize: '0.8rem' }} />
           <Typography variant="h2" sx={{ fontWeight: 800, color: '#fff', fontSize: { xs: '2rem', md: '3rem' }, mb: 2 }}>
             Simple, Transparent{' '}
@@ -105,22 +110,15 @@ function Promotions() {
           <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', maxWidth: 480, mx: 'auto', lineHeight: 1.8, mb: 4 }}>
             Choose the plan that fits your tailoring business. No hidden fees, no surprises.
           </Typography>
-
-          {/* Billing Toggle */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
             <Typography variant="body2" sx={{ color: yearly ? 'rgba(255,255,255,0.5)' : '#fff', fontWeight: 600 }}>Monthly</Typography>
             <Switch checked={yearly} onChange={(e) => setYearly(e.target.checked)}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': { color: '#f59e0b' },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#f59e0b' },
-              }} />
-            <Typography variant="body2" sx={{ color: yearly ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
-              Yearly
-            </Typography>
+              sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#f59e0b' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#f59e0b' } }} />
+            <Typography variant="body2" sx={{ color: yearly ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: 600 }}>Yearly</Typography>
             <Chip label="Save 25%" size="small" sx={{ bgcolor: '#f59e0b', color: '#fff', fontWeight: 700, fontSize: '0.7rem' }} />
           </Box>
         </Container>
-      </Box>
+      </SliderBackground>
 
       {/* Pricing Slider Section */}
       <Container maxWidth="lg" sx={{ py: 8 }}>

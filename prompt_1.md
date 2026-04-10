@@ -304,3 +304,44 @@ Admin panel passoword ********** admin123 ***********
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
 
+
+---------
+
+please this Insights page se uper ka url chage kar de http://localhost:3000/blog please ye page Full Plate form ka Analitys and All chze show karna ka hai please is ka url se set kar de and please this page ke Blog Remove kar de http://localhost:3000/Insights and please  this page ke Slyder image this Set kar de please following the 1 Screenshort and please this page Add wights Analitycs and Professional and cporrate and more opshions and All Defecoltes and please this page was create a Fully Professional and corporate and mordern UI/UX and please gab ye page khole to please Top per text Animaition ho this page ke text Aniamition ho thos text ke "Insights, Tips & Fashion Stories
+Stay informed with the latest tailoring tips, fashion trends, and industry insights from the StitchyFlow team."
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+-------
+
+please Admin panal this Settings page http://localhost:4000/settings create a 1 page of Schocial Meadia icons and links and please who please main website ke forrter and herder ke Schoical meadia links ko sao Remove Add Edit kar sake lik set kar sake and please Saab kar sake Edir bhe kar sake show in herder Top ya show in forter bhe kar sake foorter right ya lift bhe kar sake 
+
+
+__________ Database ________
+
+please Database create a 1 Table of Schocial Meadia icons and links and please Saab Data live Database men bhe save and show kare 
+
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

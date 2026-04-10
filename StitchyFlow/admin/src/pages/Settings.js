@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import Layout from '../components/Layout';
 import axios from 'axios';
+import { api } from '../utils/api';
 
 const NAV_ITEMS = [
   { key: 'general',       label: 'General',       icon: <SettingsIcon fontSize="small" /> },
@@ -413,10 +414,7 @@ function UsersPanel() {
     // Fetch current setting from backend
     const fetchSetting = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/v1/admin/settings/verification-expire', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get('/admin/settings/verification-expire');
         if (response.data.success) {
           setUserSettings(prev => ({
             ...prev,
@@ -437,11 +435,9 @@ function UsersPanel() {
     setSaving(true);
     setMessage('');
     try {
-      const token = localStorage.getItem('token');
-      await axios.put('http://localhost:5000/api/v1/admin/settings/verification-expire', {
+      const token = localStorage.getItem('adminToken');
+      await api.put('/admin/settings/verification-expire', {
         expireMinutes: parseInt(userSettings.verification_code_expire_minutes)
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       setMessage('Verification code expire time saved successfully!');
       setTimeout(() => setMessage(''), 3000);

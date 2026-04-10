@@ -4,31 +4,35 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import SliderBackground from './SliderBanner';
 
 /**
  * Reusable professional page template
- * Props: heroTitle, heroSubtitle, heroBadge, heroGradient, icon, features[], ctaText
+ * Props: heroTitle, heroSubtitle, heroBadge, heroGradient, icon, features[], ctaText, sliderPage
  */
-function PageTemplate({ heroTitle, heroHighlight, heroSubtitle, heroBadge, icon, features = [], ctaText = 'Get Started', ctaPath = '/register', extraSection }) {
+function PageTemplate({ heroTitle, heroHighlight, heroSubtitle, heroBadge, icon, features = [], ctaText = 'Get Started', ctaPath = '/register', extraSection, sliderPage }) {
   const navigate = useNavigate();
+
+  const heroGradient = 'linear-gradient(135deg, #1a3a8f 0%, #1e4db7 40%, #1565c0 65%, #0d7a6e 100%)';
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc' }}>
       <Header />
 
-      {/* Hero Banner */}
-      <Box sx={{
-        mt: '64px',
-        background: 'linear-gradient(135deg, #1a3a8f 0%, #1e4db7 40%, #1565c0 65%, #0d7a6e 100%)',
-        py: { xs: 8, md: 11 },
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+      {/* Hero Banner — slider images set as background if available */}
+      <SliderBackground
+        page={sliderPage}
+        fallbackSx={{
+          mt: '64px',
+          background: heroGradient,
+          py: { xs: 8, md: 11 },
+        }}
+      >
         {/* Decorative circles */}
-        <Box sx={{ position: 'absolute', top: -60, right: -60, width: 300, height: 300, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
-        <Box sx={{ position: 'absolute', bottom: -80, left: -40, width: 240, height: 240, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }} />
+        <Box sx={{ position: 'absolute', top: -60, right: -60, width: 300, height: 300, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.04)', pointerEvents: 'none', zIndex: 1 }} />
+        <Box sx={{ position: 'absolute', bottom: -80, left: -40, width: 240, height: 240, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.03)', pointerEvents: 'none', zIndex: 1 }} />
 
-        <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+        <Container maxWidth="md" sx={{ textAlign: 'center', position: 'relative', zIndex: 2, py: { xs: 8, md: 11 } }}>
           {heroBadge && (
             <Box sx={{
               display: 'inline-flex', alignItems: 'center', gap: 1,
@@ -41,49 +45,25 @@ function PageTemplate({ heroTitle, heroHighlight, heroSubtitle, heroBadge, icon,
               </Typography>
             </Box>
           )}
-          <Typography variant="h2" sx={{
-            fontWeight: 800, color: '#fff',
-            fontSize: { xs: '2rem', md: '3rem' },
-            lineHeight: 1.2, mb: 1.5,
-          }}>
+          <Typography variant="h2" sx={{ fontWeight: 800, color: '#fff', fontSize: { xs: '2rem', md: '3rem' }, lineHeight: 1.2, mb: 1.5 }}>
             {heroTitle}{' '}
             {heroHighlight && <Box component="span" sx={{ color: '#f59e0b' }}>{heroHighlight}</Box>}
           </Typography>
-          <Typography variant="body1" sx={{
-            color: 'rgba(255,255,255,0.8)', maxWidth: 520, mx: 'auto',
-            lineHeight: 1.8, mb: 4, fontSize: '1.05rem',
-          }}>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', maxWidth: 520, mx: 'auto', lineHeight: 1.8, mb: 4, fontSize: '1.05rem' }}>
             {heroSubtitle}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button variant="contained" endIcon={<ArrowForwardIcon />}
-              onClick={() => navigate(ctaPath)}
-              sx={{
-                bgcolor: '#f59e0b', color: '#fff', fontWeight: 700,
-                borderRadius: '10px', px: 4, py: 1.5, fontSize: '0.95rem',
-                textTransform: 'none',
-                boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
-                '&:hover': { bgcolor: '#d97706' },
-              }}>
+            <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={() => navigate(ctaPath)}
+              sx={{ bgcolor: '#f59e0b', color: '#fff', fontWeight: 700, borderRadius: '10px', px: 4, py: 1.5, fontSize: '0.95rem', textTransform: 'none', boxShadow: '0 4px 14px rgba(245,158,11,0.4)', '&:hover': { bgcolor: '#d97706' } }}>
               {ctaText}
             </Button>
-            <Button variant="outlined"
-              onClick={() => navigate('/home')}
-              sx={{
-                borderColor: 'rgba(255,255,255,0.5)', color: '#fff',
-                fontWeight: 600, borderRadius: '10px', px: 4, py: 1.5,
-                textTransform: 'none',
-                bgcolor: 'rgba(255,255,255,0.08)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.15)', borderColor: '#fff' },
-              }}>
+            <Button variant="outlined" onClick={() => navigate('/home')}
+              sx={{ borderColor: 'rgba(255,255,255,0.5)', color: '#fff', fontWeight: 600, borderRadius: '10px', px: 4, py: 1.5, textTransform: 'none', bgcolor: 'rgba(255,255,255,0.08)', '&:hover': { bgcolor: 'rgba(255,255,255,0.15)', borderColor: '#fff' } }}>
               Learn More
             </Button>
           </Box>
         </Container>
-      </Box>
-
-      {/* Extra section (e.g. sliders) */}
-      {extraSection}
+      </SliderBackground>
 
       {/* Features Grid */}
       {features.length > 0 && (

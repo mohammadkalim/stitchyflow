@@ -92,7 +92,6 @@ const businessSubItems = [
 const adminSubItems = [
   { text: 'SMTP Settings', icon: <SMTPIcon />, path: '/smtp-settings' },
   { text: 'Admin Settings', icon: <AdminSettingsIcon />, path: '/admin-settings' },
-  { text: 'Admin Refresh Tokens', icon: <RefreshIcon />, path: '/admin-refresh-tokens', badge: 'NEW' },
   { text: 'Site Settings', icon: <SiteSettingsIcon />, path: '/site-settings' },
   { text: 'Site Maintenance', icon: <MaintenanceIcon />, path: '/site-maintenance' },
   { text: 'AI Error Handling', icon: <AIErrorIcon />, path: '/ai-error-handling', badge: 'AI' },

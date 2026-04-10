@@ -100,25 +100,35 @@ async function collectDirectoryUsageStats(baseDir) {
 async function getStorageOverview() {
   const tableNames = STORAGE_TABLES.map((item) => item.key);
   const placeholders = tableNames.map(() => '?').join(',');
-  const [tableStorageRows] = await db.query(
-    `SELECT
-       table_name,
-       COALESCE(data_length, 0) + COALESCE(index_length, 0) AS used_bytes,
-       COALESCE(data_free, 0) AS free_bytes,
-       COALESCE(data_length, 0) + COALESCE(index_length, 0) + COALESCE(data_free, 0) AS total_allocated
-     FROM information_schema.TABLES
-     WHERE table_schema = DATABASE()
-       AND table_name IN (${placeholders})`,
-    tableNames
-  );
 
-  const [dbTotals] = await db.query(
-    `SELECT
-       COALESCE(SUM(data_length + index_length), 0) AS used_bytes,
-       COALESCE(SUM(data_free), 0) AS free_bytes
-     FROM information_schema.TABLES
-     WHERE table_schema = DATABASE()`
-  );
+  let tableStorageRows = [];
+  let dbTotals = [{ used_bytes: 0, free_bytes: 0 }];
+
+  try {
+    const [r1] = await db.query(
+      `SELECT
+         LOWER(table_name) AS table_name,
+         COALESCE(data_length, 0) + COALESCE(index_length, 0) AS used_bytes,
+         COALESCE(data_free, 0) AS free_bytes,
+         COALESCE(data_length, 0) + COALESCE(index_length, 0) + COALESCE(data_free, 0) AS total_allocated
+       FROM information_schema.TABLES
+       WHERE table_schema = DATABASE()
+         AND LOWER(table_name) IN (${placeholders})`,
+      tableNames
+    );
+    tableStorageRows = r1;
+  } catch (_) {}
+
+  try {
+    const [r2] = await db.query(
+      `SELECT
+         COALESCE(SUM(data_length + index_length), 0) AS used_bytes,
+         COALESCE(SUM(data_free), 0) AS free_bytes
+       FROM information_schema.TABLES
+       WHERE table_schema = DATABASE()`
+    );
+    dbTotals = r2;
+  } catch (_) {}
 
   const tableStorageMap = tableStorageRows.reduce((acc, row) => {
     acc[row.table_name] = row;
@@ -128,8 +138,13 @@ async function getStorageOverview() {
   const tableCountMap = {};
   await Promise.all(
     STORAGE_TABLES.map(async ({ key }) => {
-      const [rows] = await db.query(`SELECT COUNT(*) AS total_rows FROM ${key}`);
-      tableCountMap[key] = Number(rows[0]?.total_rows || 0);
+      try {
+        const [rows] = await db.query(`SELECT COUNT(*) AS total_rows FROM \`${key}\``);
+        tableCountMap[key] = Number(rows[0]?.total_rows || 0);
+      } catch (_) {
+        // Table may not exist yet — treat as 0 rows
+        tableCountMap[key] = 0;
+      }
     })
   );
 
@@ -240,33 +255,38 @@ async function cleanupStorage(payload = {}) {
   }
 
   if (cleanup.orphan_chat_files) {
-    const [messageFiles] = await db.query(
-      "SELECT file_url FROM messages WHERE file_url IS NOT NULL AND file_url != ''"
-    );
-    const referenced = new Set(
-      messageFiles
-        .map((row) => normalizePublicFileUrl(row.file_url))
-        .filter(Boolean)
-        .map((item) => path.basename(item))
-    );
-
-    const chatUploadRoot = path.join(__dirname, '..', 'uploads', 'chat');
-    let entries = [];
     try {
-      entries = await fs.promises.readdir(chatUploadRoot, { withFileTypes: true });
-    } catch (error) {
-      result.warnings.push('Chat uploads directory is not available.');
-    }
+      const [messageFiles] = await db.query(
+        "SELECT file_url FROM messages WHERE file_url IS NOT NULL AND file_url != ''"
+      );
+      const referenced = new Set(
+        messageFiles
+          .map((row) => normalizePublicFileUrl(row.file_url))
+          .filter(Boolean)
+          .map((item) => path.basename(item))
+      );
 
-    for (const entry of entries) {
-      if (!entry.isFile()) continue;
-      if (referenced.has(entry.name)) continue;
+      const chatUploadRoot = path.join(__dirname, '..', 'uploads', 'chat');
+      let entries = [];
       try {
-        await fs.promises.unlink(path.join(chatUploadRoot, entry.name));
-        result.orphan_chat_files_deleted += 1;
+        entries = await fs.promises.readdir(chatUploadRoot, { withFileTypes: true });
       } catch (error) {
-        result.warnings.push(`Failed to delete chat file: ${entry.name}`);
+        result.warnings.push('Chat uploads directory is not available.');
       }
+
+      for (const entry of entries) {
+        if (!entry.isFile()) continue;
+        if (referenced.has(entry.name)) continue;
+        try {
+          await fs.promises.unlink(path.join(chatUploadRoot, entry.name));
+          result.orphan_chat_files_deleted += 1;
+        } catch (error) {
+          result.warnings.push(`Failed to delete chat file: ${entry.name}`);
+        }
+      }
+    } catch (error) {
+      // messages table may not exist yet — skip orphan cleanup gracefully
+      result.warnings.push('Skipping orphan chat file cleanup: ' + error.message);
     }
   }
 

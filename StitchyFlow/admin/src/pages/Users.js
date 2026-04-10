@@ -18,6 +18,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import Layout from '../components/Layout';
+import { api } from '../utils/api';
 
 function Users() {
   const [users, setUsers] = useState([
@@ -93,12 +94,7 @@ function Users() {
         return; // Silently return if no token
       }
 
-      const response = await axios.get(
-        'http://localhost:5000/api/v1/admin/users',
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const response = await api.get('/admin/users');
 
       if (response.data.success) {
         // Map database users to frontend format - ONLY ACTIVE USERS
@@ -210,20 +206,14 @@ function Users() {
       
       const dbRole = roleMapping[formData.role] || 'customer';
       
-      const response = await axios.post(
-        'http://localhost:5000/api/v1/admin/users',
-        {
+      const response = await api.post('/admin/users', {
           full_name: formData.name,
           email: formData.email,
           phone_number: formData.phone,
           role: dbRole,
           is_active: formData.status === 'active',
           password: formData.password
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+        });
       
       if (response.data.success) {
         setOpenAddDialog(false);
@@ -260,19 +250,13 @@ function Users() {
       
       const dbRole = roleMapping[formData.role] || 'customer';
       
-      const response = await axios.put(
-        `http://localhost:5000/api/v1/admin/users/${selectedUser.id}`,
-        {
+      const response = await api.put(`/admin/users/${selectedUser.id}`, {
           full_name: formData.name,
           email: formData.email,
           phone_number: formData.phone,
           role: dbRole,
           is_active: formData.status === 'active'
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+        });
       
       if (response.data.success) {
         setOpenEditDialog(false);
@@ -295,12 +279,7 @@ function Users() {
   const handleDeleteUser = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.delete(
-        `http://localhost:5000/api/v1/admin/users/${selectedUser.id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const response = await api.delete(`/admin/users/${selectedUser.id}`);
       
       if (response.data.success) {
         setOpenDeleteDialog(false);
