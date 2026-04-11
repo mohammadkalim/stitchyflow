@@ -53,11 +53,20 @@ const NAV_LINKS = [
   { label: 'Insights',   path: '/insights' },
 ];
 
-const SERVICES_MENU = [
-  { icon: <CheckroomIcon sx={{ color: '#2563eb', fontSize: 22 }} />,         label: 'Custom Dresses',   path: '/marketplace/custom-dresses',   desc: 'Tailored to your exact measurements' },
-  { icon: <StraightenIcon sx={{ color: '#7c3aed', fontSize: 22 }} />,        label: 'Suits & Blazers',  path: '/marketplace/suits-blazers',    desc: 'Sharp formal & corporate wear' },
-  { icon: <AutoAwesomeIcon sx={{ color: '#f59e0b', fontSize: 22 }} />,       label: 'Traditional Wear', path: '/marketplace/traditional-wear', desc: 'Authentic Pakistani heritage styles' },
-  { icon: <ContentCutOutlinedIcon sx={{ color: '#10b981', fontSize: 22 }} />,label: 'Alterations',      path: '/marketplace/alterations',      desc: 'Perfect fit for existing clothes' },
+// Icon mapping for services
+const iconMap = {
+  CustomDresses: <CheckroomIcon sx={{ color: '#2563eb', fontSize: 22 }} />,
+  Suits: <StraightenIcon sx={{ color: '#7c3aed', fontSize: 22 }} />,
+  Traditional: <AutoAwesomeIcon sx={{ color: '#f59e0b', fontSize: 22 }} />,
+  Alterations: <ContentCutOutlinedIcon sx={{ color: '#10b981', fontSize: 22 }} />,
+};
+
+// Default services (fallback if DB fails)
+const DEFAULT_SERVICES = [
+  { icon: 'CustomDresses', label: 'Custom Dresses',   path: '/marketplace/custom-dresses',   desc: 'Tailored to your exact measurements', color: '#2563eb' },
+  { icon: 'Suits',        label: 'Suits & Blazers',  path: '/marketplace/suits-blazers',    desc: 'Sharp formal & corporate wear', color: '#7c3aed' },
+  { icon: 'Traditional',  label: 'Traditional Wear', path: '/marketplace/traditional-wear', desc: 'Authentic Pakistani heritage styles', color: '#f59e0b' },
+  { icon: 'Alterations',  label: 'Alterations',      path: '/marketplace/alterations',      desc: 'Perfect fit for existing clothes', color: '#10b981' },
 ];
 
 function Header() {
@@ -67,6 +76,7 @@ function Header() {
   const [userAnchor, setUserAnchor]     = useState(null);
   const [user, setUser]                 = useState(null);
   const [socialLinks, setSocialLinks]   = useState([]);
+  const [servicesMenu, setServicesMenu] = useState(DEFAULT_SERVICES);
 
   /* Read user from localStorage on mount + on storage changes */
   useEffect(() => {
@@ -88,6 +98,27 @@ function Header() {
       .then(data => {
         if (data.success) {
           setSocialLinks((data.data || []).filter(l => l.show_header && l.is_active));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  /* Fetch tailor services from DB */
+  useEffect(() => {
+    fetch(`${API_BASE}/tailor-services`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.data && data.data.length > 0) {
+          const mapped = data.data
+            .filter(s => s.is_active)
+            .map(s => ({
+              icon: s.icon,
+              label: s.label,
+              path: s.path,
+              desc: s.description,
+              color: s.color,
+            }));
+          setServicesMenu(mapped);
         }
       })
       .catch(() => {});
@@ -372,7 +403,7 @@ function Header() {
             <Menu anchorEl={mobileAnchor} open={Boolean(mobileAnchor)}
               onClose={() => setMobileAnchor(null)}
               PaperProps={{ sx: { width: 240, borderRadius: '12px', mt: 1 } }}>
-              {SERVICES_MENU.map((item) => (
+              {servicesMenu.map((item) => (
                 <MenuItem key={item.label}
                   onClick={() => { setMobileAnchor(null); navigate(item.path); }}
                   sx={{ fontSize: '0.85rem' }}>
@@ -420,20 +451,29 @@ function Header() {
             bgcolor: '#fff',
             borderBottom: '1px solid #e5e7eb',
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+            width: '598px',
+            maxHeight: '315px',
+            overflow: 'auto',
+            borderRadius: '0 0 12px 12px',
+            position: 'absolute',
+            top: '60px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1100,
           }}
           onMouseLeave={() => setMegaOpen(false)}
         >
-          <Container maxWidth="xl" sx={{ pt: 4, pb: 3 }}>
+          <Container sx={{ pt: 3, pb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e' }}>
                 Tailor Services
               </Typography>
               <Typography variant="caption" sx={{ color: '#9ca3af' }}>
-                {SERVICES_MENU.length} services
+                {servicesMenu.length} services
               </Typography>
             </Box>
             <Grid container spacing={2}>
-              {SERVICES_MENU.map((item) => (
+              {servicesMenu.map((item) => (
                 <Grid item xs={12} sm={6} md={6} key={item.label}>
                   <Paper elevation={0} onClick={() => { setMegaOpen(false); navigate(item.path); }}
                     sx={{
@@ -451,10 +491,12 @@ function Header() {
                     }}>
                     <Box sx={{
                       width: 44, height: 44, borderRadius: '10px',
-                      bgcolor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      bgcolor: item.color ? item.color + '15' : '#f8fafc',
+                      color: item.color || '#2563eb',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
                     }}>
-                      {item.icon}
+                      {iconMap[item.icon] || <ContentCutIcon sx={{ fontSize: 22 }} />}
                     </Box>
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.2 }}>

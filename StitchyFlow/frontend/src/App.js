@@ -22,13 +22,9 @@ import About from './pages/company/About';
 import HowItWorks from './pages/company/HowItWorks';
 import Careers from './pages/company/Careers';
 import PressMedia from './pages/company/PressMedia';
-import Insights from './pages/company/Blog';
+import Blog from './pages/company/Blog';
 import Promotions from './pages/Promotions';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
-// Legal
-import PrivacyPolicy from './pages/legal/PrivacyPolicy';
-import TermsConditions from './pages/legal/TermsConditions';
-import Sitemap from './pages/legal/Sitemap';
 
 const theme = createTheme({
   palette: {
@@ -61,15 +57,11 @@ function App() {
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/careers" element={<Careers />} />
             <Route path="/press-media" element={<PressMedia />} />
-            <Route path="/blog" element={<Navigate to="/insights" replace />} />
-            <Route path="/insights" element={<Insights />} />
+            <Route path="/blog" element={<Blog />} />
             <Route path="/promotions" element={<Promotions />} />
             <Route path="/customer-dashboard" element={<CustomerDashboard />} />
             <Route path="/tailor-dashboard" element={<TailorDashboard />} />
             <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsConditions />} />
-            <Route path="/sitemap" element={<Sitemap />} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>

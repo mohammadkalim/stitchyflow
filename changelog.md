@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-04-11 11:49:00 PKT
+
+- Tailor Services: **implemented comprehensive service catalog with live database integration**
+  - Created MySQL table `tailor_services` with 25 sample services including pricing, categories, duration, difficulty levels, tags, materials, and size options
+  - Updated backend API routes (`tailor_services.routes.js`) with full CRUD operations:
+    - GET /api/v1/tailor-services (all active services)
+    - GET /api/v1/tailor-services/:id (single service)
+    - GET /api/v1/tailor-services/category/:category (filter by category)
+    - GET /api/v1/tailor-services/meta/categories (all categories)
+    - POST /api/v1/tailor-services (create new service - admin only)
+    - PUT /api/v1/tailor-services/:id (update service - admin only)
+    - DELETE /api/v1/tailor-services/:id (delete service - admin only)
+    - PATCH /api/v1/tailor-services/:id/toggle-popular (toggle popular status)
+    - PATCH /api/v1/tailor-services/:id/toggle-active (toggle active status)
+  - Created frontend component `TailorServices.js` with modern UI/UX:
+    - Real-time data fetching from database
+    - Category filtering with dynamic buttons
+    - Popular services highlighting section
+    - Service cards with images, pricing, duration, difficulty level, tags
+    - Statistics dashboard (total services, popular services, categories)
+    - Loading and error states
+    - Responsive grid layout
+  - Added route `/marketplace/tailor-services` to App.js
+  - Database populated with 25 diverse services across categories: Men's Wear, Women's Wear, Bottom Wear, Alterations, Embroidery, Home Decor, Uniforms, Kids Wear
+  - All data displayed live from MySQL database
+  - Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
 ## 2026-04-10 21:54:00 PKT
 
 - Dynamic Frontend Pages: **implemented live database-driven pages for About, Privacy Policy, Terms & Conditions, and Sitemap**

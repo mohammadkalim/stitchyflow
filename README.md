@@ -113,6 +113,14 @@ Docs/                 # Complete documentation
 - Reviews and ratings
 - Real-time notifications
 - Analytics dashboards
+- **Tailor Services:** Comprehensive service catalog with live database integration
+  - 25+ professional tailoring services across multiple categories
+  - Real-time data display from MySQL database
+  - Category filtering (Men's Wear, Women's Wear, Alterations, Embroidery, Home Decor, etc.)
+  - Popular services highlighting
+  - Detailed service information including pricing, duration, difficulty level
+  - Responsive grid layout with modern UI/UX
+  - Accessible at http://localhost:3000/marketplace/tailor-services
 
 ## Documentation
 

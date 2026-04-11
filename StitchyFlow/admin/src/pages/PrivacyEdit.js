@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
+import Layout from '../components/Layout';
 import {
   Box, Typography, Paper, Tabs, Tab, TextField, Switch,
   FormControlLabel, CircularProgress, Snackbar, Alert,
@@ -223,31 +224,33 @@ function PageEditor({ pageKey, pageMeta }) {
     <Box>
       {/* Page header card */}
       <Box sx={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between',
+        flexDirection: { xs: 'column', sm: 'row' },
         flexWrap: 'wrap', gap: 2, mb: 3,
-        p: 2.5, borderRadius: '12px',
+        p: { xs: 2, sm: 2.5 }, borderRadius: '12px',
         background: `linear-gradient(135deg, ${pageMeta.bg} 0%, #fff 100%)`,
         border: `1px solid ${pageMeta.color}30`,
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, flex: 1 }}>
           <Box sx={{
-            width: 44, height: 44, borderRadius: '10px',
+            width: { xs: 40, sm: 44 }, height: { xs: 40, sm: 44 }, borderRadius: '10px',
             bgcolor: pageMeta.color, color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: `0 4px 12px ${pageMeta.color}40`,
+            flexShrink: 0,
           }}>
             {pageMeta.icon}
           </Box>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', lineHeight: 1.2 }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1a1a2e', lineHeight: 1.2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               {pageMeta.label}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#6b7280' }}>
+            <Typography variant="caption" sx={{ color: '#6b7280', display: { xs: 'none', sm: 'block' } }}>
               {pageMeta.desc}
             </Typography>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexShrink: 0 }}>
           <Chip
             label={data.is_active ? 'Active' : 'Inactive'}
             size="small"
@@ -309,32 +312,34 @@ function PageEditor({ pageKey, pageMeta }) {
                 onBlur={handleContentBlur}
                 dangerouslySetInnerHTML={{ __html: data.content }}
                 sx={{
-                  minHeight: 280,
-                  p: 2,
+                  minHeight: { xs: 200, sm: 280 },
+                  p: { xs: 1.5, sm: 2 },
                   outline: 'none',
-                  fontSize: 14,
+                  fontSize: { xs: 13, sm: 14 },
                   lineHeight: 1.7,
                   color: '#1a1a2e',
                   bgcolor: '#fff',
-                  '& h2': { color: pageMeta.color, mt: 1, mb: 0.5 },
-                  '& h3': { color: '#1976D2', mt: 1, mb: 0.5 },
+                  '& h2': { color: pageMeta.color, mt: 1, mb: 0.5, fontSize: { xs: '1.1rem', sm: '1.25rem' } },
+                  '& h3': { color: '#1976D2', mt: 1, mb: 0.5, fontSize: { xs: '1rem', sm: '1.1rem' } },
                   '& p':  { mb: 1 },
-                  '& ul, & ol': { pl: 3, mb: 1 },
+                  '& ul, & ol': { pl: { xs: 2, sm: 3 }, mb: 1 },
                   '& a':  { color: pageMeta.color },
+                  '& img': { maxWidth: '100%', height: 'auto', borderRadius: 1 },
                 }}
               />
             </Box>
           ) : (
             <Box sx={{
-              minHeight: 280, p: 2.5,
+              minHeight: { xs: 200, sm: 280 }, p: { xs: 1.5, sm: 2.5 },
               border: `1px solid #BBDEFB`, borderRadius: '8px',
               bgcolor: '#FAFCFF',
-              fontSize: 14, lineHeight: 1.7, color: '#1a1a2e',
-              '& h2': { color: pageMeta.color, mt: 1, mb: 0.5 },
-              '& h3': { color: '#1976D2', mt: 1, mb: 0.5 },
+              fontSize: { xs: 13, sm: 14 }, lineHeight: 1.7, color: '#1a1a2e',
+              '& h2': { color: pageMeta.color, mt: 1, mb: 0.5, fontSize: { xs: '1.1rem', sm: '1.25rem' } },
+              '& h3': { color: '#1976D2', mt: 1, mb: 0.5, fontSize: { xs: '1rem', sm: '1.1rem' } },
               '& p':  { mb: 1 },
-              '& ul, & ol': { pl: 3, mb: 1 },
+              '& ul, & ol': { pl: { xs: 2, sm: 3 }, mb: 1 },
               '& a':  { color: pageMeta.color },
+              '& img': { maxWidth: '100%', height: 'auto', borderRadius: 1 },
             }}
               dangerouslySetInnerHTML={{ __html: data.content }}
             />
@@ -383,7 +388,7 @@ function PageEditor({ pageKey, pageMeta }) {
         />
 
         {/* Active toggle + Save */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' }, flexWrap: 'wrap', gap: 2 }}>
           <FormControlLabel
             control={
               <Switch
@@ -409,14 +414,16 @@ function PageEditor({ pageKey, pageMeta }) {
               display: 'flex', alignItems: 'center', gap: 1,
               bgcolor: saving ? '#90CAF9' : pageMeta.color,
               color: '#fff', border: 'none', borderRadius: '10px',
-              px: 3, py: 1.2, fontWeight: 700, fontSize: '0.875rem',
+              px: { xs: 2, sm: 3 }, py: { xs: 1, sm: 1.2 }, fontWeight: 700, fontSize: { xs: '0.8rem', sm: '0.875rem' },
               cursor: saving ? 'not-allowed' : 'pointer',
               boxShadow: `0 4px 14px ${pageMeta.color}40`,
               transition: 'all 0.2s',
+              width: { xs: '100%', sm: 'auto' },
+              justifyContent: 'center',
               '&:hover': { bgcolor: saving ? '#90CAF9' : '#0D47A1', transform: saving ? 'none' : 'translateY(-1px)' },
             }}
           >
-            {saving ? <CircularProgress size={16} sx={{ color: '#fff' }} /> : <SaveIcon sx={{ fontSize: 18 }} />}
+            {saving ? <CircularProgress size={16} sx={{ color: '#fff' }} /> : <SaveIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
             {saving ? 'Saving...' : 'Save Changes'}
           </Box>
         </Box>
@@ -441,26 +448,29 @@ export default function PrivacyEdit() {
   const [tab, setTab] = useState(0);
 
   return (
+    <Layout title="Privacy & Pages Editor">
     <Box>
       {/* Section header */}
       <Box sx={{
         display: 'flex', alignItems: 'center', gap: 1.5, mb: 3,
-        p: 2.5, borderRadius: '12px',
+        p: { xs: 2, sm: 2.5 }, borderRadius: '12px',
         background: 'linear-gradient(135deg, #1565C0 0%, #1976D2 50%, #42A5F5 100%)',
         boxShadow: '0 4px 20px rgba(21,101,192,0.3)',
+        flexWrap: 'wrap',
       }}>
         <Box sx={{
-          width: 48, height: 48, borderRadius: '12px',
+          width: { xs: 40, sm: 48 }, height: { xs: 40, sm: 48 }, borderRadius: '12px',
           bgcolor: 'rgba(255,255,255,0.2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
         }}>
-          <PrivacyIcon sx={{ color: '#fff', fontSize: 26 }} />
+          <PrivacyIcon sx={{ color: '#fff', fontSize: { xs: 22, sm: 26 } }} />
         </Box>
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff', lineHeight: 1.2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             Privacy & Pages Editor
           </Typography>
-          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', display: { xs: 'none', sm: 'block' } }}>
             Edit About, Privacy Policy, Terms & Conditions, and Sitemap pages
           </Typography>
         </Box>
@@ -481,9 +491,10 @@ export default function PrivacyEdit() {
             bgcolor: '#F0F7FF',
             borderBottom: '1px solid #BBDEFB',
             '& .MuiTab-root': {
-              fontWeight: 600, fontSize: '0.8rem', textTransform: 'none',
-              minHeight: 52, color: '#546E7A',
+              fontWeight: 600, fontSize: { xs: '0.75rem', sm: '0.8rem' }, textTransform: 'none',
+              minHeight: { xs: 44, sm: 52 }, color: '#546E7A',
               transition: 'all 0.2s',
+              px: { xs: 1.5, sm: 2 },
             },
             '& .Mui-selected': { color: '#1565C0' },
             '& .MuiTabs-indicator': { bgcolor: '#1565C0', height: 3, borderRadius: '3px 3px 0 0' },
@@ -494,10 +505,11 @@ export default function PrivacyEdit() {
               key={p.key}
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                  <Box sx={{ color: tab === i ? p.color : '#90A4AE', display: 'flex', fontSize: 18 }}>
+                  <Box sx={{ color: tab === i ? p.color : '#90A4AE', display: 'flex', fontSize: { xs: 16, sm: 18 } }}>
                     {p.icon}
                   </Box>
-                  {p.label}
+                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{p.label}</Box>
+                  <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>{p.label.split(' ')[0]}</Box>
                 </Box>
               }
             />
@@ -513,5 +525,6 @@ export default function PrivacyEdit() {
         </Box>
       </Paper>
     </Box>
+    </Layout>
   );
 }

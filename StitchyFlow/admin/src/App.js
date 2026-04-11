@@ -52,6 +52,7 @@ import AdsManagement from './pages/AdsManagement';
 import AdsAnalytics from './pages/AdsAnalytics';
 import SliderMedia from './pages/SliderMedia';
 import PrivacyEdit from './pages/PrivacyEdit';
+import TailorServices from './pages/TailorServices';
 const theme = createTheme({
   palette: {
     mode: 'light',
@@ -127,6 +128,7 @@ function App() {
           <Route path="/smtp-settings" element={<PrivateRoute><SMTPSettings /></PrivateRoute>} />
           <Route path="/admin-settings" element={<PrivateRoute><AdminSettings /></PrivateRoute>} />
           <Route path="/site-settings" element={<PrivateRoute><SiteSettings /></PrivateRoute>} />
+          <Route path="/tailor-services" element={<PrivateRoute><TailorServices /></PrivateRoute>} />
           <Route path="/site-maintenance" element={<PrivateRoute><SiteMaintenanceMode /></PrivateRoute>} />
           <Route path="/add-more-smtp" element={<PrivateRoute><AddMoreSMTP /></PrivateRoute>} />
           <Route path="/ads-management" element={<PrivateRoute><AdsManagement /></PrivateRoute>} />

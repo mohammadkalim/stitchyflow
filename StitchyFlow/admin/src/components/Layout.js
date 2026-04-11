@@ -57,7 +57,6 @@ import {
   Slideshow as SlideshowIcon,
   Menu as MenuIcon,
   Close as CloseIcon,
-  PrivacyTip as PrivacyIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -101,6 +100,7 @@ const businessSubItems = [
 ];
 
 const adminSubItems = [
+  { text: 'Tailor Services',  icon: <TailorsIcon />,        path: '/tailor-services' },
   { text: 'SMTP Settings',    icon: <SMTPIcon />,           path: '/smtp-settings' },
   { text: 'Admin Settings',   icon: <AdminSettingsIcon />,  path: '/admin-settings' },
   { text: 'Site Settings',    icon: <SiteSettingsIcon />,   path: '/site-settings' },
@@ -262,12 +262,6 @@ function SidebarContent({ location, navigate, onNavigate }) {
         {/* Logs Management */}
         <NavGroup label="Logs Management" icon={<LogsManagementIcon />} items={logsSubItems}
           location={location} navigate={navigate} onNavigate={onNavigate} />
-
-        {/* Privacy & Pages */}
-        <NavItem
-          item={{ text: 'Privacy & Pages', icon: <PrivacyIcon />, path: '/privacy-pages' }}
-          location={location} navigate={navigate} onNavigate={onNavigate}
-        />
 
         {/* Settings */}
         <NavItem

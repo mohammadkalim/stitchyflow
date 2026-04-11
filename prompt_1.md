@@ -415,3 +415,26 @@ Admin panel passoword ********** admin123 ***********
 
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+------
+
+
+please Admin panal sidebar Admistation ke page create kare Tailor Services
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+------
+
+please Database create a 1 Table of Tailor Services and please create All Data is showing live Database
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
