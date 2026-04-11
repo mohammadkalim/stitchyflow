@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-11 19:00:00 PKT
+
+- **Fix admin Tailor Services 404:** Admin list moved to **`GET /api/v1/admin/tailor-services`** (registered in `admin.routes.js`). The admin UI now calls `api.get('/admin/tailor-services')` so the list resolves reliably (avoids 404 on `/tailor-services/admin/all` when the nested route was not matched or an older API process was running).
+
 ## 2026-04-11 18:30:00 PKT
 
 - **Admin Tailor Services (`/tailor-services`):** Rebuilt to use live MySQL data via `GET /api/v1/tailor-services/admin/all` with full CRUD (`POST`, `PUT /:id`, `DELETE /:id`, `PATCH …/toggle-active`, `PATCH …/toggle-popular`). Service icons use the existing admin image upload (`/admin/ads/upload-image`). UI uses a light-blue theme. Fixed admin API import to use the named `api` axios instance.

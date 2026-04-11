@@ -66,7 +66,7 @@ function TailorServices() {
   const loadServices = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/tailor-services/admin/all');
+      const res = await api.get('/admin/tailor-services');
       if (res.data?.success && Array.isArray(res.data.data)) {
         setServices(res.data.data);
       }
