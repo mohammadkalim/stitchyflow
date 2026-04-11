@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-11 19:45:00 PKT
+
+- **Tailor Services admin 404 (stale Node process):** Added **`GET /api/v1/tailor-services/mgmt/list`** for the full table. Admin UI tries `mgmt/list`, then `admin/tailor-services`, then public **`GET /api/v1/tailor-services`** with an info toast (active rows only) when the API was not restarted. **`/tailor-services/admin/all`** now uses `authenticateToken` only.
+
 ## 2026-04-11 19:00:00 PKT
 
 - **Fix admin Tailor Services 404:** Admin list moved to **`GET /api/v1/admin/tailor-services`** (registered in `admin.routes.js`). The admin UI now calls `api.get('/admin/tailor-services')` so the list resolves reliably (avoids 404 on `/tailor-services/admin/all` when the nested route was not matched or an older API process was running).

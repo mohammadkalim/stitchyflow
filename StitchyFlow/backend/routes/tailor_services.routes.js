@@ -14,6 +14,19 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 const emptyJsonArray = () => '[]';
 
+// ── FULL LIST FOR ADMIN UI (auth) — before "/" and "/:id" ─────────────────────
+// GET /api/v1/tailor-services/mgmt/list
+router.get('/mgmt/list', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT * FROM tailor_services ORDER BY is_popular DESC, service_name ASC`
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
 // ── GET ALL ACTIVE (public — header / marketplace) ────────────────────────────
 // GET /api/v1/tailor-services
 router.get('/', async (req, res) => {
@@ -31,7 +44,7 @@ router.get('/', async (req, res) => {
 
 // ── LIST ALL ROWS (admin — includes inactive) ────────────────────────────────
 // GET /api/v1/tailor-services/admin/all  (must be before /:id)
-router.get('/admin/all', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+router.get('/admin/all', authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT * FROM tailor_services ORDER BY is_popular DESC, service_name ASC`

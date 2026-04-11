@@ -66,7 +66,27 @@ function TailorServices() {
   const loadServices = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/admin/tailor-services');
+      let res;
+      try {
+        res = await api.get('/tailor-services/mgmt/list');
+      } catch (e1) {
+        const s1 = e1.response?.status;
+        if (s1 === 401 || s1 === 403) throw e1;
+        if (s1 !== 404) throw e1;
+        try {
+          res = await api.get('/admin/tailor-services');
+        } catch (e2) {
+          const s2 = e2.response?.status;
+          if (s2 === 401 || s2 === 403) throw e2;
+          if (s2 !== 404) throw e2;
+          res = await api.get('/tailor-services');
+          setSnack({
+            open: true,
+            msg: 'Showing active services only. Restart the StitchyFlow backend (StitchyFlow/backend npm start) to enable the full admin list including inactive items.',
+            sev: 'info',
+          });
+        }
+      }
       if (res.data?.success && Array.isArray(res.data.data)) {
         setServices(res.data.data);
       }

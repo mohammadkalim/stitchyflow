@@ -103,7 +103,7 @@ Docs/                 # Complete documentation
 - Daily/Weekly/Monthly reports
 - Clean white theme with blue accents
 - Secure login with JWT authentication
-- **Tailor Services (Administration):** Full CRUD on `tailor_services` — add/edit/delete, upload service icons (stored via existing ad image upload API), set name, description, type (category), link path, accent color, enable/disable (active), and popular flag; light-blue themed UI at `/tailor-services`. The admin list loads from **`GET /api/v1/admin/tailor-services`** (authenticated). Data is read live from MySQL and drives the main site header “Tailor Services” mega menu.
+- **Tailor Services (Administration):** Full CRUD on `tailor_services` — add/edit/delete, upload service icons (stored via existing ad image upload API), set name, description, type (category), link path, accent color, enable/disable (active), and popular flag; light-blue themed UI at `/tailor-services`. The admin list prefers **`GET /api/v1/tailor-services/mgmt/list`** (authenticated); it falls back to other admin paths, then to the public catalog if the API process has not been restarted yet. Data is read live from MySQL and drives the main site header “Tailor Services” mega menu.
 - **Privacy & Pages Editor:** Edit main website pages (About, Privacy, Terms, Sitemap) with rich text editor and image upload
   - Professional blue UI/UX design
   - Rich text formatting (Bold, Italic, Underline, Headings, Lists, Links)
