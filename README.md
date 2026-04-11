@@ -29,6 +29,12 @@ cd ../..
 mysql -u root -p12345 < Database/database_setup.sql
 ```
 
+If your `stitchyflow` database already existed before **2026-04-11** and the admin Tailor Services screen reports unknown columns, apply the navigation columns migration (adds `link_path`, `accent_color`, and refreshes the public view):
+
+```bash
+mysql -u root -p12345 < Database/add_tailor_services_link_accent.sql
+```
+
 ### 3. Start All Services
 
 ```bash
@@ -97,6 +103,7 @@ Docs/                 # Complete documentation
 - Daily/Weekly/Monthly reports
 - Clean white theme with blue accents
 - Secure login with JWT authentication
+- **Tailor Services (Administration):** Full CRUD on `tailor_services` — add/edit/delete, upload service icons (stored via existing ad image upload API), set name, description, type (category), link path, accent color, enable/disable (active), and popular flag; light-blue themed UI at `/tailor-services`. Data is read live from MySQL and drives the main site header “Tailor Services” mega menu.
 - **Privacy & Pages Editor:** Edit main website pages (About, Privacy, Terms, Sitemap) with rich text editor and image upload
   - Professional blue UI/UX design
   - Rich text formatting (Bold, Italic, Underline, Headings, Lists, Links)
@@ -113,14 +120,8 @@ Docs/                 # Complete documentation
 - Reviews and ratings
 - Real-time notifications
 - Analytics dashboards
-- **Tailor Services:** Comprehensive service catalog with live database integration
-  - 25+ professional tailoring services across multiple categories
-  - Real-time data display from MySQL database
-  - Category filtering (Men's Wear, Women's Wear, Alterations, Embroidery, Home Decor, etc.)
-  - Popular services highlighting
-  - Detailed service information including pricing, duration, difficulty level
-  - Responsive grid layout with modern UI/UX
-  - Accessible at http://localhost:3000/marketplace/tailor-services
+- **Header — Tailor Services menu:** Loads active services from `/api/v1/tailor-services` (name, description, optional icon image, link path, colors).
+- **Tailor Shops page:** Public page at http://localhost:3000/tailor-shops (also linked in the main header).
 
 ## Documentation
 

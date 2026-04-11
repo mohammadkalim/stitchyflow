@@ -33,6 +33,15 @@ import LanguageIcon from '@mui/icons-material/Language';
 
 const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
 
+/** Resolve uploaded or relative image paths for tailor service icons */
+function resolveServiceImageUrl(url) {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  const root = API_BASE.replace(/\/api\/v\d+$/i, '');
+  if (url.startsWith('/')) return `${root}${url}`;
+  return url;
+}
+
 // Map platform name → MUI icon component
 function getSocialIcon(platform, color, size = 18) {
   const sx = { fontSize: size, color };
@@ -48,9 +57,10 @@ function getSocialIcon(platform, color, size = 18) {
 }
 
 const NAV_LINKS = [
-  { label: 'Tailors',    path: '/marketplace/custom-dresses' },
+  { label: 'Tailor Shops', path: '/tailor-shops' },
+  { label: 'Tailors', path: '/marketplace/custom-dresses' },
   { label: 'Promotions', path: '/promotions' },
-  { label: 'Insights',   path: '/insights' },
+  { label: 'Insights', path: '/insights' },
 ];
 
 // Icon mapping for services
@@ -103,21 +113,19 @@ function Header() {
       .catch(() => {});
   }, []);
 
-  /* Fetch tailor services from DB */
+  /* Fetch tailor services from DB (active rows — matches main site popup / mega menu) */
   useEffect(() => {
     fetch(`${API_BASE}/tailor-services`)
       .then(r => r.json())
       .then(data => {
         if (data.success && data.data && data.data.length > 0) {
-          const mapped = data.data
-            .filter(s => s.is_active)
-            .map(s => ({
-              icon: s.icon,
-              label: s.label,
-              path: s.path,
-              desc: s.description,
-              color: s.color,
-            }));
+          const mapped = data.data.map((s) => ({
+            label: s.service_name,
+            path: s.link_path || '/marketplace/custom-dresses',
+            desc: s.service_description || '',
+            color: s.accent_color || '#2563eb',
+            imageUrl: s.image_url || null,
+          }));
           setServicesMenu(mapped);
         }
       })
@@ -495,8 +503,18 @@ function Header() {
                       color: item.color || '#2563eb',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
+                      overflow: 'hidden',
                     }}>
-                      {iconMap[item.icon] || <ContentCutIcon sx={{ fontSize: 22 }} />}
+                      {item.imageUrl ? (
+                        <Avatar
+                          src={resolveServiceImageUrl(item.imageUrl)}
+                          variant="rounded"
+                          sx={{ width: 44, height: 44 }}
+                          imgProps={{ loading: 'lazy', decoding: 'async' }}
+                        />
+                      ) : (
+                        iconMap[item.icon] || <ContentCutIcon sx={{ fontSize: 22 }} />
+                      )}
                     </Box>
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.2 }}>

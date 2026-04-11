@@ -10,9 +10,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-// ── GET ALL (public — displays live data from database) ───────────────────────
+const emptyJsonArray = () => '[]';
+
+// ── GET ALL ACTIVE (public — header / marketplace) ────────────────────────────
 // GET /api/v1/tailor-services
 router.get('/', async (req, res) => {
   try {
@@ -27,18 +29,28 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ── GET SINGLE (public) ─────────────────────────────────────────────────────
-// GET /api/v1/tailor-services/:id
-router.get('/:id', async (req, res) => {
+// ── LIST ALL ROWS (admin — includes inactive) ────────────────────────────────
+// GET /api/v1/tailor-services/admin/all  (must be before /:id)
+router.get('/admin/all', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT * FROM tailor_services WHERE service_id = ?',
-      [req.params.id]
+      `SELECT * FROM tailor_services ORDER BY is_popular DESC, service_name ASC`
     );
-    if (!rows.length) {
-      return res.status(404).json({ success: false, error: { message: 'Service not found' } });
-    }
-    res.json({ success: true, data: rows[0] });
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
+// ── META: CATEGORIES (public) — before /:id ──────────────────────────────────
+// GET /api/v1/tailor-services/meta/categories
+router.get('/meta/categories', async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT DISTINCT category FROM tailor_services WHERE is_active = TRUE ORDER BY category ASC'
+    );
+    const categories = rows.map((row) => row.category);
+    res.json({ success: true, data: categories });
   } catch (err) {
     res.status(500).json({ success: false, error: { message: err.message } });
   }
@@ -60,14 +72,36 @@ router.get('/category/:category', async (req, res) => {
   }
 });
 
+// ── GET SINGLE (public) ─────────────────────────────────────────────────────
+// GET /api/v1/tailor-services/:id
+router.get('/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id) || id < 1) {
+      return res.status(404).json({ success: false, error: { message: 'Service not found' } });
+    }
+    const [rows] = await db.query(
+      'SELECT * FROM tailor_services WHERE service_id = ?',
+      [id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ success: false, error: { message: 'Service not found' } });
+    }
+    res.json({ success: true, data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: { message: err.message } });
+  }
+});
+
 // ── CREATE NEW SERVICE (admin only) ───────────────────────────────────────────
 // POST /api/v1/tailor-services
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
     const {
       service_name,
       service_description,
       category,
+      link_path,
       base_price,
       price_range_min,
       price_range_max,
@@ -76,40 +110,43 @@ router.post('/', authenticateToken, async (req, res) => {
       is_popular,
       is_active,
       image_url,
+      accent_color,
       tags,
       materials_included,
-      size_options
+      size_options,
     } = req.body;
 
     const [result] = await db.query(
       `INSERT INTO tailor_services (
-        service_name, service_description, category, base_price,
+        service_name, service_description, category, link_path, base_price,
         price_range_min, price_range_max, estimated_duration_hours,
-        difficulty_level, is_popular, is_active, image_url,
+        difficulty_level, is_popular, is_active, image_url, accent_color,
         tags, materials_included, size_options
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         service_name,
         service_description,
         category,
+        link_path || null,
         base_price,
-        price_range_min,
-        price_range_max,
-        estimated_duration_hours,
+        price_range_min ?? null,
+        price_range_max ?? null,
+        estimated_duration_hours ?? null,
         difficulty_level || 'intermediate',
         is_popular || false,
         is_active !== undefined ? is_active : true,
-        image_url,
-        tags ? JSON.stringify(tags) : JSON_ARRAY(),
-        materials_included ? JSON.stringify(materials_included) : JSON_ARRAY(),
-        size_options ? JSON.stringify(size_options) : JSON_ARRAY()
+        image_url || null,
+        accent_color || null,
+        tags ? JSON.stringify(tags) : emptyJsonArray(),
+        materials_included ? JSON.stringify(materials_included) : emptyJsonArray(),
+        size_options ? JSON.stringify(size_options) : emptyJsonArray(),
       ]
     );
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Tailor service created successfully',
-      data: { service_id: result.insertId }
+      data: { service_id: result.insertId },
     });
   } catch (err) {
     res.status(500).json({ success: false, error: { message: err.message } });
@@ -118,12 +155,13 @@ router.post('/', authenticateToken, async (req, res) => {
 
 // ── UPDATE SERVICE (admin only) ───────────────────────────────────────────────
 // PUT /api/v1/tailor-services/:id
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
     const {
       service_name,
       service_description,
       category,
+      link_path,
       base_price,
       price_range_min,
       price_range_max,
@@ -132,9 +170,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
       is_popular,
       is_active,
       image_url,
+      accent_color,
       tags,
       materials_included,
-      size_options
+      size_options,
     } = req.body;
 
     const [existing] = await db.query(
@@ -150,6 +189,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         service_name = ?,
         service_description = ?,
         category = ?,
+        link_path = ?,
         base_price = ?,
         price_range_min = ?,
         price_range_max = ?,
@@ -158,6 +198,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         is_popular = ?,
         is_active = ?,
         image_url = ?,
+        accent_color = ?,
         tags = ?,
         materials_included = ?,
         size_options = ?,
@@ -167,18 +208,20 @@ router.put('/:id', authenticateToken, async (req, res) => {
         service_name,
         service_description,
         category,
+        link_path || null,
         base_price,
-        price_range_min,
-        price_range_max,
-        estimated_duration_hours,
+        price_range_min ?? null,
+        price_range_max ?? null,
+        estimated_duration_hours ?? null,
         difficulty_level || 'intermediate',
         is_popular || false,
         is_active !== undefined ? is_active : true,
-        image_url,
-        tags ? JSON.stringify(tags) : JSON_ARRAY(),
-        materials_included ? JSON.stringify(materials_included) : JSON_ARRAY(),
-        size_options ? JSON.stringify(size_options) : JSON_ARRAY(),
-        req.params.id
+        image_url || null,
+        accent_color || null,
+        tags ? JSON.stringify(tags) : emptyJsonArray(),
+        materials_included ? JSON.stringify(materials_included) : emptyJsonArray(),
+        size_options ? JSON.stringify(size_options) : emptyJsonArray(),
+        req.params.id,
       ]
     );
 
@@ -190,7 +233,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
 // ── DELETE SERVICE (admin only) ───────────────────────────────────────────────
 // DELETE /api/v1/tailor-services/:id
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
     const [existing] = await db.query(
       'SELECT service_id FROM tailor_services WHERE service_id = ?',
@@ -200,10 +243,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ success: false, error: { message: 'Service not found' } });
     }
 
-    await db.query(
-      'DELETE FROM tailor_services WHERE service_id = ?',
-      [req.params.id]
-    );
+    await db.query('DELETE FROM tailor_services WHERE service_id = ?', [req.params.id]);
 
     res.json({ success: true, message: 'Tailor service deleted successfully' });
   } catch (err) {
@@ -211,9 +251,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// ── TOGGLE POPULAR STATUS (admin only) ─────────────────────────────────────────
+// ── TOGGLE POPULAR STATUS (admin only) ──────────────────────────────────────
 // PATCH /api/v1/tailor-services/:id/toggle-popular
-router.patch('/:id/toggle-popular', authenticateToken, async (req, res) => {
+router.patch('/:id/toggle-popular', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
     const [rows] = await db.query(
       'SELECT service_id, is_popular FROM tailor_services WHERE service_id = ?',
@@ -227,15 +267,19 @@ router.patch('/:id/toggle-popular', authenticateToken, async (req, res) => {
       'UPDATE tailor_services SET is_popular = ?, updated_at = NOW() WHERE service_id = ?',
       [newStatus, req.params.id]
     );
-    res.json({ success: true, message: `Service ${newStatus ? 'marked as popular' : 'unmarked as popular'}`, data: { is_popular: newStatus } });
+    res.json({
+      success: true,
+      message: `Service ${newStatus ? 'marked as popular' : 'unmarked as popular'}`,
+      data: { is_popular: newStatus },
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: { message: err.message } });
   }
 });
 
-// ── TOGGLE ACTIVE STATUS (admin only) ─────────────────────────────────────────
+// ── TOGGLE ACTIVE STATUS (admin only) ───────────────────────────────────────
 // PATCH /api/v1/tailor-services/:id/toggle-active
-router.patch('/:id/toggle-active', authenticateToken, async (req, res) => {
+router.patch('/:id/toggle-active', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
     const [rows] = await db.query(
       'SELECT service_id, is_active FROM tailor_services WHERE service_id = ?',
@@ -249,21 +293,11 @@ router.patch('/:id/toggle-active', authenticateToken, async (req, res) => {
       'UPDATE tailor_services SET is_active = ?, updated_at = NOW() WHERE service_id = ?',
       [newStatus, req.params.id]
     );
-    res.json({ success: true, message: `Service ${newStatus ? 'activated' : 'deactivated'}`, data: { is_active: newStatus } });
-  } catch (err) {
-    res.status(500).json({ success: false, error: { message: err.message } });
-  }
-});
-
-// ── GET ALL CATEGORIES (public) ───────────────────────────────────────────────
-// GET /api/v1/tailor-services/categories
-router.get('/meta/categories', async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      'SELECT DISTINCT category FROM tailor_services WHERE is_active = TRUE ORDER BY category ASC'
-    );
-    const categories = rows.map(row => row.category);
-    res.json({ success: true, data: categories });
+    res.json({
+      success: true,
+      message: `Service ${newStatus ? 'activated' : 'deactivated'}`,
+      data: { is_active: newStatus },
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: { message: err.message } });
   }

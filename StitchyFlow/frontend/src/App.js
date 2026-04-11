@@ -24,6 +24,7 @@ import Careers from './pages/company/Careers';
 import PressMedia from './pages/company/PressMedia';
 import Blog from './pages/company/Blog';
 import Promotions from './pages/Promotions';
+import TailorShops from './pages/TailorShops';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 
 const theme = createTheme({
@@ -59,6 +60,7 @@ function App() {
             <Route path="/press-media" element={<PressMedia />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/promotions" element={<Promotions />} />
+            <Route path="/tailor-shops" element={<TailorShops />} />
             <Route path="/customer-dashboard" element={<CustomerDashboard />} />
             <Route path="/tailor-dashboard" element={<TailorDashboard />} />
             <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />

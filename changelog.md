@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-04-11 18:30:00 PKT
+
+- **Admin Tailor Services (`/tailor-services`):** Rebuilt to use live MySQL data via `GET /api/v1/tailor-services/admin/all` with full CRUD (`POST`, `PUT /:id`, `DELETE /:id`, `PATCH …/toggle-active`, `PATCH …/toggle-popular`). Service icons use the existing admin image upload (`/admin/ads/upload-image`). UI uses a light-blue theme. Fixed admin API import to use the named `api` axios instance.
+- **Backend `tailor_services.routes.js`:** Registered static routes before `/:id` (fixes `/meta/categories`). Added `link_path` and `accent_color` on create/update. Replaced invalid `JSON_ARRAY()` JavaScript usage with `[]` JSON for JSON columns. Added admin-only `GET /admin/all`.
+- **Database:** `create_tailor_services_table.sql` includes `link_path` and `accent_color`. New migration `Database/add_tailor_services_link_accent.sql` for existing databases; updates `vw_tailor_services_list`.
+- **Main site header:** Mega menu maps `service_name`, `service_description`, `link_path`, `accent_color`, and `image_url` from the public tailor-services API; shows uploaded images when present.
+- **Customer site:** New page `TailorShops.js` and route `/tailor-shops`; header nav includes “Tailor Shops”.
+- Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
 ## 2026-04-11 11:49:00 PKT
 
 - Tailor Services: **implemented comprehensive service catalog with live database integration**
