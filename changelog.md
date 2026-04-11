@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-11 20:30:00 PKT
+
+- **Admin tailor service images 404 / CORP:** Express now serves **`GET /images/...`** from `StitchyFlow/backend/public/images/`. Helmet uses **`crossOriginResourcePolicy: 'cross-origin'`** so images from the API (port 5000) load in the admin (4000) and main site (3000) without `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin`. Admin Tailor Services **Avatar** and header mega-menu images fall back on **`onError`** when a file is missing.
+
 ## 2026-04-11 19:45:00 PKT
 
 - **Tailor Services admin 404 (stale Node process):** Added **`GET /api/v1/tailor-services/mgmt/list`** for the full table. Admin UI tries `mgmt/list`, then `admin/tailor-services`, then public **`GET /api/v1/tailor-services`** with an info toast (active rows only) when the API was not restarted. **`/tailor-services/admin/all`** now uses `authenticateToken` only.

@@ -21,8 +21,13 @@ fs.mkdirSync(path.join(uploadsRoot, 'slider'), { recursive: true });
 fs.mkdirSync(path.join(uploadsRoot, 'privacy'), { recursive: true });
 app.use('/uploads', express.static(uploadsRoot));
 
-// Middleware
-app.use(helmet());
+// Marketing/service images referenced as /images/... in DB (e.g. tailor_services.image_url)
+const publicImagesRoot = path.join(__dirname, 'public', 'images');
+fs.mkdirSync(path.join(publicImagesRoot, 'services'), { recursive: true });
+app.use('/images', express.static(publicImagesRoot));
+
+// Middleware — allow admin (4000) / frontend (3000) to embed images from this API (5000)
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ 
   origin: ['http://localhost:3000', 'http://localhost:4000', process.env.FRONTEND_URL, process.env.ADMIN_URL].filter(Boolean),
   credentials: true 

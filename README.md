@@ -48,6 +48,10 @@ mysql -u root -p12345 < Database/add_tailor_services_link_accent.sql
 - **Backend API:** http://localhost:5000
 - **phpMyAdmin:** http://localhost:8080/phpmyadmin
 
+## Tailor service images (`/images/services/...`)
+
+The database may reference paths such as `/images/services/mens-shirt.jpg`. The API serves these from **`StitchyFlow/backend/public/images/`** (URL prefix `/images/...`). Add JPG/PNG files there to match the DB paths, or upload icons via the admin Tailor Services flow (stored under `/uploads/ads/`). Restart the backend after adding files.
+
 ## Default Credentials
 
 **Database:**

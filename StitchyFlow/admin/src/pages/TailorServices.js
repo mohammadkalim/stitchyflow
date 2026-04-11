@@ -32,12 +32,13 @@ function apiOrigin() {
   return raw.replace(/\/api\/v\d+$/i, '') || 'http://localhost:5000';
 }
 
+/** Uploaded ads + DB paths /images/... are served from the API (see server.js static /images, /uploads). */
 function resolveMediaUrl(url) {
   if (!url) return null;
   if (/^https?:\/\//i.test(url)) return url;
   const root = apiOrigin();
-  if (url.startsWith('/')) return `${root}${url}`;
-  return url;
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return `${root}${path}`;
 }
 
 const emptyForm = () => ({
@@ -62,6 +63,8 @@ function TailorServices() {
   const [form, setForm] = useState(emptyForm());
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  /** Hide broken image URLs (missing files under backend/public/images/...) */
+  const [brokenImages, setBrokenImages] = useState(() => new Set());
 
   const loadServices = useCallback(async () => {
     setLoading(true);
@@ -89,6 +92,7 @@ function TailorServices() {
       }
       if (res.data?.success && Array.isArray(res.data.data)) {
         setServices(res.data.data);
+        setBrokenImages(new Set());
       }
     } catch (error) {
       const msg = error.response?.data?.error?.message || error.message || 'Failed to load services';
@@ -311,7 +315,16 @@ function TailorServices() {
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
                           <Avatar
                             variant="rounded"
-                            src={resolveMediaUrl(row.image_url) || undefined}
+                            src={
+                              row.image_url && !brokenImages.has(row.service_id)
+                                ? resolveMediaUrl(row.image_url) || undefined
+                                : undefined
+                            }
+                            imgProps={{
+                              onError: () => {
+                                setBrokenImages((prev) => new Set(prev).add(row.service_id));
+                              },
+                            }}
                             sx={{
                               width: 52, height: 52,
                               bgcolor: (row.accent_color || '#2196f3') + '22',
@@ -319,7 +332,9 @@ function TailorServices() {
                               fontWeight: 700,
                             }}
                           >
-                            {!row.image_url ? (row.service_name || '?')[0] : null}
+                            {!row.image_url || brokenImages.has(row.service_id)
+                              ? (row.service_name || '?')[0]
+                              : null}
                           </Avatar>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>

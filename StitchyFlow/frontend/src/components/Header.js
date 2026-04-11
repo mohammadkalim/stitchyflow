@@ -33,13 +33,13 @@ import LanguageIcon from '@mui/icons-material/Language';
 
 const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
 
-/** Resolve uploaded or relative image paths for tailor service icons */
+/** API serves /uploads and /images (see backend server.js); paths are absolute on API origin. */
 function resolveServiceImageUrl(url) {
   if (!url) return null;
   if (/^https?:\/\//i.test(url)) return url;
   const root = API_BASE.replace(/\/api\/v\d+$/i, '');
-  if (url.startsWith('/')) return `${root}${url}`;
-  return url;
+  const p = url.startsWith('/') ? url : `/${url}`;
+  return `${root}${p}`;
 }
 
 // Map platform name → MUI icon component
@@ -87,6 +87,7 @@ function Header() {
   const [user, setUser]                 = useState(null);
   const [socialLinks, setSocialLinks]   = useState([]);
   const [servicesMenu, setServicesMenu] = useState(DEFAULT_SERVICES);
+  const [brokenTailorImages, setBrokenTailorImages] = useState(() => new Set());
 
   /* Read user from localStorage on mount + on storage changes */
   useEffect(() => {
@@ -505,12 +506,18 @@ function Header() {
                       flexShrink: 0,
                       overflow: 'hidden',
                     }}>
-                      {item.imageUrl ? (
+                      {item.imageUrl && !brokenTailorImages.has(`${item.label}|${item.imageUrl}`) ? (
                         <Avatar
                           src={resolveServiceImageUrl(item.imageUrl)}
                           variant="rounded"
                           sx={{ width: 44, height: 44 }}
-                          imgProps={{ loading: 'lazy', decoding: 'async' }}
+                          imgProps={{
+                            loading: 'lazy',
+                            decoding: 'async',
+                            onError: () => {
+                              setBrokenTailorImages((prev) => new Set(prev).add(`${item.label}|${item.imageUrl}`));
+                            },
+                          }}
                         />
                       ) : (
                         iconMap[item.icon] || <ContentCutIcon sx={{ fontSize: 22 }} />
