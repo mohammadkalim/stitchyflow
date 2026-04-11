@@ -365,18 +365,8 @@ async function getRefreshTokenMetrics() {
   };
 }
 
-// List all tailor services (admin — includes inactive; /tailor-services admin UI)
-// GET /api/v1/admin/tailor-services
-router.get('/tailor-services', authenticateToken, async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      `SELECT * FROM tailor_services ORDER BY is_popular DESC, service_name ASC`
-    );
-    res.json({ success: true, data: rows });
-  } catch (error) {
-    res.status(500).json({ success: false, error: { message: error.message } });
-  }
-});
+// Tailor services admin list: implemented in server.js as GET /api/v1/admin/tailor-services
+// (registered on app before this router mounts, so the path always resolves.)
 
 // Get Analytics
 router.get('/analytics', authenticateToken, async (req, res) => {

@@ -10,6 +10,7 @@ require('dotenv').config();
 const path = require('path');
 const fs = require('fs');
 const db = require('./config/database');
+const { authenticateToken } = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -37,6 +38,19 @@ const adsUploadRouter = require('./routes/ads_upload.routes');
 app.use('/api/v1/ads', adsUploadRouter);
 app.use('/api/v1/admin/ads', adsUploadRouter);
 app.use('/api/v1/ca-sub/ads', adsUploadRouter);
+
+// Admin tailor services list — explicit app-level route (must register before app.use('/api/v1/admin', …))
+// so GET /api/v1/admin/tailor-services is never missed by nested router ordering.
+app.get('/api/v1/admin/tailor-services', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT * FROM tailor_services ORDER BY is_popular DESC, service_name ASC`
+    );
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
 
 // Routes
 app.use('/api/v1/auth', require('./routes/auth.routes'));
