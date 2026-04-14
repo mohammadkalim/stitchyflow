@@ -17,7 +17,9 @@ import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined';
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { apiFetch, getApiBase, getToken, notifyPublicShopsChanged } from '../../utils/api';
+import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
+import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
+import { apiFetch, getApiBase, getToken, notifyPublicShopsChanged, resolvePublicBusinessImageUrl } from '../../utils/api';
 
 /** Corporate payment tiers — slider selects index0..2 */
 const PAYMENT_PRICING_TIERS = [
@@ -102,6 +104,9 @@ const EMPTY = {
   cover_image: '',
   category_id: '',
   subcategory_id: '',
+  available_from: '',
+  available_to: '',
+  not_available_note: '',
 };
 
 export default function MyBusinessesSection({ isApproved }) {
@@ -172,16 +177,27 @@ export default function MyBusinessesSection({ isApproved }) {
       cover_image: b.cover_image || '',
       category_id: b.category_id || '',
       subcategory_id: b.subcategory_id || '',
+      available_from: b.available_from || '',
+      available_to: b.available_to || '',
+      not_available_note: b.not_available_note || '',
     });
     setEdit(b); setError(''); setOpen(true);
   };
 
   const save = async () => {
     if (!form.shop_name || !form.owner_name) { setError('Shop name and owner name are required.'); return; }
-    setSaving(true); setError('');
+       setSaving(true); setError('');
+    const payload = {
+      ...form,
+      not_available_note: String(form.not_available_note || '').slice(0, 200),
+    };
+    ['business_type_id', 'specialization_id', 'category_id', 'subcategory_id'].forEach((k) => {
+      const v = payload[k];
+      if (v === '' || v === null || v === undefined) delete payload[k];
+    });
     try {
-      if (edit) await apiFetch(`/business/shops/${edit.shop_id}`, { method: 'PUT', body: JSON.stringify(form) });
-      else       await apiFetch('/business/shops', { method: 'POST', body: JSON.stringify(form) });
+      if (edit) await apiFetch(`/business/shops/${edit.shop_id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      else       await apiFetch('/business/shops', { method: 'POST', body: JSON.stringify(payload) });
       setOpen(false);
       load();
       notifyPublicShopsChanged();
@@ -231,6 +247,14 @@ export default function MyBusinessesSection({ isApproved }) {
       const uploaded = data?.data?.imageUrl || '';
       if (target === 'logo') setForm((prev) => ({ ...prev, logo_image: uploaded }));
       else setForm((prev) => ({ ...prev, cover_image: uploaded }));
+      if (edit?.shop_id && uploaded) {
+        await apiFetch(`/business/shops/${edit.shop_id}`, {
+          method: 'PUT',
+          body: JSON.stringify(target === 'logo' ? { logo_image: uploaded } : { cover_image: uploaded }),
+        });
+        notifyPublicShopsChanged();
+        load();
+      }
     } catch (e) {
       setError(e.message || 'Image upload failed.');
     } finally {
@@ -338,22 +362,36 @@ export default function MyBusinessesSection({ isApproved }) {
             return (
               <Grid item xs={12} sm={6} lg={4} key={b.shop_id}>
                 <Paper elevation={0} sx={{ borderRadius: '16px', p: 2.5, border: '1px solid #dbeafe', bgcolor: '#fff', transition: 'all 0.18s', '&:hover': { boxShadow: '0 10px 26px rgba(37,99,235,0.16)', transform: 'translateY(-2px)', borderColor: BLUE_BORDER } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.75 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                      <Box sx={{ width: 48, height: 48, borderRadius: '13px', bgcolor: BLUE_SOFT, border: '1px solid #dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1, mb: 1.75 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25, minWidth: 0, flex: 1 }}>
+                      <Box sx={{ width: 48, height: 48, flexShrink: 0, borderRadius: '13px', bgcolor: BLUE_SOFT, border: '1px solid #dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <StorefrontOutlinedIcon sx={{ fontSize: 24, color: BLUE }} />
                       </Box>
-                      <Box>
-                        <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.93rem' }}>{b.shop_name}</Typography>
-                        <Typography sx={{ color: '#94a3b8', fontSize: '0.74rem' }}>{b.business_type_name || b.owner_name || '—'}</Typography>
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.93rem', lineHeight: 1.35, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{b.shop_name}</Typography>
+                        <Typography sx={{ color: '#94a3b8', fontSize: '0.74rem', mt: 0.25, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{b.business_type_name || b.owner_name || '—'}</Typography>
                       </Box>
                     </Box>
-                    <Chip label={s.label} size="small" sx={{ bgcolor: s.bg, color: s.color, fontWeight: 700, fontSize: '0.68rem' }} />
+                    <Chip label={s.label} size="small" sx={{ flexShrink: 0, bgcolor: s.bg, color: s.color, fontWeight: 700, fontSize: '0.68rem' }} />
                   </Box>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6, mb: 1.75 }}>
-                    {b.address && <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}><LocationOnOutlinedIcon sx={{ fontSize: 14, color: '#94a3b8' }} /><Typography sx={{ fontSize: '0.78rem', color: '#64748b' }}>{b.address}{b.city ? `, ${b.city}` : ''}</Typography></Box>}
+                    {b.address && <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}><LocationOnOutlinedIcon sx={{ fontSize: 14, color: '#94a3b8', mt: 0.2, flexShrink: 0 }} /><Typography sx={{ fontSize: '0.78rem', color: '#64748b', minWidth: 0, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{b.address}{b.city ? `, ${b.city}` : ''}</Typography></Box>}
                     {b.contact_number && <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}><PhoneOutlinedIcon sx={{ fontSize: 14, color: '#94a3b8' }} /><Typography sx={{ fontSize: '0.78rem', color: '#64748b' }}>{b.contact_number}</Typography></Box>}
                     {b.specialization_name && <Chip label={b.specialization_name} size="small" sx={{ alignSelf: 'flex-start', bgcolor: '#f0fdf4', color: G, fontSize: '0.68rem', fontWeight: 600 }} />}
+                    {(b.available_from || b.available_to) && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <ScheduleOutlinedIcon sx={{ fontSize: 14, color: '#15803d' }} />
+                        <Typography sx={{ fontSize: '0.78rem', color: '#166534', fontWeight: 600 }}>
+                          {(b.available_from || '—')} – {(b.available_to || '—')}
+                        </Typography>
+                      </Box>
+                    )}
+                    {b.not_available_note && (
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+                        <EventBusyOutlinedIcon sx={{ fontSize: 14, color: '#b91c1c', mt: 0.1, flexShrink: 0 }} />
+                        <Typography sx={{ fontSize: '0.76rem', color: '#991b1b', lineHeight: 1.35, minWidth: 0, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{b.not_available_note}</Typography>
+                      </Box>
+                    )}
                   </Box>
                   <Divider sx={{ my: 1.25 }} />
                   <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -563,6 +601,75 @@ export default function MyBusinessesSection({ isApproved }) {
               </Grid>
             </Paper>
 
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Paper elevation={0} sx={{ p: 2, borderRadius: '10px', border: '1px solid #bae6fd', background: 'linear-gradient(180deg, #f0f9ff 0%, #ffffff 48%)', height: '100%' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: 'rgba(37, 150, 190, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ScheduleOutlinedIcon sx={{ fontSize: 20, color: '#2596be' }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, letterSpacing: '0.06em' }}>AVAILABLE TIME</Typography>
+                      <Typography sx={{ fontSize: '0.72rem', color: '#64748b' }}>When customers can visit or reach you</Typography>
+                    </Box>
+                  </Box>
+                  <Grid container spacing={1.5}>
+                    <Grid item xs={6}>
+                      <TextField
+                        sx={INPUT_SX}
+                        label="Opens"
+                        type="time"
+                        fullWidth
+                        size="small"
+                        value={form.available_from}
+                        onChange={(e) => setForm({ ...form, available_from: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ step: 300 }}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        sx={INPUT_SX}
+                        label="Closes"
+                        type="time"
+                        fullWidth
+                        size="small"
+                        value={form.available_to}
+                        onChange={(e) => setForm({ ...form, available_to: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ step: 300 }}
+                      />
+                    </Grid>
+                  </Grid>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Paper elevation={0} sx={{ p: 2, borderRadius: '10px', border: '1px solid #fecaca', background: 'linear-gradient(180deg, #fef2f2 0%, #ffffff 48%)', height: '100%' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: 'rgba(185, 28, 28, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <EventBusyOutlinedIcon sx={{ fontSize: 20, color: '#b91c1c' }} />
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, letterSpacing: '0.06em' }}>NOT AVAILABLE</Typography>
+                      <Typography sx={{ fontSize: '0.72rem', color: '#64748b' }}>Closed days, breaks, or exceptions</Typography>
+                    </Box>
+                  </Box>
+                  <TextField
+                    sx={INPUT_SX}
+                    label="Note (e.g. Sundays, public holidays)"
+                    fullWidth
+                    size="small"
+                    multiline
+                    minRows={3}
+                    value={form.not_available_note}
+                    onChange={(e) => setForm({ ...form, not_available_note: e.target.value.slice(0, 200) })}
+                    placeholder="e.g. Closed Sundays and public holidays. Lunch break 1–2 PM."
+                    helperText={`${(form.not_available_note || '').length}/200`}
+                  />
+                </Paper>
+              </Grid>
+            </Grid>
+
             <Paper elevation={0} sx={{ p: 2, borderRadius: '10px', border: '1px solid #d1d5db', bgcolor: '#ffffff' }}>
               <Typography sx={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, mb: 1.5, letterSpacing: '0.06em', borderLeft: '3px solid #0f172a', pl: 1.25 }}>CATEGORY & STATUS</Typography>
               <Grid container spacing={1.5}>
@@ -578,7 +685,7 @@ export default function MyBusinessesSection({ isApproved }) {
                 </Grid>
                 <Grid item xs={12}>
                   <TextField sx={INPUT_SX} select label="Status" fullWidth size="small" value={form.shop_status} onChange={e => setForm({ ...form, shop_status: e.target.value })} SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}>
-                    {['active', 'inactive'].map(s => <MenuItem key={s} value={s} sx={{ ...CORPORATE_MENU_ITEM_SX, textTransform: 'capitalize' }}>{s}</MenuItem>)}
+                    {['active', 'inactive', 'suspended'].map(s => <MenuItem key={s} value={s} sx={{ ...CORPORATE_MENU_ITEM_SX, textTransform: 'capitalize' }}>{s}</MenuItem>)}
                   </TextField>
                 </Grid>
               </Grid>
@@ -590,12 +697,24 @@ export default function MyBusinessesSection({ isApproved }) {
                 <Grid item xs={12} md={6}>
                   <Paper elevation={0} sx={{ p: 1.25, borderRadius: '12px', border: '1px dashed #cbd5e1', bgcolor: '#fff' }}>
                     <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                      <Box>
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#0f172a' }}>Logo</Typography>
-                        <Typography sx={{ fontSize: '0.7rem', color: '#64748b' }}>{form.logo_image ? 'Uploaded' : 'Upload logo image'}</Typography>
+                        <Typography sx={{ fontSize: '0.7rem', color: '#64748b' }}>
+                          {form.logo_image
+                            ? (edit ? 'Uploaded — saved; shows on Tailor Shops' : 'Uploaded — click Save business to publish')
+                            : 'Upload logo image'}
+                        </Typography>
+                        {form.logo_image ? (
+                          <Box
+                            component="img"
+                            src={resolvePublicBusinessImageUrl(form.logo_image, edit || undefined)}
+                            alt=""
+                            sx={{ mt: 1, maxHeight: 72, maxWidth: '100%', objectFit: 'contain', borderRadius: 1, bgcolor: '#f1f5f9' }}
+                          />
+                        ) : null}
                       </Box>
                       <Button component="label" size="small" startIcon={<UploadFileOutlinedIcon />} disabled={uploadingLogo}
-                        sx={{ bgcolor: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', textTransform: 'none', fontWeight: 700 }}>
+                        sx={{ bgcolor: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', textTransform: 'none', fontWeight: 700, flexShrink: 0 }}>
                         {uploadingLogo ? 'Uploading...' : 'Upload'}
                         <input hidden type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={(e) => uploadBusinessImage(e.target.files?.[0], 'logo')} />
                       </Button>
@@ -605,12 +724,24 @@ export default function MyBusinessesSection({ isApproved }) {
                 <Grid item xs={12} md={6}>
                   <Paper elevation={0} sx={{ p: 1.25, borderRadius: '12px', border: '1px dashed #cbd5e1', bgcolor: '#fff' }}>
                     <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                      <Box>
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#0f172a' }}>Cover Image</Typography>
-                        <Typography sx={{ fontSize: '0.7rem', color: '#64748b' }}>{form.cover_image ? 'Uploaded' : 'Upload cover image'}</Typography>
+                        <Typography sx={{ fontSize: '0.7rem', color: '#64748b' }}>
+                          {form.cover_image
+                            ? (edit ? 'Uploaded — saved; shop detail banner' : 'Uploaded — click Save business to publish')
+                            : 'Upload cover image'}
+                        </Typography>
+                        {form.cover_image ? (
+                          <Box
+                            component="img"
+                            src={resolvePublicBusinessImageUrl(form.cover_image, edit || undefined)}
+                            alt=""
+                            sx={{ mt: 1, maxHeight: 72, maxWidth: '100%', objectFit: 'cover', borderRadius: 1, bgcolor: '#f1f5f9' }}
+                          />
+                        ) : null}
                       </Box>
                       <Button component="label" size="small" startIcon={<UploadFileOutlinedIcon />} disabled={uploadingCover}
-                        sx={{ bgcolor: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', textTransform: 'none', fontWeight: 700 }}>
+                        sx={{ bgcolor: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', textTransform: 'none', fontWeight: 700, flexShrink: 0 }}>
                         {uploadingCover ? 'Uploading...' : 'Upload'}
                         <input hidden type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={(e) => uploadBusinessImage(e.target.files?.[0], 'cover')} />
                       </Button>

@@ -24,6 +24,7 @@ app.use('/uploads', express.static(uploadsRoot));
 // Marketing/service images referenced as /images/... in DB (e.g. tailor_services.image_url)
 const publicImagesRoot = path.join(__dirname, 'public', 'images');
 fs.mkdirSync(path.join(publicImagesRoot, 'services'), { recursive: true });
+fs.mkdirSync(path.join(publicImagesRoot, 'business'), { recursive: true });
 app.use('/images', express.static(publicImagesRoot));
 
 // Middleware — allow admin (4000) / frontend (3000) to embed images from this API (5000)
@@ -63,7 +64,10 @@ app.use('/api/v1/users', require('./routes/users.routes'));
 app.use('/api/v1/orders', require('./routes/orders.routes'));
 app.use('/api/v1/admin', require('./routes/admin.routes'));
 app.use('/api/v1/smtp', require('./routes/smtp.routes'));
-app.use('/api/v1/business', require('./routes/business.routes'));
+// Public tailor shop detail — app-level route so GET always hits before any nested auth (fixes 404 from proxy/clients).
+const businessRoutes = require('./routes/business.routes');
+app.get('/api/v1/business/public/shops/:shopId', businessRoutes.getPublicShopById);
+app.use('/api/v1/business', businessRoutes);
 app.use('/api/v1/ai-errors', require('./routes/ai_errors.routes'));
 app.use('/api/v1/verification', require('./routes/verification.routes'));
 app.use('/api/v1/password', require('./routes/password.routes'));

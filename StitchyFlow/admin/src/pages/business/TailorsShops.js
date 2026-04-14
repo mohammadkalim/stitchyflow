@@ -21,7 +21,8 @@ const EMPTY_FORM = {
   shop_name: '', owner_name: '', contact_number: '',
   city: '', address: '',
   business_type_id: '', specialization_id: '',
-  shop_status: 'active'
+  shop_status: 'active',
+  available_from: '', available_to: '', not_available_note: '',
 };
 
 const STATUS_COLOR = { active: '#16A34A', inactive: '#94A3B8', suspended: '#EF4444' };
@@ -94,7 +95,10 @@ export default function TailorsShops() {
       address: row.address || '',
       business_type_id: row.business_type_id || '',
       specialization_id: row.specialization_id || '',
-      shop_status: row.shop_status || 'active'
+      shop_status: row.shop_status || 'active',
+      available_from: row.available_from || '',
+      available_to: row.available_to || '',
+      not_available_note: row.not_available_note || '',
     });
     if (row.business_type_id) {
       setFilteredSpecs(specializations.filter(s => !s.business_type_id || s.business_type_id === row.business_type_id));
@@ -110,7 +114,10 @@ export default function TailorsShops() {
       toast('Shop Name and Owner Name are required', 'error'); return;
     }
     try {
-      const payload = { ...form };
+      const payload = {
+        ...form,
+        not_available_note: String(form.not_available_note || '').slice(0, 200),
+      };
       if (!payload.business_type_id) delete payload.business_type_id;
       if (!payload.specialization_id) delete payload.specialization_id;
 
@@ -160,25 +167,33 @@ export default function TailorsShops() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {['ID','Shop Name','Owner','Contact','City','Business Type','Specialization','Status','Actions'].map(h => (
+                {['ID','Shop Name','Owner','Contact','City','Available','Closed / off','Business Type','Specialization','Status','Actions'].map(h => (
                   <TableCell key={h} sx={{ fontWeight: 800, bgcolor: '#F8FAFC', color: '#475569', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', py: 1.5, borderBottom: '2px solid #E2E8F0', whiteSpace: 'nowrap' }}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
               {loading && (
-                <TableRow><TableCell colSpan={9} sx={{ textAlign: 'center', py: 4 }}><CircularProgress size={28} /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} sx={{ textAlign: 'center', py: 4 }}><CircularProgress size={28} /></TableCell></TableRow>
               )}
               {!loading && rows.length === 0 && (
-                <TableRow><TableCell colSpan={9} sx={{ textAlign: 'center', py: 6, color: '#94A3B8', fontWeight: 600 }}>No shops found. Add your first shop.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} sx={{ textAlign: 'center', py: 6, color: '#94A3B8', fontWeight: 600 }}>No shops found. Add your first shop.</TableCell></TableRow>
               )}
               {rows.map(row => (
                 <TableRow key={row.shop_id} hover sx={{ '&:hover': { bgcolor: '#F8FAFC' }, transition: 'background 0.15s' }}>
                   <TableCell sx={{ fontSize: '0.75rem', color: '#CBD5E1', fontFamily: 'monospace', fontWeight: 700 }}>#{row.shop_id}</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#1E293B', fontSize: '0.875rem' }}>{row.shop_name}</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#1E293B', fontSize: '0.875rem', maxWidth: 280, whiteSpace: 'normal', overflowWrap: 'anywhere', wordBreak: 'break-word', verticalAlign: 'top' }}>{row.shop_name}</TableCell>
                   <TableCell sx={{ color: '#475569', fontSize: '0.85rem' }}>{row.owner_name}</TableCell>
                   <TableCell sx={{ color: '#64748B', fontSize: '0.82rem' }}>{row.contact_number || '—'}</TableCell>
                   <TableCell sx={{ color: '#64748B', fontSize: '0.82rem' }}>{row.city || '—'}</TableCell>
+                  <TableCell sx={{ fontSize: '0.78rem', color: '#166534', fontWeight: 600, maxWidth: 120 }}>
+                    {(row.available_from || row.available_to)
+                      ? `${row.available_from || '—'} – ${row.available_to || '—'}`
+                      : '—'}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.75rem', color: '#991b1b', maxWidth: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.not_available_note || ''}>
+                    {row.not_available_note || '—'}
+                  </TableCell>
                   <TableCell>
                     {row.business_type_name
                       ? <Chip label={row.business_type_name} size="small" icon={<BizIcon sx={{ fontSize: '13px !important' }} />} sx={{ bgcolor: '#EFF6FF', color: '#2563EB', fontWeight: 700, fontSize: '0.72rem', border: '1px solid #BFDBFE' }} />
@@ -324,6 +339,28 @@ export default function TailorsShops() {
                   <MenuItem value="suspended">Suspended</MenuItem>
                 </Select>
               </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Divider sx={{ my: 1 }} />
+              <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.08em', mb: 1.5 }}>
+                Hours & availability (live on Tailor Shops)
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Opens" type="time" value={form.available_from} onChange={e => set('available_from', e.target.value)}
+                InputLabelProps={{ shrink: true }} inputProps={{ step: 300 }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField fullWidth label="Closes" type="time" value={form.available_to} onChange={e => set('available_to', e.target.value)}
+                InputLabelProps={{ shrink: true }} inputProps={{ step: 300 }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }} />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField fullWidth label="Not available (closures, exceptions)" value={form.not_available_note} onChange={e => set('not_available_note', e.target.value.slice(0, 200))}
+                multiline minRows={2} helperText={`${(form.not_available_note || '').length}/200`}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#fff' } }} />
             </Grid>
           </Grid>
 

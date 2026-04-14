@@ -36,7 +36,7 @@ function BusinessSlider() {
     let cancelled = false;
     const loadShops = async () => {
       try {
-        const data = await gex('/business/public/shops');
+        const data = await gex('/business/public/shops', { cache: 'no-store' });
         if (!cancelled && data.success && Array.isArray(data.data) && data.data.length > 0) {
           setShops(data.data);
           return;

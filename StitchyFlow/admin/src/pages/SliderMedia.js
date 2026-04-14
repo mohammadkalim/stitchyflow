@@ -20,7 +20,7 @@ const WEBSITE_PAGES = [
   { path: '/about', label: 'About', defaultBgColor: '#ffffff', defaultTextColor: '#000000' },
   { path: '/promotions', label: 'Promotions', defaultBgColor: '#ffffff', defaultTextColor: '#000000' },
   { path: '/blog', label: 'Insights', defaultBgColor: '#ffffff', defaultTextColor: '#000000' },
-  { path: '/tailor-shops', label: 'Tailor Shops', defaultBgColor: '#1310ca', defaultTextColor: '#ffffff' },
+  { path: '/tailor-shops', label: 'Tailor Shops', defaultBgColor: '#2596be', defaultTextColor: '#ffffff' },
 ];
 
 const emptyForm = {

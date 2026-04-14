@@ -26,8 +26,22 @@ const PAGE_DEFAULTS = {
   '/about': { label: 'About', bg_color: '#ffffff', text_color: '#000000' },
   '/promotions': { label: 'Promotions', bg_color: '#ffffff', text_color: '#000000' },
   '/blog': { label: 'Insights', bg_color: '#ffffff', text_color: '#000000' },
-  '/tailor-shops': { label: 'Tailor Shops', bg_color: '#1310ca', text_color: '#ffffff' }
+  '/tailor-shops': { label: 'Tailor Shops', bg_color: '#2596be', text_color: '#ffffff' }
 };
+
+/** Align legacy slider rows with public Tailor Shops brand (#2596be). */
+async function migrateTailorShopsSliderColors() {
+  try {
+    await db.query(
+      `UPDATE slider_media SET bg_color = ?, text_color = ? 
+       WHERE page = '/tailor-shops' AND LOWER(TRIM(bg_color)) = '#1310ca'`,
+      ['#2596be', '#ffffff']
+    );
+  } catch (_) {
+    /* slider_media may not exist yet */
+  }
+}
+migrateTailorShopsSliderColors();
 const ALLOWED_ANIMATIONS = new Set(['fade', 'slide', 'zoom', 'bounce']);
 const ALLOWED_STATUS = new Set(['active', 'inactive']);
 const HEX_COLOR_REGEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;

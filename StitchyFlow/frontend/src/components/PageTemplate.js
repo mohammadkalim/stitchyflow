@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, Button, Grid, Paper, CircularProgress, Chip } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -9,30 +9,82 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import SliderBackground from './SliderBanner';
+import { resolvePublicBusinessImageUrl } from '../utils/api';
 
 /**
  * Reusable professional page template
  * Props: heroTitle, heroSubtitle, heroBadge, icon, features[], ctaText, sliderPage, sliderTheme, showHeroButtons,
  *        useShopSection, shops, shopsLoading — when useShopSection is true, shows API shop cards instead of feature cards.
+ *        shopVisitUrlBuilder(shop) — optional; if set, “Visit Shop” opens that URL in a new tab instead of navigating to shopVisitPath.
  */
-const SHOP_IMAGE_FALLBACK = [
-  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
-  'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80',
-  'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80',
-  'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600&q=80',
-  'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80',
-];
 
-function resolveShopImageUrl(shop) {
-  const raw = shop.shop_image || shop.cover_image || shop.logo_image;
-  if (!raw) return SHOP_IMAGE_FALLBACK[(Number(shop.shop_id) || 0) % SHOP_IMAGE_FALLBACK.length];
-  if (String(raw).startsWith('http')) return raw;
-  const base = process.env.REACT_APP_API_URL
-    ? process.env.REACT_APP_API_URL.replace(/\/api\/v\d+\/?$/i, '')
-    : `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000'}`;
-  const path = raw.startsWith('/') ? raw : `/${raw}`;
-  return `${base}${path}`;
+function resolveShopListingCardLogoUrl(shop) {
+  const raw = shop.logo_image && String(shop.logo_image).trim();
+  if (!raw) return null;
+  const url = resolvePublicBusinessImageUrl(raw, shop);
+  return url || null;
+}
+
+function shopListingCardHasLogo(shop) {
+  return Boolean(shop.logo_image && String(shop.logo_image).trim());
+}
+
+/** Renders DB logo only; on missing URL or load error shows neutral placeholder (not Unsplash). */
+function ShopListingCardLogo({ shop, shopAccent }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const url = resolveShopListingCardLogoUrl(shop);
+  const hasPath = shopListingCardHasLogo(shop);
+
+  useEffect(() => {
+    setImgFailed(false);
+  }, [shop.shop_id, shop.logo_image, shop.updated_at]);
+
+  if (!hasPath || !url || imgFailed) {
+    const initial = String(shop.shop_name || shop.owner_name || '?').trim().charAt(0).toUpperCase() || '?';
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'rgba(19, 16, 202, 0.14)',
+        }}
+        aria-hidden
+      >
+        <Typography
+          component="span"
+          sx={{
+            fontSize: { xs: '3.25rem', sm: '3.75rem' },
+            fontWeight: 800,
+            color: shopAccent,
+            lineHeight: 1,
+            userSelect: 'none',
+          }}
+        >
+          {initial}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      component="img"
+      key={`${shop.shop_id}-${url}`}
+      src={url}
+      alt={shop.shop_name || ''}
+      sx={{
+        width: '100%',
+        height: '100%',
+        display: 'block',
+        objectFit: 'cover',
+        objectPosition: 'center',
+      }}
+      onError={() => setImgFailed(true)}
+    />
+  );
 }
 
 function getShopAvailability(shop) {
@@ -61,10 +113,13 @@ function PageTemplate({
   shopSectionTitle = 'Tailor shops',
   shopSectionSubtitle = 'Browse verified tailoring businesses on StitchyFlow',
   shopVisitPath = '/marketplace/custom-dresses',
+  /** If set, “Visit Shop” opens this URL in a new tab (e.g. tailor detail page). */
+  shopVisitUrlBuilder = null,
 }) {
   const navigate = useNavigate();
 
   const heroGradient = sliderTheme.heroGradient || 'linear-gradient(135deg, #1a3a8f 0%, #1e4db7 40%, #1565c0 65%, #0d7a6e 100%)';
+  const shopAccent = sliderTheme.heroAccentColor || '#1310ca';
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc' }}>
@@ -176,7 +231,7 @@ function PageTemplate({
           </Typography>
           {shopsLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-              <CircularProgress sx={{ color: '#1310ca' }} />
+              <CircularProgress sx={{ color: shopAccent }} />
             </Box>
           ) : shops.length === 0 ? (
             <Typography variant="body1" sx={{ textAlign: 'center', color: '#6b7280' }}>
@@ -204,15 +259,18 @@ function PageTemplate({
                       },
                     }}
                   >
-                    <Box sx={{ position: 'relative', height: 168, bgcolor: '#e8e7ff' }}>
-                      <Box
-                        component="img"
-                        src={resolveShopImageUrl(shop)}
-                        alt={shop.shop_name}
-                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          e.target.src = SHOP_IMAGE_FALLBACK[0];
-                        }}
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        height: 168,
+                        bgcolor: '#e8e7ff',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <ShopListingCardLogo
+                        key={`card-logo-${shop.shop_id}-${String(shop.logo_image || '').slice(0, 80)}-${String(shop.updated_at || '')}`}
+                        shop={shop}
+                        shopAccent={shopAccent}
                       />
                       {shop.business_type_name && (
                         <Chip
@@ -231,13 +289,13 @@ function PageTemplate({
                       )}
                     </Box>
                     <Box sx={{ p: 2.5 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 0.75 }}>
-                        <StorefrontIcon sx={{ fontSize: 18, color: '#1310ca', mt: 0.15 }} />
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1rem', lineHeight: 1.35 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 0.75, minWidth: 0 }}>
+                        <StorefrontIcon sx={{ fontSize: 18, color: shopAccent, mt: 0.15, flexShrink: 0 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1a1a2e', fontSize: '1rem', lineHeight: 1.35, minWidth: 0, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                           {shop.shop_name}
                         </Typography>
                       </Box>
-                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 1 }}>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 1, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                         {shop.owner_name}
                       </Typography>
                       {shop.city && (
@@ -284,7 +342,14 @@ function PageTemplate({
                           type="button"
                           variant="text"
                           fullWidth
-                          onClick={() => navigate(shopVisitPath)}
+                          onClick={() => {
+                            if (typeof shopVisitUrlBuilder === 'function') {
+                              const url = shopVisitUrlBuilder(shop);
+                              if (url) window.open(url, '_blank', 'noopener,noreferrer');
+                            } else {
+                              navigate(shopVisitPath);
+                            }
+                          }}
                           sx={{
                             color: '#1310ca',
                             fontWeight: 700,

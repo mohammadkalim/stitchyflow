@@ -11,6 +11,10 @@ const features = [
 ];
 
 function CustomDresses() {
+  const sliderTheme = {
+    heroGradient: 'linear-gradient(135deg, #450002 0%, #450002 100%)',
+  };
+
   return (
     <PageTemplate
       heroBadge="Marketplace · Custom Dresses"
@@ -19,6 +23,7 @@ function CustomDresses() {
       heroSubtitle="Get beautifully crafted custom dresses designed to your exact measurements and style preferences by Pakistan's top verified tailors."
       features={features}
       ctaText="Find a Dress Tailor"
+      sliderTheme={sliderTheme}
     />
   );
 }

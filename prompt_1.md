@@ -528,3 +528,74 @@ Admin panel passoword ********** admin123 ***********
 
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+
+---------
+
+when click on Visit Shop to please going a 1 page of in new Tab like please os Tailer a View Deatiles ka page khole an please view Deatiles page was create a Professional and coorporate 
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+______ Database ______
+
+
+please Database All Data showing live Database as well
+
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+--------
+
+please save the logo and cover image into the public image assects and aolso save those path into Database 
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+---------
+
+
+please You change this page url and page http://localhost:3000/marketplace/custom-dresses and please page new was a Tailers please this page men All Tailers show kare and please new url was a http://localhost:3000/tailers and please All pages and Database chage as well
+
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+

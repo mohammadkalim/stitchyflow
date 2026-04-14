@@ -68,11 +68,13 @@ const RESOURCES = {
   }
 };
 
-const businessUploadDir = path.join(__dirname, '..', 'uploads', 'business');
-fs.mkdirSync(businessUploadDir, { recursive: true });
+// Logo & cover: persist under public image assets (served as GET /images/business/...); paths stored in logo_image / cover_image.
+// Developer by: Muhammad Kalim · LogixInventor (PVT) Ltd.
+const businessPublicImagesDir = path.join(__dirname, '..', 'public', 'images', 'business');
+fs.mkdirSync(businessPublicImagesDir, { recursive: true });
 const businessImageUpload = multer({
   storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, businessUploadDir),
+    destination: (_req, _file, cb) => cb(null, businessPublicImagesDir),
     filename: (_req, file, cb) => {
       const ext = path.extname(file.originalname || '').toLowerCase();
       const safeExt = ['.png', '.jpg', '.jpeg', '.webp'].includes(ext) ? ext : '.jpg';
@@ -228,6 +230,68 @@ function isTailorUser(req) {
   return String(req.user?.role || '').toLowerCase() === 'tailor';
 }
 
+/** Optional INT FKs: empty string breaks MySQL — omit on insert, NULL on update. */
+const SHOP_OPTIONAL_INT_FIELDS = ['business_type_id', 'specialization_id', 'category_id', 'subcategory_id'];
+const SHOP_STATUS_ENUM = new Set(['active', 'inactive', 'suspended']);
+
+function normalizeShopIntFields(payload, mode) {
+  for (const field of SHOP_OPTIONAL_INT_FIELDS) {
+    if (!Object.prototype.hasOwnProperty.call(payload, field)) continue;
+    const raw = payload[field];
+    const empty =
+      raw === '' ||
+      raw === null ||
+      raw === undefined ||
+      (typeof raw === 'string' && String(raw).trim() === '');
+    if (empty) {
+      if (mode === 'update') payload[field] = null;
+      else delete payload[field];
+      continue;
+    }
+    const n = parseInt(raw, 10);
+    if (Number.isNaN(n) || n < 1) {
+      if (mode === 'update') payload[field] = null;
+      else delete payload[field];
+    } else {
+      payload[field] = n;
+    }
+  }
+}
+
+function sanitizeShopStatus(payload, mode) {
+  if (!Object.prototype.hasOwnProperty.call(payload, 'shop_status')) return;
+  const s = String(payload.shop_status ?? '').trim().toLowerCase();
+  if (!SHOP_STATUS_ENUM.has(s)) {
+    if (mode === 'update') payload.shop_status = null;
+    else delete payload.shop_status;
+  } else {
+    payload.shop_status = s;
+  }
+}
+
+function sanitizeShopResourcePayload(payload, mode) {
+  normalizeShopIntFields(payload, mode);
+  sanitizeShopStatus(payload, mode);
+}
+
+/** Drop invalid business_type_id / specialization_id so FK insert does not 500. */
+async function coerceShopForeignKeys(payload, mode) {
+  const checks = [
+    ['business_type_id', 'business_type_management', 'type_id'],
+    ['specialization_id', 'specialization_management', 'specialization_id'],
+  ];
+  for (const [field, table, col] of checks) {
+    if (!Object.prototype.hasOwnProperty.call(payload, field)) continue;
+    const id = payload[field];
+    if (id === null || id === undefined) continue;
+    const [rows] = await db.query(`SELECT 1 FROM \`${table}\` WHERE \`${col}\` = ? LIMIT 1`, [id]);
+    if (!rows.length) {
+      if (mode === 'update') payload[field] = null;
+      else delete payload[field];
+    }
+  }
+}
+
 const initPromise = initBusinessTables().catch((error) => {
   console.error('Business module table initialization failed:', error.message);
 });
@@ -261,6 +325,9 @@ router.get('/public/shops', async (req, res) => {
     await initPromise;
     const shopQuery = `
       SELECT shop_id, shop_name, owner_name, city,
+             s.logo_image,
+             s.cover_image,
+             s.updated_at,
              COALESCE(NULLIF(TRIM(s.shop_image), ''), NULLIF(TRIM(s.cover_image), ''), NULLIF(TRIM(s.logo_image), '')) AS shop_image,
              s.available_from, s.available_to, s.not_available_note,
              bt.type_name AS business_type_name,
@@ -284,11 +351,99 @@ router.get('/public/shops', async (req, res) => {
         console.warn('GET /public/shops auto-seed:', seedErr.message);
       }
     }
+    res.set('Cache-Control', 'private, no-cache, must-revalidate');
     res.json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, error: { message: error.message } });
   }
 });
+
+// ── PUBLIC: Single active shop (detail page, no auth) ──────────────────────────
+// Also registered on `app` in server.js so the path always resolves (avoids proxy/router 404).
+async function getPublicShopById(req, res) {
+  try {
+    await initPromise;
+    const shopId = parseInt(req.params.shopId, 10);
+    if (!Number.isFinite(shopId) || shopId < 1) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid shop id' } });
+    }
+    const [rows] = await db.query(
+      `
+      SELECT
+        s.shop_id,
+        s.shop_name,
+        s.owner_name,
+        s.city,
+        s.country,
+        s.address,
+        s.contact_number,
+        s.whatsapp_number,
+        s.shop_status,
+        s.available_from,
+        s.available_to,
+        s.not_available_note,
+        s.logo_image,
+        s.cover_image,
+        s.shop_image,
+        s.updated_at,
+        COALESCE(NULLIF(TRIM(s.shop_image), ''), NULLIF(TRIM(s.cover_image), ''), NULLIF(TRIM(s.logo_image), '')) AS hero_image,
+        bt.type_name AS business_type_name,
+        sp.specialization_name AS specialization_name,
+        c.name AS category_name,
+        sc.name AS subcategory_name
+      FROM business_tailor_shops s
+      LEFT JOIN business_type_management bt ON s.business_type_id = bt.type_id
+      LEFT JOIN specialization_management sp ON s.specialization_id = sp.specialization_id
+      LEFT JOIN categories c ON s.category_id = c.id
+      LEFT JOIN subcategories sc ON s.subcategory_id = sc.id
+      WHERE s.shop_id = ?
+      LIMIT 1
+      `,
+      [shopId]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ success: false, error: { message: 'Shop not found.' } });
+    }
+    res.set('Cache-Control', 'private, no-cache, must-revalidate');
+    res.json({ success: true, data: rows[0] });
+  } catch (error) {
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      try {
+        await initPromise;
+        const shopId = parseInt(req.params.shopId, 10);
+        const [rows] = await db.query(
+          `
+          SELECT
+            s.shop_id, s.shop_name, s.owner_name, s.city, s.country, s.address,
+            s.contact_number, s.whatsapp_number, s.shop_status,
+            s.available_from, s.available_to, s.not_available_note,
+            s.logo_image, s.cover_image, s.shop_image,
+            s.updated_at,
+            COALESCE(NULLIF(TRIM(s.shop_image), ''), NULLIF(TRIM(s.cover_image), ''), NULLIF(TRIM(s.logo_image), '')) AS hero_image,
+            bt.type_name AS business_type_name,
+            sp.specialization_name AS specialization_name
+          FROM business_tailor_shops s
+          LEFT JOIN business_type_management bt ON s.business_type_id = bt.type_id
+          LEFT JOIN specialization_management sp ON s.specialization_id = sp.specialization_id
+          WHERE s.shop_id = ?
+          LIMIT 1
+          `,
+          [shopId]
+        );
+        if (!rows.length) {
+          return res.status(404).json({ success: false, error: { message: 'Shop not found.' } });
+        }
+        res.set('Cache-Control', 'private, no-cache, must-revalidate');
+        return res.json({ success: true, data: { ...rows[0], category_name: null, subcategory_name: null } });
+      } catch (e2) {
+        return res.status(500).json({ success: false, error: { message: e2.message } });
+      }
+    }
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+}
+
+router.get('/public/shops/:shopId', getPublicShopById);
 
 router.use(authenticateToken);
 router.use(ensureInitialized);
@@ -302,7 +457,7 @@ router.post('/shops/upload-image', (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, error: { message: 'No image file uploaded' } });
     }
-    const imageUrl = `/uploads/business/${req.file.filename}`;
+    const imageUrl = `/images/business/${req.file.filename}`;
     return res.json({ success: true, data: { imageUrl } });
   });
 });
@@ -407,6 +562,11 @@ router.post('/:resource', async (req, res) => {
       if (req.body[field] !== undefined) payload[field] = req.body[field];
     }
 
+    if (req.params.resource === 'shops') {
+      sanitizeShopResourcePayload(payload, 'create');
+      await coerceShopForeignKeys(payload, 'create');
+    }
+
     if (req.params.resource === 'shops' && isTailorUser(req)) {
       payload.owner_user_id = req.user.userId;
       const [[ownCountRow]] = await db.query(
@@ -447,6 +607,13 @@ router.post('/:resource', async (req, res) => {
 
     res.status(201).json({ success: true, data: { id: result.insertId } });
   } catch (error) {
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Invalid business type or specialization. Please choose again or leave unset.' },
+      });
+    }
+    console.error('POST /business/:resource', req.params.resource, error.message);
     res.status(500).json({ success: false, error: { message: error.message } });
   }
 });
@@ -461,6 +628,11 @@ router.put('/:resource/:id', async (req, res) => {
     const payload = {};
     for (const field of config.allowed) {
       if (req.body[field] !== undefined) payload[field] = req.body[field];
+    }
+
+    if (req.params.resource === 'shops') {
+      sanitizeShopResourcePayload(payload, 'update');
+      await coerceShopForeignKeys(payload, 'update');
     }
 
     const fields = Object.keys(payload);
@@ -495,6 +667,13 @@ router.put('/:resource/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Record updated successfully' });
   } catch (error) {
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Invalid business type or specialization. Please choose again or leave unset.' },
+      });
+    }
+    console.error('PUT /business/:resource/:id', req.params.resource, error.message);
     res.status(500).json({ success: false, error: { message: error.message } });
   }
 });
@@ -536,3 +715,4 @@ router.delete('/:resource/:id', async (req, res) => {
 
 module.exports = router;
 module.exports.initPromise = initPromise;
+module.exports.getPublicShopById = getPublicShopById;

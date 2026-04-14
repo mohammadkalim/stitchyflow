@@ -3,6 +3,16 @@
  * In development, default is relative `/api/v1` so Create React App proxies to `package.json` "proxy" (port 5000).
  */
 export function getApiBase() {
+  // In CRA dev on :3000, always use same-origin `/api/v1` so package.json proxy hits one backend.
+  // Direct `http://localhost:5000/...` often points at a stale or different process → confusing 404s.
+  if (
+    process.env.NODE_ENV === 'development' &&
+    typeof window !== 'undefined' &&
+    window.location.hostname === 'localhost' &&
+    window.location.port === '3000'
+  ) {
+    return '/api/v1';
+  }
   const env = process.env.REACT_APP_API_URL;
   if (env && env.trim()) {
     return env.replace(/\/$/, '');
@@ -14,6 +24,46 @@ const BASE = getApiBase();
 
 export function getToken() {
   return localStorage.getItem('token');
+}
+
+/** Bust browser cache for API-served images when the DB row changes (`updated_at`). */
+export function appendShopAssetCacheBust(url, meta) {
+  if (!url) return url;
+  const u = String(url);
+  if (u.includes('images.unsplash.com')) return u;
+  const stamp = meta && meta.updated_at != null ? String(meta.updated_at) : '';
+  if (!stamp) return u;
+  const sep = u.includes('?') ? '&' : '?';
+  return `${u}${sep}v=${encodeURIComponent(stamp)}`;
+}
+
+/**
+ * Full URL for a stored path (`/images/...`, `/uploads/...`) or absolute URL.
+ * In CRA dev on :3000 uses same-origin paths so src/setupProxy.js reaches the API.
+ */
+export function resolvePublicBusinessImageUrl(storedPath, cacheMeta = null) {
+  if (!storedPath || !String(storedPath).trim()) return '';
+  const raw = String(storedPath).trim();
+  if (raw.startsWith('http')) return appendShopAssetCacheBust(raw, cacheMeta);
+
+  const pathOnly = raw.startsWith('/') ? raw : `/${raw}`;
+  const api = getApiBase();
+  const isCraDev =
+    process.env.NODE_ENV === 'development' &&
+    typeof window !== 'undefined' &&
+    window.location.hostname === 'localhost' &&
+    window.location.port === '3000';
+
+  if (isCraDev && !api.startsWith('http')) {
+    return appendShopAssetCacheBust(pathOnly, cacheMeta);
+  }
+
+  const origin = api.startsWith('http')
+    ? api.replace(/\/api\/v\d+\/?$/i, '')
+    : typeof window !== 'undefined'
+      ? window.location.origin
+      : 'http://localhost:5000';
+  return appendShopAssetCacheBust(`${origin}${pathOnly}`, cacheMeta);
 }
 
 export async function apiFetch(path, options = {}) {

@@ -45,7 +45,7 @@ function TailorShops() {
     const load = () => {
       const gen = ++fetchGeneration;
       setShopsLoading(true);
-      gex('/business/public/shops')
+      gex('/business/public/shops', { cache: 'no-store' })
         .then((d) => {
           if (cancelled || gen !== fetchGeneration) return;
           const list = d.success && Array.isArray(d.data) ? d.data : [];
@@ -88,6 +88,7 @@ function TailorShops() {
       showHeroButtons={false}
       sliderPage="/tailor-shops"
       sliderTheme={tailorShopsSliderTheme}
+      shopVisitUrlBuilder={(shop) => (shop?.shop_id != null ? `/tailor-shops/view/${shop.shop_id}` : null)}
     />
   );
 }
