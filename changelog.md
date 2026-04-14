@@ -1,9 +1,8 @@
 # Changelog
 
-## 2026-04-14 (PKT)
+## 2026-04-14 (tailor shop cap)
 
-- **Tailor multi-business cap (env-driven):** Tailors can create more than one shop when configured via `TAILOR_MAX_BUSINESSES` and optional `TAILOR_MAX_BUSINESSES_OVERRIDES` in the backend `.env` (comma-separated `email:max` pairs). Added authenticated **`GET /api/v1/business/shops/business-slots`** returning `maxShops`, `currentCount`, and `canAddMore`. **`POST /api/v1/business/shops`** enforces the same limit. The tailor dashboard **My Businesses** section uses this for **Add Business** instead of a hardcoded single slot. Documented in `README.md`, `Docs/05_API_Documentation.md`, and `StitchyFlow/backend/.env.example`.
-- Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+- **Tailor dashboard — extra business slots:** Backend supports configurable max shops per tailor via `TAILOR_DEFAULT_MAX_SHOPS` and per-email `TAILOR_SHOP_CAP_OVERRIDES` in `.env`. `GET /business/shops/enriched` returns `meta.maxShops` for tailors; `My Businesses` uses it so “Add Business” matches the server limit (e.g. second shop for `markhubstore98@gmail.com` when override is set). Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
 
 ## 2026-04-11 20:45:00 PKT
 

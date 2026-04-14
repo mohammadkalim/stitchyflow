@@ -132,18 +132,13 @@ export default function MyBusinessesSection({ isApproved }) {
 
   const load = () => {
     setLoading(true);
-    Promise.allSettled([
-      apiFetch('/business/shops/enriched'),
-      apiFetch('/business/shops/business-slots'),
-    ])
-      .then((results) => {
-        const [enrichedRes, slotsRes] = results;
-        if (enrichedRes.status === 'fulfilled') setList(enrichedRes.value.data || []);
-        if (slotsRes.status === 'fulfilled') {
-          const m = Number(slotsRes.value?.data?.maxShops);
-          if (!Number.isNaN(m) && m >= 1) setMaxShops(m);
-        }
+    apiFetch('/business/shops/enriched')
+      .then((r) => {
+        setList(Array.isArray(r.data) ? r.data : []);
+        const cap = r.meta?.maxShops;
+        if (typeof cap === 'number' && cap >= 1) setMaxShops(cap);
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 
@@ -216,7 +211,7 @@ export default function MyBusinessesSection({ isApproved }) {
       notifyPublicShopsChanged();
     } catch (e) {
       const msg = e.message || '';
-      if (!edit && /one business|only one business|up to \d+ business/i.test(msg)) {
+      if (!edit && /one business|only one business|up to \d+ business account/i.test(msg)) {
         setOpen(false);
         setPaymentOpen(true);
         return;

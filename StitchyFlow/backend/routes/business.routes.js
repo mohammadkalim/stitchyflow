@@ -230,52 +230,58 @@ function isTailorUser(req) {
   return ['tailor', 'business_owner'].includes(String(req.user?.role || '').toLowerCase());
 }
 
+/** Default max tailor-owned shops when no per-email override applies. */
+const DEFAULT_TAILOR_MAX_SHOPS = 1;
+
 /**
- * Tailors may create multiple shops when configured via env (no hardcoded emails in code).
- * - TAILOR_MAX_BUSINESSES — default max shops per tailor (default 1, min 1).
- * - TAILOR_MAX_BUSINESSES_OVERRIDES — optional comma list: email@x.com:2,other@y.com:3 (case-insensitive email).
- * Developer by: Muhammad Kalim · LogixInventor (PVT) Ltd.
+ * Parse `TAILOR_SHOP_CAP_OVERRIDES` — per-email max shop count (no hardcoded accounts in code).
+ * Formats:
+ *   - `email=count;email2=count` or comma-separated segments
+ *   - JSON object: `{"user@example.com":2}`
+ * Email matching is case-insensitive.
  */
-function parsePositiveIntEnv(value, fallback) {
-  const n = parseInt(String(value ?? '').trim(), 10);
-  if (Number.isNaN(n) || n < 1) return fallback;
-  return n;
-}
-
-function getDefaultTailorMaxBusinesses() {
-  return parsePositiveIntEnv(process.env.TAILOR_MAX_BUSINESSES, 1);
-}
-
-function parseTailorMaxBusinessOverrides() {
-  const raw = process.env.TAILOR_MAX_BUSINESSES_OVERRIDES;
+function parseTailorShopCapOverrides() {
+  const raw = String(process.env.TAILOR_SHOP_CAP_OVERRIDES || '').trim();
   const map = new Map();
-  if (!raw || !String(raw).trim()) return map;
-  for (const part of String(raw).split(',')) {
+  if (!raw) return map;
+  if (raw.startsWith('{')) {
+    try {
+      const obj = JSON.parse(raw);
+      for (const [k, v] of Object.entries(obj)) {
+        const email = String(k).trim().toLowerCase();
+        const n = parseInt(v, 10);
+        if (email && Number.isFinite(n) && n >= 1) map.set(email, n);
+      }
+    } catch (_) {
+      /* ignore invalid JSON */
+    }
+    return map;
+  }
+  for (const part of raw.split(/[;,]/)) {
     const seg = part.trim();
     if (!seg) continue;
-    const idx = seg.lastIndexOf(':');
-    if (idx <= 0) continue;
-    const email = seg.slice(0, idx).trim().toLowerCase();
-    const max = parseInt(seg.slice(idx + 1).trim(), 10);
-    if (email && !Number.isNaN(max) && max >= 1) map.set(email, max);
+    const eq = seg.indexOf('=');
+    if (eq === -1) continue;
+    const email = seg.slice(0, eq).trim().toLowerCase();
+    const n = parseInt(seg.slice(eq + 1).trim(), 10);
+    if (email && Number.isFinite(n) && n >= 1) map.set(email, n);
   }
   return map;
 }
 
-let tailorMaxBusinessOverridesMap = null;
-function getTailorMaxBusinessOverridesMap() {
-  if (!tailorMaxBusinessOverridesMap) tailorMaxBusinessOverridesMap = parseTailorMaxBusinessOverrides();
-  return tailorMaxBusinessOverridesMap;
+function getDefaultMaxShopsPerTailor() {
+  const n = parseInt(process.env.TAILOR_DEFAULT_MAX_SHOPS, 10);
+  return Number.isFinite(n) && n >= 1 ? n : DEFAULT_TAILOR_MAX_SHOPS;
 }
 
-function getTailorMaxBusinessesForRequest(req) {
-  const defaultMax = getDefaultTailorMaxBusinesses();
-  if (!isTailorUser(req)) return defaultMax;
+/** Max businesses a tailor user may own (create). Admins are not limited here. */
+function getMaxShopsForTailorUser(req) {
+  if (!isTailorUser(req)) return Number.MAX_SAFE_INTEGER;
+  const base = getDefaultMaxShopsPerTailor();
   const email = String(req.user?.email || '').trim().toLowerCase();
-  if (!email) return defaultMax;
-  const override = getTailorMaxBusinessOverridesMap().get(email);
-  if (override != null) return override;
-  return defaultMax;
+  if (!email) return base;
+  const cap = parseTailorShopCapOverrides().get(email);
+  return cap != null ? cap : base;
 }
 
 /** Optional INT FKs: empty string breaks MySQL — omit on insert, NULL on update. */
@@ -568,31 +574,11 @@ router.get('/shops/enriched', async (req, res) => {
       `,
       params
     );
-    res.json({ success: true, data: rows });
-  } catch (error) {
-    res.status(500).json({ success: false, error: { message: error.message } });
-  }
-});
-
-// ── Tailor shop slot cap (for dashboard “Add Business” UI) ────────────────────
-router.get('/shops/business-slots', async (req, res) => {
-  try {
-    if (!isTailorUser(req)) {
-      return res.status(403).json({ success: false, error: { message: 'Access denied' } });
-    }
-    const maxShops = getTailorMaxBusinessesForRequest(req);
-    const [[row]] = await db.query(
-      'SELECT COUNT(*) AS total FROM business_tailor_shops WHERE owner_user_id = ?',
-      [req.user.userId]
-    );
-    const currentCount = Number(row?.total || 0);
+    const maxShops = isTailorUser(req) ? getMaxShopsForTailorUser(req) : undefined;
     res.json({
       success: true,
-      data: {
-        maxShops,
-        currentCount,
-        canAddMore: currentCount < maxShops,
-      },
+      data: rows,
+      ...(maxShops != null ? { meta: { maxShops } } : {}),
     });
   } catch (error) {
     res.status(500).json({ success: false, error: { message: error.message } });
@@ -681,11 +667,11 @@ router.post('/:resource', async (req, res) => {
 
     if (req.params.resource === 'shops' && isTailorUser(req)) {
       payload.owner_user_id = req.user.userId;
-      const maxShops = getTailorMaxBusinessesForRequest(req);
       const [[ownCountRow]] = await db.query(
         'SELECT COUNT(*) AS total FROM business_tailor_shops WHERE owner_user_id = ?',
         [req.user.userId]
       );
+      const maxShops = getMaxShopsForTailorUser(req);
       if ((ownCountRow?.total || 0) >= maxShops) {
         return res.status(400).json({
           success: false,
@@ -693,7 +679,7 @@ router.post('/:resource', async (req, res) => {
             message:
               maxShops <= 1
                 ? 'You can create only one business account.'
-                : `You can create up to ${maxShops} business accounts. Contact support if you need more.`,
+                : `You can create up to ${maxShops} business accounts.`,
           },
         });
       }
