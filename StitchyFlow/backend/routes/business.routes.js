@@ -230,6 +230,54 @@ function isTailorUser(req) {
   return ['tailor', 'business_owner'].includes(String(req.user?.role || '').toLowerCase());
 }
 
+/**
+ * Tailors may create multiple shops when configured via env (no hardcoded emails in code).
+ * - TAILOR_MAX_BUSINESSES — default max shops per tailor (default 1, min 1).
+ * - TAILOR_MAX_BUSINESSES_OVERRIDES — optional comma list: email@x.com:2,other@y.com:3 (case-insensitive email).
+ * Developer by: Muhammad Kalim · LogixInventor (PVT) Ltd.
+ */
+function parsePositiveIntEnv(value, fallback) {
+  const n = parseInt(String(value ?? '').trim(), 10);
+  if (Number.isNaN(n) || n < 1) return fallback;
+  return n;
+}
+
+function getDefaultTailorMaxBusinesses() {
+  return parsePositiveIntEnv(process.env.TAILOR_MAX_BUSINESSES, 1);
+}
+
+function parseTailorMaxBusinessOverrides() {
+  const raw = process.env.TAILOR_MAX_BUSINESSES_OVERRIDES;
+  const map = new Map();
+  if (!raw || !String(raw).trim()) return map;
+  for (const part of String(raw).split(',')) {
+    const seg = part.trim();
+    if (!seg) continue;
+    const idx = seg.lastIndexOf(':');
+    if (idx <= 0) continue;
+    const email = seg.slice(0, idx).trim().toLowerCase();
+    const max = parseInt(seg.slice(idx + 1).trim(), 10);
+    if (email && !Number.isNaN(max) && max >= 1) map.set(email, max);
+  }
+  return map;
+}
+
+let tailorMaxBusinessOverridesMap = null;
+function getTailorMaxBusinessOverridesMap() {
+  if (!tailorMaxBusinessOverridesMap) tailorMaxBusinessOverridesMap = parseTailorMaxBusinessOverrides();
+  return tailorMaxBusinessOverridesMap;
+}
+
+function getTailorMaxBusinessesForRequest(req) {
+  const defaultMax = getDefaultTailorMaxBusinesses();
+  if (!isTailorUser(req)) return defaultMax;
+  const email = String(req.user?.email || '').trim().toLowerCase();
+  if (!email) return defaultMax;
+  const override = getTailorMaxBusinessOverridesMap().get(email);
+  if (override != null) return override;
+  return defaultMax;
+}
+
 /** Optional INT FKs: empty string breaks MySQL — omit on insert, NULL on update. */
 const SHOP_OPTIONAL_INT_FIELDS = ['business_type_id', 'specialization_id', 'category_id', 'subcategory_id'];
 const SHOP_STATUS_ENUM = new Set(['active', 'inactive', 'suspended']);
@@ -526,6 +574,31 @@ router.get('/shops/enriched', async (req, res) => {
   }
 });
 
+// ── Tailor shop slot cap (for dashboard “Add Business” UI) ────────────────────
+router.get('/shops/business-slots', async (req, res) => {
+  try {
+    if (!isTailorUser(req)) {
+      return res.status(403).json({ success: false, error: { message: 'Access denied' } });
+    }
+    const maxShops = getTailorMaxBusinessesForRequest(req);
+    const [[row]] = await db.query(
+      'SELECT COUNT(*) AS total FROM business_tailor_shops WHERE owner_user_id = ?',
+      [req.user.userId]
+    );
+    const currentCount = Number(row?.total || 0);
+    res.json({
+      success: true,
+      data: {
+        maxShops,
+        currentCount,
+        canAddMore: currentCount < maxShops,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
 // ── Dropdown options for Business Types ───────────────────────────────────────
 router.get('/options/business-types', async (req, res) => {
   try {
@@ -608,12 +681,21 @@ router.post('/:resource', async (req, res) => {
 
     if (req.params.resource === 'shops' && isTailorUser(req)) {
       payload.owner_user_id = req.user.userId;
+      const maxShops = getTailorMaxBusinessesForRequest(req);
       const [[ownCountRow]] = await db.query(
         'SELECT COUNT(*) AS total FROM business_tailor_shops WHERE owner_user_id = ?',
         [req.user.userId]
       );
-      if ((ownCountRow?.total || 0) >= 1) {
-        return res.status(400).json({ success: false, error: { message: 'You can create only one business account.' } });
+      if ((ownCountRow?.total || 0) >= maxShops) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message:
+              maxShops <= 1
+                ? 'You can create only one business account.'
+                : `You can create up to ${maxShops} business accounts. Contact support if you need more.`,
+          },
+        });
       }
     }
 

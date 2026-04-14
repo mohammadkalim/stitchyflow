@@ -52,6 +52,15 @@ mysql -u root -p12345 < Database/add_tailor_services_link_accent.sql
 
 The database may reference paths such as `/images/services/mens-shirt.jpg`. The API serves these from **`StitchyFlow/backend/public/images/`** (URL prefix `/images/...`). Add JPG/PNG files there to match the DB paths, or upload icons via the admin Tailor Services flow (stored under `/uploads/ads/`). Restart the backend after adding files.
 
+## Tailor dashboard — multiple businesses (env)
+
+By default each tailor may create **one** shop. To raise the limit globally or for specific accounts, set in **`StitchyFlow/backend/.env`** (see **`StitchyFlow/backend/.env.example`**):
+
+- `TAILOR_MAX_BUSINESSES` — default max shops per tailor (default `1`).
+- `TAILOR_MAX_BUSINESSES_OVERRIDES` — optional comma list `email@domain.com:2,other@domain.com:3` (emails matched case-insensitively).
+
+Restart the API after changing these values. The tailor dashboard loads **`GET /api/v1/business/shops/business-slots`** to enable **Add Business** up to the configured cap.
+
 ## Default Credentials
 
 **Database:**

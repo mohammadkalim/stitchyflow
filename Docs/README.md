@@ -162,6 +162,7 @@ This documentation suite provides complete technical and functional specificatio
 3. **Configure environment**
    - Copy `.env.example` to `.env`
    - Update database credentials and configuration
+   - For per-tailor **multiple shop** limits, set `TAILOR_MAX_BUSINESSES` and optional `TAILOR_MAX_BUSINESSES_OVERRIDES` in **`StitchyFlow/backend/.env`** (see root **`README.md`** and **`StitchyFlow/backend/.env.example`**).
 
 4. **Database setup**
    - Import database schema

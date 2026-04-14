@@ -128,10 +128,23 @@ export default function MyBusinessesSection({ isApproved }) {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [maxShops, setMaxShops] = useState(1);
 
   const load = () => {
     setLoading(true);
-    apiFetch('/business/shops/enriched').then(r => setList(r.data || [])).catch(() => {}).finally(() => setLoading(false));
+    Promise.allSettled([
+      apiFetch('/business/shops/enriched'),
+      apiFetch('/business/shops/business-slots'),
+    ])
+      .then((results) => {
+        const [enrichedRes, slotsRes] = results;
+        if (enrichedRes.status === 'fulfilled') setList(enrichedRes.value.data || []);
+        if (slotsRes.status === 'fulfilled') {
+          const m = Number(slotsRes.value?.data?.maxShops);
+          if (!Number.isNaN(m) && m >= 1) setMaxShops(m);
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -153,7 +166,7 @@ export default function MyBusinessesSection({ isApproved }) {
   }, [paymentOpen]);
 
   const openAdd = () => {
-    if (list.length >= 1) {
+    if (list.length >= maxShops) {
       setPaymentOpen(true);
       return;
     }
@@ -203,7 +216,7 @@ export default function MyBusinessesSection({ isApproved }) {
       notifyPublicShopsChanged();
     } catch (e) {
       const msg = e.message || '';
-      if (!edit && /one business|only one business/i.test(msg)) {
+      if (!edit && /one business|only one business|up to \d+ business/i.test(msg)) {
         setOpen(false);
         setPaymentOpen(true);
         return;

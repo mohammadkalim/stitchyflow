@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-14 (PKT)
+
+- **Tailor multi-business cap (env-driven):** Tailors can create more than one shop when configured via `TAILOR_MAX_BUSINESSES` and optional `TAILOR_MAX_BUSINESSES_OVERRIDES` in the backend `.env` (comma-separated `email:max` pairs). Added authenticated **`GET /api/v1/business/shops/business-slots`** returning `maxShops`, `currentCount`, and `canAddMore`. **`POST /api/v1/business/shops`** enforces the same limit. The tailor dashboard **My Businesses** section uses this for **Add Business** instead of a hardcoded single slot. Documented in `README.md`, `Docs/05_API_Documentation.md`, and `StitchyFlow/backend/.env.example`.
+- Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
 ## 2026-04-11 20:45:00 PKT
 
 - **Tailor Shops slider theme/colors:** Documented support for Tailor Shops hero/slider theming through the existing slider media flow, including page-specific fallback colors on the frontend and use of database-saved background/text colors via current admin/backend slider records.
