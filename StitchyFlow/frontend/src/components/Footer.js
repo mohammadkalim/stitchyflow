@@ -154,7 +154,7 @@ function Footer() {
               Marketplace
             </Typography>
             {[
-              { label: 'Custom Dresses',  path: '/marketplace/custom-dresses' },
+              { label: 'All Tailors',     path: '/All-tailers' },
               { label: 'Suits & Blazers', path: '/marketplace/suits-blazers' },
               { label: 'Bridal Wear',     path: '/marketplace/bridal-wear' },
               { label: 'Traditional Wear',path: '/marketplace/traditional-wear' },

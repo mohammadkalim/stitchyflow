@@ -112,7 +112,7 @@ function PageTemplate({
   shopsLoading = false,
   shopSectionTitle = 'Tailor shops',
   shopSectionSubtitle = 'Browse verified tailoring businesses on StitchyFlow',
-  shopVisitPath = '/marketplace/custom-dresses',
+  shopVisitPath = '/All-tailers',
   /** If set, “Visit Shop” opens this URL in a new tab (e.g. tailor detail page). */
   shopVisitUrlBuilder = null,
 }) {

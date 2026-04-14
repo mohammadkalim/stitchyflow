@@ -14,6 +14,20 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 const emptyJsonArray = () => '[]';
 
+async function migrateLegacyAllTailorsLinkPath() {
+  try {
+    await db.query(
+      `UPDATE tailor_services
+       SET link_path = '/All-tailers'
+       WHERE link_path = '/marketplace/custom-dresses'`
+    );
+  } catch (err) {
+    console.warn('tailor_services link_path migration skipped:', err.message);
+  }
+}
+
+migrateLegacyAllTailorsLinkPath();
+
 // ── FULL LIST FOR ADMIN UI (auth) — before "/" and "/:id" ─────────────────────
 // GET /api/v1/tailor-services/mgmt/list
 router.get('/mgmt/list', authenticateToken, async (req, res) => {

@@ -58,7 +58,7 @@ function getSocialIcon(platform, color, size = 18) {
 
 const NAV_LINKS = [
   { label: 'Tailor Shops', path: '/tailor-shops' },
-  { label: 'Tailors', path: '/marketplace/custom-dresses' },
+  { label: 'Tailors', path: '/All-tailers' },
   { label: 'Promotions', path: '/promotions' },
   { label: 'Insights', path: '/blog' },
 ];
@@ -73,7 +73,7 @@ const iconMap = {
 
 // Default services (fallback if DB fails)
 const DEFAULT_SERVICES = [
-  { icon: 'CustomDresses', label: 'Custom Dresses',   path: '/marketplace/custom-dresses',   desc: 'Tailored to your exact measurements', color: '#2563eb' },
+  { icon: 'CustomDresses', label: 'All Tailors',      path: '/All-tailers',                   desc: 'Browse all verified tailors', color: '#2563eb' },
   { icon: 'Suits',        label: 'Suits & Blazers',  path: '/marketplace/suits-blazers',    desc: 'Sharp formal & corporate wear', color: '#7c3aed' },
   { icon: 'Traditional',  label: 'Traditional Wear', path: '/marketplace/traditional-wear', desc: 'Authentic Pakistani heritage styles', color: '#f59e0b' },
   { icon: 'Alterations',  label: 'Alterations',      path: '/marketplace/alterations',      desc: 'Perfect fit for existing clothes', color: '#10b981' },
@@ -122,7 +122,7 @@ function Header() {
         if (data.success && data.data && data.data.length > 0) {
           const mapped = data.data.map((s) => ({
             label: s.service_name,
-            path: s.link_path || '/marketplace/custom-dresses',
+            path: s.link_path || '/All-tailers',
             desc: s.service_description || '',
             color: s.accent_color || '#2563eb',
             imageUrl: s.image_url || null,

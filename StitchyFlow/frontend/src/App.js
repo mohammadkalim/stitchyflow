@@ -26,6 +26,7 @@ import Blog from './pages/company/Blog';
 import Promotions from './pages/Promotions';
 import TailorShops from './pages/TailorShops';
 import TailorShopDetails from './pages/TailorShopDetails';
+import TailorProfileDetails from './pages/TailorProfileDetails';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 
 const theme = createTheme({
@@ -48,7 +49,8 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/verify-code" element={<VerifyCode />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/marketplace/custom-dresses" element={<CustomDresses />} />
+            <Route path="/marketplace/custom-dresses" element={<Navigate to="/All-tailers" replace />} />
+            <Route path="/All-tailers" element={<CustomDresses />} />
             <Route path="/marketplace/suits-blazer" element={<Navigate to="/marketplace/suits-blazers" replace />} />
             <Route path="/marketplace/suits-blazers" element={<SuitsBlazer />} />
             <Route path="/marketplace/bridal-wear" element={<BridalWear />} />
@@ -62,6 +64,7 @@ function App() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/promotions" element={<Promotions />} />
             <Route path="/tailor-shops/view/:shopId" element={<TailorShopDetails />} />
+            <Route path="/All-tailers/view/:tailorId" element={<TailorProfileDetails />} />
             <Route path="/tailor-shops" element={<TailorShops />} />
             <Route path="/customer-dashboard" element={<CustomerDashboard />} />
             <Route path="/tailor-dashboard" element={<TailorDashboard />} />

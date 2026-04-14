@@ -227,7 +227,7 @@ async function ensureShopHourColumns() {
 }
 
 function isTailorUser(req) {
-  return String(req.user?.role || '').toLowerCase() === 'tailor';
+  return ['tailor', 'business_owner'].includes(String(req.user?.role || '').toLowerCase());
 }
 
 /** Optional INT FKs: empty string breaks MySQL — omit on insert, NULL on update. */
@@ -324,7 +324,7 @@ router.get('/public/shops', async (req, res) => {
   try {
     await initPromise;
     const shopQuery = `
-      SELECT shop_id, shop_name, owner_name, city,
+      SELECT shop_id, owner_user_id, shop_name, owner_name, city, country, address,
              s.logo_image,
              s.cover_image,
              s.updated_at,
@@ -349,6 +349,45 @@ router.get('/public/shops', async (req, res) => {
         }
       } catch (seedErr) {
         console.warn('GET /public/shops auto-seed:', seedErr.message);
+      }
+    }
+    res.set('Cache-Control', 'private, no-cache, must-revalidate');
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// Alias endpoint for frontend route naming consistency.
+router.get('/public/all-tailors', async (req, res) => {
+  try {
+    await initPromise;
+    const shopQuery = `
+      SELECT shop_id, owner_user_id, shop_name, owner_name, city, country, address,
+             s.logo_image,
+             s.cover_image,
+             s.updated_at,
+             COALESCE(NULLIF(TRIM(s.shop_image), ''), NULLIF(TRIM(s.cover_image), ''), NULLIF(TRIM(s.logo_image), '')) AS shop_image,
+             s.available_from, s.available_to, s.not_available_note,
+             bt.type_name AS business_type_name,
+             sp.specialization_name AS specialization_name
+      FROM business_tailor_shops s
+      LEFT JOIN business_type_management bt ON s.business_type_id = bt.type_id
+      LEFT JOIN specialization_management sp ON s.specialization_id = sp.specialization_id
+      WHERE s.shop_status = 'active'
+      ORDER BY s.shop_id DESC
+      LIMIT 500
+    `;
+    let [rows] = await db.query(shopQuery);
+    if (!rows.length) {
+      try {
+        const { seedTailorShopsIfEmpty } = require('../seed/tailorShopsSeed');
+        const seedResult = await seedTailorShopsIfEmpty();
+        if (!seedResult.skipped) {
+          [rows] = await db.query(shopQuery);
+        }
+      } catch (seedErr) {
+        console.warn('GET /public/all-tailors auto-seed:', seedErr.message);
       }
     }
     res.set('Cache-Control', 'private, no-cache, must-revalidate');
@@ -633,6 +672,8 @@ router.put('/:resource/:id', async (req, res) => {
     if (req.params.resource === 'shops') {
       sanitizeShopResourcePayload(payload, 'update');
       await coerceShopForeignKeys(payload, 'update');
+      // Ensure each saved shop stays linked to the authenticated business/tailor user.
+      if (isTailorUser(req)) payload.owner_user_id = req.user.userId;
     }
 
     const fields = Object.keys(payload);
