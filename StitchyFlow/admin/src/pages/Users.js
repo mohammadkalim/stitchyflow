@@ -73,17 +73,24 @@ function Users() {
   const [suspendUser, setSuspendUser] = useState(null);
   const [suspending, setSuspending] = useState(false);
 
-  // Fetch users from database on component mount
+  // Fetch on mount; poll every 30s only while tab is visible (saves CPU/network in background tabs)
   useEffect(() => {
     fetchUsers();
-    
-    // Auto-refresh users every 30 seconds to keep data in sync with database
+
     const intervalId = setInterval(() => {
+      if (document.hidden) return;
       fetchUsers();
-    }, 30000); // 30 seconds
-    
-    // Cleanup interval on component unmount
-    return () => clearInterval(intervalId);
+    }, 30000);
+
+    const onVisible = () => {
+      if (!document.hidden) fetchUsers();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
   const fetchUsers = async () => {

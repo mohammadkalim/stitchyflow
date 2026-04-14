@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-11 20:45:00 PKT
+
+- **Tailor Shops slider theme/colors:** Documented support for Tailor Shops hero/slider theming through the existing slider media flow, including page-specific fallback colors on the frontend and use of database-saved background/text colors via current admin/backend slider records.
+
 ## 2026-04-11 20:30:00 PKT
 
 - **Admin tailor service images 404 / CORP:** Express now serves **`GET /images/...`** from `StitchyFlow/backend/public/images/`. Helmet uses **`crossOriginResourcePolicy: 'cross-origin'`** so images from the API (port 5000) load in the admin (4000) and main site (3000) without `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin`. Admin Tailor Services **Avatar** and header mega-menu images fall back on **`onError`** when a file is missing.

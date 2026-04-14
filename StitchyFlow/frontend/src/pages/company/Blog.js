@@ -211,6 +211,7 @@ function Blog() {
       heroSubtitle="Stay informed with the latest tailoring tips, fashion trends, and industry insights from the StitchyFlow team."
       features={features}
       ctaText="Read Latest Posts"
+      sliderPage="/blog"
       extraSection={<BusinessSlider />}
     />
   );

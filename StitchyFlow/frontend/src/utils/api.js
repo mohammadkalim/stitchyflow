@@ -48,3 +48,12 @@ export async function apiFetch(path, options = {}) {
 export async function gex(path, options = {}) {
   return apiFetch(path, { method: 'GET', ...options });
 }
+
+/** Fired after a tailor creates/updates/deletes a business so public pages can refetch `/business/public/shops`. */
+export const PUBLIC_SHOPS_CHANGED_EVENT = 'stitchyflow:public-shops-changed';
+
+export function notifyPublicShopsChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(PUBLIC_SHOPS_CHANGED_EVENT));
+  }
+}

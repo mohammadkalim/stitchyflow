@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
 
 const RESOURCES = {
@@ -14,7 +17,12 @@ const RESOURCES = {
     table: 'business_tailor_shops',
     id: 'shop_id',
     required: ['shop_name', 'owner_name'],
-    allowed: ['shop_name', 'owner_name', 'city', 'address', 'contact_number', 'business_type_id', 'specialization_id', 'shop_status', 'shop_image']
+    allowed: [
+      'shop_name', 'owner_name', 'city', 'country', 'address', 'contact_number', 'whatsapp_number',
+      'business_type_id', 'specialization_id', 'category_id', 'subcategory_id',
+      'shop_status', 'shop_image', 'logo_image', 'cover_image',
+      'available_from', 'available_to', 'not_available_note'
+    ]
   },
   settings: {
     table: 'business_settings',
@@ -59,6 +67,24 @@ const RESOURCES = {
     allowed: ['specialization_name', 'specialization_code', 'business_type_id', 'description', 'is_active']
   }
 };
+
+const businessUploadDir = path.join(__dirname, '..', 'uploads', 'business');
+fs.mkdirSync(businessUploadDir, { recursive: true });
+const businessImageUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, businessUploadDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || '').toLowerCase();
+      const safeExt = ['.png', '.jpg', '.jpeg', '.webp'].includes(ext) ? ext : '.jpg';
+      cb(null, `business-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${safeExt}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (/^image\/(png|jpe?g|webp)$/i.test(file.mimetype)) return cb(null, true);
+    return cb(new Error('Only PNG, JPG, JPEG, and WEBP images are allowed.'));
+  },
+});
 
 async function initBusinessTables() {
   const tableQueries = [
@@ -166,6 +192,40 @@ async function initBusinessTables() {
   for (const query of tableQueries) {
     await db.query(query);
   }
+
+  await ensureShopHourColumns();
+}
+
+/** Add opening / closed copy columns for public shop cards (idempotent). */
+async function ensureShopHourColumns() {
+  const fragments = [
+    'ADD COLUMN shop_image VARCHAR(500) NULL',
+    'ADD COLUMN business_type_id INT NULL',
+    'ADD COLUMN specialization_id INT NULL',
+    'ADD COLUMN owner_user_id INT NULL',
+    'ADD COLUMN country VARCHAR(120) NULL',
+    'ADD COLUMN whatsapp_number VARCHAR(30) NULL',
+    'ADD COLUMN category_id INT NULL',
+    'ADD COLUMN subcategory_id INT NULL',
+    'ADD COLUMN logo_image VARCHAR(500) NULL',
+    'ADD COLUMN cover_image VARCHAR(500) NULL',
+    'ADD COLUMN available_from VARCHAR(40) NULL',
+    'ADD COLUMN available_to VARCHAR(40) NULL',
+    'ADD COLUMN not_available_note VARCHAR(200) NULL',
+  ];
+  for (const f of fragments) {
+    try {
+      await db.query(`ALTER TABLE business_tailor_shops ${f}`);
+    } catch (e) {
+      if (e.errno !== 1060 && e.code !== 'ER_DUP_FIELDNAME') {
+        console.warn('ensureShopHourColumns:', e.message);
+      }
+    }
+  }
+}
+
+function isTailorUser(req) {
+  return String(req.user?.role || '').toLowerCase() === 'tailor';
 }
 
 const initPromise = initBusinessTables().catch((error) => {
@@ -198,17 +258,32 @@ function getResourceConfig(resourceName) {
 // ── PUBLIC: Active shops for frontend slider (no auth required) ───────────────
 router.get('/public/shops', async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT shop_id, shop_name, owner_name, city, shop_image,
+    await initPromise;
+    const shopQuery = `
+      SELECT shop_id, shop_name, owner_name, city,
+             COALESCE(NULLIF(TRIM(s.shop_image), ''), NULLIF(TRIM(s.cover_image), ''), NULLIF(TRIM(s.logo_image), '')) AS shop_image,
+             s.available_from, s.available_to, s.not_available_note,
              bt.type_name AS business_type_name,
-             sp.specialization_name
+             sp.specialization_name AS specialization_name
       FROM business_tailor_shops s
       LEFT JOIN business_type_management bt ON s.business_type_id = bt.type_id
       LEFT JOIN specialization_management sp ON s.specialization_id = sp.specialization_id
       WHERE s.shop_status = 'active'
       ORDER BY s.shop_id DESC
-      LIMIT 12
-    `);
+      LIMIT 500
+    `;
+    let [rows] = await db.query(shopQuery);
+    if (!rows.length) {
+      try {
+        const { seedTailorShopsIfEmpty } = require('../seed/tailorShopsSeed');
+        const seedResult = await seedTailorShopsIfEmpty();
+        if (!seedResult.skipped) {
+          [rows] = await db.query(shopQuery);
+        }
+      } catch (seedErr) {
+        console.warn('GET /public/shops auto-seed:', seedErr.message);
+      }
+    }
     res.json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, error: { message: error.message } });
@@ -218,19 +293,39 @@ router.get('/public/shops', async (req, res) => {
 router.use(authenticateToken);
 router.use(ensureInitialized);
 
+// Upload business logo/cover image
+router.post('/shops/upload-image', (req, res) => {
+  businessImageUpload.single('image')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, error: { message: err.message || 'Image upload failed' } });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: { message: 'No image file uploaded' } });
+    }
+    const imageUrl = `/uploads/business/${req.file.filename}`;
+    return res.json({ success: true, data: { imageUrl } });
+  });
+});
+
 // ── Enriched shops list (with type & specialization names) ────────────────────
 router.get('/shops/enriched', async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT
-        s.*,
-        bt.type_name        AS business_type_name,
-        sp.specialization_name AS specialization_name
-      FROM business_tailor_shops s
-      LEFT JOIN business_type_management bt ON s.business_type_id = bt.type_id
-      LEFT JOIN specialization_management sp ON s.specialization_id = sp.specialization_id
-      ORDER BY s.shop_id DESC
-    `);
+    const whereClause = isTailorUser(req) ? 'WHERE s.owner_user_id = ?' : '';
+    const params = isTailorUser(req) ? [req.user.userId] : [];
+    const [rows] = await db.query(
+      `
+        SELECT
+          s.*,
+          bt.type_name        AS business_type_name,
+          sp.specialization_name AS specialization_name
+        FROM business_tailor_shops s
+        LEFT JOIN business_type_management bt ON s.business_type_id = bt.type_id
+        LEFT JOIN specialization_management sp ON s.specialization_id = sp.specialization_id
+        ${whereClause}
+        ORDER BY s.shop_id DESC
+      `,
+      params
+    );
     res.json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, error: { message: error.message } });
@@ -286,7 +381,14 @@ router.get('/:resource', async (req, res) => {
     if (!config) {
       return res.status(404).json({ success: false, error: { message: 'Resource not found' } });
     }
-    const [rows] = await db.query(`SELECT * FROM ${config.table} ORDER BY ${config.id} DESC`);
+    let query = `SELECT * FROM ${config.table}`;
+    const params = [];
+    if (req.params.resource === 'shops' && isTailorUser(req)) {
+      query += ' WHERE owner_user_id = ?';
+      params.push(req.user.userId);
+    }
+    query += ` ORDER BY ${config.id} DESC`;
+    const [rows] = await db.query(query, params);
     res.json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, error: { message: error.message } });
@@ -303,6 +405,17 @@ router.post('/:resource', async (req, res) => {
     const payload = {};
     for (const field of config.allowed) {
       if (req.body[field] !== undefined) payload[field] = req.body[field];
+    }
+
+    if (req.params.resource === 'shops' && isTailorUser(req)) {
+      payload.owner_user_id = req.user.userId;
+      const [[ownCountRow]] = await db.query(
+        'SELECT COUNT(*) AS total FROM business_tailor_shops WHERE owner_user_id = ?',
+        [req.user.userId]
+      );
+      if ((ownCountRow?.total || 0) >= 1) {
+        return res.status(400).json({ success: false, error: { message: 'You can create only one business account.' } });
+      }
     }
 
     const missing = config.required.filter((field) => !payload[field] && payload[field] !== 0);
@@ -359,10 +472,13 @@ router.put('/:resource/:id', async (req, res) => {
     const values = fields.map((field) => payload[field]);
     values.push(req.params.id);
 
-    const [result] = await db.query(
-      `UPDATE ${config.table} SET ${setClause} WHERE ${config.id} = ?`,
-      values
-    );
+    let whereClause = `${config.id} = ?`;
+    if (req.params.resource === 'shops' && isTailorUser(req)) {
+      whereClause += ' AND owner_user_id = ?';
+      values.push(req.user.userId);
+    }
+
+    const [result] = await db.query(`UPDATE ${config.table} SET ${setClause} WHERE ${whereClause}`, values);
 
     if (!result.affectedRows) {
       return res.status(404).json({ success: false, error: { message: 'Record not found' } });
@@ -390,10 +506,14 @@ router.delete('/:resource/:id', async (req, res) => {
       return res.status(404).json({ success: false, error: { message: 'Resource not found' } });
     }
 
-    const [result] = await db.query(
-      `DELETE FROM ${config.table} WHERE ${config.id} = ?`,
-      [req.params.id]
-    );
+    let query = `DELETE FROM ${config.table} WHERE ${config.id} = ?`;
+    const params = [req.params.id];
+    if (req.params.resource === 'shops' && isTailorUser(req)) {
+      query += ' AND owner_user_id = ?';
+      params.push(req.user.userId);
+    }
+
+    const [result] = await db.query(query, params);
 
     if (!result.affectedRows) {
       return res.status(404).json({ success: false, error: { message: 'Record not found' } });
@@ -415,3 +535,4 @@ router.delete('/:resource/:id', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.initPromise = initPromise;

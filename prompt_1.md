@@ -438,3 +438,93 @@ Database username ****** root *****
 Database Password **** 12345 ******
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+--------
+
+please main wesbite Herder create a 1 page of Tailer Shopes
+
+---------
+
+1) please Admin panal sideabr Tailor Services http://localhost:4000/tailor-services  page Data is showing live Database http://localhost:8080/phpmyadmin/index.php?route=/sql&pos=0&db=stitchyflow&table=tailor_services and please Tailor Services page create a i opshion of Add new services and please icon bhe upload kar sake os service ka and please name bhe show kare and name Type kare and please kese bhe service ko Delete bhe kar sakte hen and Edit bhe kae sakte hen and please enible bhe kar sakteho and Disibl bhe kar sak te ho and please gab Data save kare to please Database men bhe save ho and main wesbite ke this popup main bhe show kare please Admin panal http://localhost:4000/tailor-services page Theme was set a light Blue 
+2) please main wesbite Herder create a 1 page of Tailer Shopes 
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+------
+
+Kindly fixed All cosnole error when upload icon to error
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+-------
+
+please ye Tailer services ka moudle asse ho 
+
+---------
+
+please my main wesite Tailer Shpes page Full Slyder this All colors was set  #2596be rgba(37, 150, 190)  hsl(196, 67, 45) and please Daabase men bhe save ho ye colors
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+--------
+
+
+when Register New Business 2 opshion showing as well Available Time 2 Not available Tile showing as well and please create a Professional and corporate and All Features working as well 
+
+________ Database _________
+
+please Database and Admin panal All Business Data is live Showing as well
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+--------- Admin panel Creadincles --------- 
+
+
+
+Admin panel Host ********** http://localhost:4000 ***********
+
+Admin panel username ********** admin@stitchyflow.com **********
+
+Admin panel passoword ********** admin123 ***********
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

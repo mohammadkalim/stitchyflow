@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Paper, TextField, Button, Typography, Box, Checkbox, FormControlLabel, Link } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ContentCut as ScissorsIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import axios from 'axios';
 import API_BASE_URL from '../utils/api';
+import { prefetchAdminPage } from '../adminPageChunks';
 
 function Login() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const schedule =
+      typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback(() => prefetchAdminPage('/dashboard'))
+        : setTimeout(() => prefetchAdminPage('/dashboard'), 200);
+    return () => {
+      if (typeof window.cancelIdleCallback === 'function' && typeof schedule === 'number') {
+        window.cancelIdleCallback(schedule);
+      } else {
+        clearTimeout(schedule);
+      }
+    };
+  }, []);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);

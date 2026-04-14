@@ -115,6 +115,7 @@ Docs/                 # Complete documentation
   - SEO fields (meta title, meta description)
   - Active/Inactive toggle for each page
   - All data stored in MySQL database
+- **Slider Media management:** Existing slider media admin/backend flow stores page slider records in MySQL, including background and text color values used by supported pages such as Tailor Shops.
 
 ### Customer Features
 - **Entry splash:** On each browser load or refresh, a full-screen splash displays first (duration configurable via `REACT_APP_SPLASH_DURATION_MS` in `frontend/.env`, default 5 seconds), then the requested route; visiting `/` redirects to `/home` after the splash.
@@ -126,6 +127,7 @@ Docs/                 # Complete documentation
 - Analytics dashboards
 - **Header — Tailor Services menu:** Loads active services from `/api/v1/tailor-services` (name, description, optional icon image, link path, colors).
 - **Tailor Shops page:** Public page at http://localhost:3000/tailor-shops (also linked in the main header).
+- **Tailor Shops slider theming:** The Tailor Shops hero/slider supports page-specific fallback theme colors and can use database-saved slider background/text colors managed through the existing slider media admin/API flow.
 
 ## Documentation
 

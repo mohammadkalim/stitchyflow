@@ -13,51 +13,55 @@ import {
   ListItem, ListItemButton, ListItemIcon, ListItemText, Avatar,
   Menu, MenuItem, Chip, Collapse, useMediaQuery, useTheme, Divider
 } from '@mui/material';
-import {
-  Dashboard as DashboardIcon, People as PeopleIcon,
-  ShoppingCart as OrdersIcon, ContentCut as TailorsIcon,
-  Straighten as MeasurementsIcon, Payment as PaymentIcon,
-  Assessment as ReportsIcon, Settings as SettingsIcon,
-  ExitToApp as LogoutIcon,
-  Checkroom as AirCoatsIcon,
-  ExpandMore, ExpandLess,
-  AdminPanelSettings as AdminSettingsIcon,
-  Notifications as NotificationsIcon,
-  Search as SearchIcon,
-  Email as SMTPIcon,
-  Language as SiteSettingsIcon,
-  Build as MaintenanceIcon,
-  Person as PersonIcon,
-  Business as BusinessIcon,
-  VerifiedUser as VerificationIcon,
-  Store as StoreIcon,
-  BusinessCenter as BusinessSettingsIcon,
-  Receipt as OrdersBusinessIcon,
-  History as LogsIcon,
-  CheckCircle as StatusIcon,
-  Info as InfoIcon,
-  Category as CategoryIcon,
-  Stars as SpecializationIcon,
-  Psychology as AIErrorIcon,
-  Google as GoogleAuthIcon,
-  Campaign as AdsIcon,
-  Insights as InsightsIcon,
-  Chat as ChatIcon,
-  ManageSearch as LogsManagementIcon,
-  GppGood as AuditLogsIcon,
-  DevicesOther as SessionsIcon,
-  CheckCircleOutline as ActiveSessionIcon,
-  PauseCircleOutline as InactiveSessionIcon,
-  DeleteOutline as DeletedSessionIcon,
-  HourglassEmpty as PendingSessionIcon,
-  HistoryToggleOff as SessionLogsIcon,
-  AccountTree as CASubIcon,
-  Label as SubcategoryIcon,
-  Article as EmailTemplateIcon,
-  Slideshow as SlideshowIcon,
-  Menu as MenuIcon,
-  Close as CloseIcon,
-} from '@mui/icons-material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PeopleIcon from '@mui/icons-material/People';
+import OrdersIcon from '@mui/icons-material/ShoppingCart';
+import TailorsIcon from '@mui/icons-material/ContentCut';
+import MeasurementsIcon from '@mui/icons-material/Straighten';
+import PaymentIcon from '@mui/icons-material/Payment';
+import ReportsIcon from '@mui/icons-material/Assessment';
+import SettingsIcon from '@mui/icons-material/Settings';
+import LogoutIcon from '@mui/icons-material/ExitToApp';
+import AirCoatsIcon from '@mui/icons-material/Checkroom';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import AdminSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import SearchIcon from '@mui/icons-material/Search';
+import SMTPIcon from '@mui/icons-material/Email';
+import SiteSettingsIcon from '@mui/icons-material/Language';
+import MaintenanceIcon from '@mui/icons-material/Build';
+import PersonIcon from '@mui/icons-material/Person';
+import BusinessIcon from '@mui/icons-material/Business';
+import VerificationIcon from '@mui/icons-material/VerifiedUser';
+import StoreIcon from '@mui/icons-material/Store';
+import BusinessSettingsIcon from '@mui/icons-material/BusinessCenter';
+import OrdersBusinessIcon from '@mui/icons-material/Receipt';
+import LogsIcon from '@mui/icons-material/History';
+import StatusIcon from '@mui/icons-material/CheckCircle';
+import InfoIcon from '@mui/icons-material/Info';
+import CategoryIcon from '@mui/icons-material/Category';
+import SpecializationIcon from '@mui/icons-material/Stars';
+import AIErrorIcon from '@mui/icons-material/Psychology';
+import GoogleAuthIcon from '@mui/icons-material/Google';
+import AdsIcon from '@mui/icons-material/Campaign';
+import InsightsIcon from '@mui/icons-material/Insights';
+import ChatIcon from '@mui/icons-material/Chat';
+import LogsManagementIcon from '@mui/icons-material/ManageSearch';
+import AuditLogsIcon from '@mui/icons-material/GppGood';
+import SessionsIcon from '@mui/icons-material/DevicesOther';
+import ActiveSessionIcon from '@mui/icons-material/CheckCircleOutline';
+import InactiveSessionIcon from '@mui/icons-material/PauseCircleOutline';
+import DeletedSessionIcon from '@mui/icons-material/DeleteOutline';
+import PendingSessionIcon from '@mui/icons-material/HourglassEmpty';
+import SessionLogsIcon from '@mui/icons-material/HistoryToggleOff';
+import CASubIcon from '@mui/icons-material/AccountTree';
+import SubcategoryIcon from '@mui/icons-material/Label';
+import EmailTemplateIcon from '@mui/icons-material/Article';
+import SlideshowIcon from '@mui/icons-material/Slideshow';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import { prefetchAdminPage } from '../adminPageChunks';
 
 const drawerWidth = 240;
 
@@ -134,6 +138,7 @@ function NavItem({ item, location, navigate, onNavigate, indent = false }) {
     <ListItem disablePadding sx={{ mb: 0.5 }}>
       <ListItemButton
         onClick={() => { navigate(item.path); onNavigate && onNavigate(); }}
+        onMouseEnter={() => prefetchAdminPage(item.path)}
         sx={{
           minHeight: indent ? 40 : 44,
           borderRadius: '8px',
@@ -296,6 +301,24 @@ function Layout({ children, title }) {
     setMobileOpen(false);
   }, [location.pathname]);
 
+  // Warm common route chunks after landing on dashboard (idle — does not block paint)
+  useEffect(() => {
+    const onDash = location.pathname === '/' || location.pathname === '/dashboard';
+    if (!onDash) return undefined;
+    const warm = () => {
+      prefetchAdminPage('/users');
+      prefetchAdminPage('/settings');
+      prefetchAdminPage('/orders');
+    };
+    let id;
+    if (typeof window.requestIdleCallback === 'function') {
+      id = window.requestIdleCallback(warm, { timeout: 2500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    id = setTimeout(warm, 400);
+    return () => clearTimeout(id);
+  }, [location.pathname]);
+
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     navigate('/login');
@@ -393,12 +416,12 @@ function Layout({ children, title }) {
               </Box>
             </Box>
             <Box sx={{ py: 1 }}>
-              <MenuItem onClick={() => { setAnchorEl(null); navigate('/settings'); }}
+              <MenuItem onMouseEnter={() => prefetchAdminPage('/settings')} onClick={() => { setAnchorEl(null); navigate('/settings'); }}
                 sx={{ py: 1.5, px: 2.5, gap: 1.5, '&:hover': { bgcolor: '#f5f5f5' } }}>
                 <PersonIcon sx={{ color: '#666', fontSize: 20 }} />
                 <Typography sx={{ color: '#333', fontWeight: 500, fontSize: '0.875rem' }}>Profile</Typography>
               </MenuItem>
-              <MenuItem onClick={() => { setAnchorEl(null); navigate('/settings'); }}
+              <MenuItem onMouseEnter={() => prefetchAdminPage('/settings')} onClick={() => { setAnchorEl(null); navigate('/settings'); }}
                 sx={{ py: 1.5, px: 2.5, gap: 1.5, '&:hover': { bgcolor: '#f5f5f5' } }}>
                 <SettingsIcon sx={{ color: '#666', fontSize: 20 }} />
                 <Typography sx={{ color: '#333', fontWeight: 500, fontSize: '0.875rem' }}>Settings</Typography>

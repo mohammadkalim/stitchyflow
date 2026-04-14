@@ -147,10 +147,17 @@ router.post('/reject/:userId', async (req, res) => {
     const { note } = req.body;
 
     const [users] = await db.query(
-      'SELECT email, first_name FROM users WHERE user_id = ? AND role = ?',
+      'SELECT email, first_name, approval_status FROM users WHERE user_id = ? AND role = ?',
       [userId, 'tailor']
     );
     if (!users.length) return res.status(404).json({ success: false, error: { message: 'Tailor not found' } });
+
+    if (users[0].approval_status === 'approved') {
+      return res.status(409).json({
+        success: false,
+        error: { message: 'This tailor is already approved. Approval cannot be revoked from this action.' }
+      });
+    }
 
     // Reject: keep status pending, set approval_status rejected
     await db.query(

@@ -17,29 +17,23 @@ import ReviewsSection from './tailor/ReviewsSection';
 import MessagesSection from './tailor/MessagesSection';
 import AnalyticsSection from './tailor/AnalyticsSection';
 import SupportSection from './tailor/SupportSection';
-import TermsSection from './tailor/TermsSection';
 
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import MiscellaneousServicesOutlinedIcon from '@mui/icons-material/MiscellaneousServicesOutlined';
-import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
-import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import MessageOutlinedIcon from '@mui/icons-material/MessageOutlined';
 import AnalyticsOutlinedIcon from '@mui/icons-material/AnalyticsOutlined';
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
-import GavelOutlinedIcon from '@mui/icons-material/GavelOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -51,29 +45,23 @@ import BusinessIcon from '@mui/icons-material/Business';
 
 const SIDEBAR_W = 260;
 const HEADER_H = 60;
+/** Full options green bar height — only shown on Overview (Dashboard) */
 const SUBBAR_H = 52;
-const TOP_STACK = HEADER_H + SUBBAR_H;
 
 const FOREST = '#1b4332';
-const FOREST_LIGHT = '#2d6a4f';
 const NAVY = '#0d1b2a';
 const PAGE_BG = '#f4f6f8';
 
 const SIDEBAR_NAV = [
   { key: 'overview',    label: 'Overview',        Icon: DashboardOutlinedIcon },
   { key: 'businesses',  label: 'My Businesses',   Icon: StorefrontOutlinedIcon },
-  { key: 'locations',   label: 'Locations',        Icon: LocationOnOutlinedIcon },
   { key: 'services',    label: 'Services',         Icon: MiscellaneousServicesOutlinedIcon },
-  { key: 'media',       label: 'Media',            Icon: PermMediaOutlinedIcon },
-  { key: 'features',    label: 'Features',         Icon: AutoAwesomeOutlinedIcon },
-  { key: 'why',         label: 'Why Choose Us',    Icon: FavoriteBorderIcon },
   { key: 'promotions',  label: 'Promotions',       Icon: LocalOfferOutlinedIcon },
   { key: 'bookings',    label: 'Orders',           Icon: CalendarTodayOutlinedIcon },
   { key: 'reviews',     label: 'Reviews',          Icon: StarBorderIcon },
   { key: 'messages',    label: 'Messages',         Icon: MessageOutlinedIcon },
   { key: 'analytics',   label: 'Analytics',        Icon: AnalyticsOutlinedIcon },
   { key: 'support',     label: 'Support Tickets',  Icon: SupportAgentOutlinedIcon },
-  { key: 'terms',       label: 'Terms & Privacy',  Icon: GavelOutlinedIcon },
 ];
 
 function TailorDashboard() {
@@ -87,6 +75,7 @@ function TailorDashboard() {
   const [approvalStatus, setApprovalStatus] = useState(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [showRejected, setShowRejected] = useState(false);
+  const [heroBannerOpen, setHeroBannerOpen] = useState(false);
 
   const fetchApprovalStatus = useCallback(async () => {
     try {
@@ -95,6 +84,17 @@ function TailorDashboard() {
         const s = data.data.approval_status;
         setApprovalStatus(s);
         if (s === 'rejected') setShowRejected(true);
+        try {
+          const raw = localStorage.getItem('user');
+          if (raw && s) {
+            const u = JSON.parse(raw);
+            if (u.approvalStatus !== s) {
+              u.approvalStatus = s;
+              localStorage.setItem('user', JSON.stringify(u));
+              setUser(u);
+            }
+          }
+        } catch (_) { /* ignore */ }
       }
     } catch (_) {}
     finally { setCheckingStatus(false); }
@@ -106,6 +106,7 @@ function TailorDashboard() {
     const u = JSON.parse(stored);
     if (u.role !== 'tailor') { navigate('/login'); return; }
     setUser(u);
+    if (u.approvalStatus) setApprovalStatus(u.approvalStatus);
     fetchApprovalStatus();
     const iv = setInterval(() => fetchApprovalStatus(), 15000);
     return () => clearInterval(iv);
@@ -118,15 +119,17 @@ function TailorDashboard() {
   };
 
   const isApproved = approvalStatus === 'approved';
+  const showFullDashboardBar = activeKey === 'overview';
+  const topStack = HEADER_H + (showFullDashboardBar ? SUBBAR_H : 0);
 
   const navToSection = (key) => {
-    if (!isApproved && key !== 'overview' && key !== 'terms') return;
+    if (!isApproved && key !== 'overview') return;
     setActiveKey(key);
     if (isMobile) setMobileOpen(false);
   };
 
   const navTo = (key) => {
-    if (!isApproved && key !== 'overview' && key !== 'terms') return;
+    if (!isApproved && key !== 'overview') return;
     navToSection(key);
   };
 
@@ -170,7 +173,7 @@ function TailorDashboard() {
       {/* ── Nav Items ── */}
       <Box sx={{ flex: 1, px: 1.25, pb: 1.5, overflowY: 'auto', '&::-webkit-scrollbar': { width: 3 } }}>
         {SIDEBAR_NAV.map((item) => {
-          const locked = !isApproved && item.key !== 'overview' && item.key !== 'terms';
+          const locked = !isApproved && item.key !== 'overview';
           const active = activeKey === item.key;
           const IconComp = item.Icon;
           return (
@@ -219,7 +222,6 @@ function TailorDashboard() {
           );
         })}
       </Box>
-
       {/* ── Footer ── */}
       <Box sx={{ px: 2, py: 1.5, borderTop: '1px solid #f0f2f5' }}>
         <Typography sx={{ color: '#b0bac5', fontSize: '0.63rem', textAlign: 'center' }}>
@@ -239,54 +241,108 @@ function TailorDashboard() {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: PAGE_BG }}>
       <Header />
-
-      {/* Top context bar */}
-      <Box sx={{ position: 'fixed', top: HEADER_H, left: 0, right: 0, height: SUBBAR_H, zIndex: 1190, bgcolor: NAVY, borderBottom: '1px solid rgba(0,0,0,0.12)', display: 'flex', alignItems: 'center', px: { xs: 1.5, md: 3 }, gap: 2 }}>
-        {isMobile && (
-          <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: '#fff' }}>
-            <MenuIcon />
-          </IconButton>
-        )}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flex: 1, minWidth: 0 }}>
-          <Box sx={{ width: 32, height: 32, borderRadius: '9px', bgcolor: 'rgba(255,255,255,0.12)', display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'center' }}>
-            <StorefrontOutlinedIcon sx={{ color: '#fff', fontSize: 18 }} />
+      {showFullDashboardBar && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: HEADER_H,
+            left: 0,
+            right: 0,
+            height: SUBBAR_H,
+            zIndex: 1190,
+            display: 'flex',
+            alignItems: 'center',
+            px: { xs: 2, md: 3 },
+            background: 'linear-gradient(90deg, #06402B 0%, #053828 50%, #06402B 100%)',
+            borderBottom: '1px solid rgba(0,0,0,0.16)',
+          }}
+        >
+          {isMobile && (
+            <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: '#fff', mr: 0.5 }}>
+              <MenuIcon />
+            </IconButton>
+          )}
+          <Box sx={{ width: 34, height: 34, borderRadius: '10px', bgcolor: 'rgba(16,185,129,0.22)', display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'center', mr: 1.25 }}>
+            <StorefrontOutlinedIcon sx={{ color: '#d1fae5', fontSize: 18 }} />
           </Box>
-          <Box>
-            <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: { xs: '0.82rem', sm: '0.9rem' }, lineHeight: 1.2 }}>Business Dashboard</Typography>
-            <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>Welcome back, {user.firstName}!</Typography>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '0.93rem', lineHeight: 1.1 }}>
+              Business Dashboard
+            </Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.76rem' }}>
+              Welcome back, {user.firstName}!
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {approvalStatus === 'pending' && (
+              <Chip
+                icon={<HourglassEmptyIcon sx={{ fontSize: 12 }} />}
+                label="Pending"
+                size="small"
+                sx={{ display: { xs: 'none', sm: 'flex' }, bgcolor: 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, fontSize: '0.63rem', border: '1px solid rgba(255,255,255,0.2)' }}
+              />
+            )}
+            {approvalStatus === 'approved' && (
+              <Chip
+                icon={<CheckCircleOutlineIcon sx={{ fontSize: 12 }} />}
+                label="Approved"
+                size="small"
+                sx={{ display: { xs: 'none', sm: 'flex' }, bgcolor: 'rgba(255,255,255,0.12)', color: '#fff', fontWeight: 700, fontSize: '0.63rem' }}
+              />
+            )}
+            <IconButton size="small" sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.1)' }}>
+              <Badge badgeContent={0} color="error"><NotificationsNoneIcon sx={{ fontSize: 20 }} /></Badge>
+            </IconButton>
+            <Box sx={{ display: { xs: 'none', sm: 'inline-flex' }, alignItems: 'stretch', borderRadius: '9px', border: '1px solid rgba(255,255,255,0.25)', bgcolor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <Button
+                onClick={handleLogout}
+                startIcon={<LogoutIcon sx={{ fontSize: 16 }} />}
+                sx={{
+                  color: '#fff',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: '0.78rem',
+                  borderRadius: 0,
+                  px: 1.5,
+                  py: 0.5,
+                  border: 'none',
+                  minWidth: 0,
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.12)' },
+                }}
+              >
+                Logout
+              </Button>
+              <IconButton
+                size="small"
+                onClick={(e) => { e.stopPropagation(); setHeroBannerOpen((v) => !v); }}
+                aria-label={heroBannerOpen ? 'Hide welcome banner' : 'Show welcome banner'}
+                sx={{
+                  color: '#fff',
+                  borderRadius: 0,
+                  borderLeft: '1px solid rgba(255,255,255,0.25)',
+                  px: 0.75,
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.12)' },
+                }}
+              >
+                <KeyboardArrowDownIcon sx={{ fontSize: 18, transition: 'transform 0.2s', transform: heroBannerOpen ? 'rotate(0deg)' : 'rotate(180deg)' }} />
+              </IconButton>
+            </Box>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {approvalStatus === 'pending' && (
-            <Chip icon={<HourglassEmptyIcon sx={{ fontSize: 12 }} />} label="Pending" size="small"
-              sx={{ display: { xs: 'none', sm: 'flex' }, bgcolor: 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, fontSize: '0.63rem', border: '1px solid rgba(255,255,255,0.2)' }} />
-          )}
-          {approvalStatus === 'approved' && (
-            <Chip icon={<CheckCircleOutlineIcon sx={{ fontSize: 12 }} />} label="Approved" size="small"
-              sx={{ display: { xs: 'none', sm: 'flex' }, bgcolor: 'rgba(255,255,255,0.12)', color: '#fff', fontWeight: 700, fontSize: '0.63rem' }} />
-          )}
-          <IconButton size="small" sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.1)' }}>
-            <Badge badgeContent={0} color="error"><NotificationsNoneIcon sx={{ fontSize: 20 }} /></Badge>
-          </IconButton>
-          <Button onClick={handleLogout} startIcon={<LogoutIcon sx={{ fontSize: 16 }} />} endIcon={<KeyboardArrowDownIcon sx={{ fontSize: 16 }} />}
-            sx={{ color: '#fff', textTransform: 'none', fontWeight: 700, fontSize: '0.78rem', borderRadius: '9px', px: 1.5, py: 0.5, border: '1px solid rgba(255,255,255,0.25)', bgcolor: 'rgba(255,255,255,0.08)', display: { xs: 'none', sm: 'inline-flex' }, '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' } }}>
-            Logout
-          </Button>
-        </Box>
-      </Box>
+      )}
 
       <Drawer open={mobileOpen} onClose={() => setMobileOpen(false)} variant="temporary" ModalProps={{ keepMounted: true }} PaperProps={{ sx: { width: SIDEBAR_W } }}>
         <SidebarContent />
       </Drawer>
 
       {/* ── Main layout: sidebar + content ── */}
-      <Box sx={{ display: 'flex', pt: `${TOP_STACK}px` }}>
+      <Box sx={{ display: 'flex', pt: `${topStack}px` }}>
         {/* Sidebar — sticky, stops before footer */}
         {!isMobile && (
           <Box sx={{
             width: SIDEBAR_W, flexShrink: 0,
-            position: 'sticky', top: TOP_STACK,
-            height: `calc(100vh - ${TOP_STACK}px)`,
+            position: 'sticky', top: topStack,
+            height: `calc(100vh - ${topStack}px)`,
             alignSelf: 'flex-start',
             zIndex: 100,
           }}>
@@ -296,6 +352,13 @@ function TailorDashboard() {
 
         {/* Content */}
         <Box component="main" sx={{ flex: 1, minWidth: 0, p: { xs: 2, md: 3 } }}>
+          {isMobile && !showFullDashboardBar && (
+            <Box sx={{ mb: 1.25 }}>
+              <IconButton size="small" onClick={() => setMobileOpen(true)} sx={{ color: '#334155', bgcolor: '#fff', border: '1px solid #e2e8f0' }}>
+                <MenuIcon />
+              </IconButton>
+            </Box>
+          )}
           {approvalStatus === 'pending' && (
             <Paper elevation={0} sx={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid #fde68a', mb: 3 }}>
               <Box sx={{ height: 3, background: 'linear-gradient(90deg,#f59e0b,#d97706)' }} />
@@ -311,7 +374,7 @@ function TailorDashboard() {
             </Paper>
           )}
 
-          {activeKey === 'overview'   && <OverviewSection user={user} isApproved={isApproved} onNavigate={navToSection} />}
+          {activeKey === 'overview'   && <OverviewSection user={user} isApproved={isApproved} onNavigate={navToSection} showHeroBanner={heroBannerOpen} />}
           {activeKey === 'businesses' && <MyBusinessesSection isApproved={isApproved} />}
           {activeKey === 'services'   && <ServicesSection isApproved={isApproved} />}
           {activeKey === 'promotions' && <PromotionsSection isApproved={isApproved} />}
@@ -320,13 +383,6 @@ function TailorDashboard() {
           {activeKey === 'messages'   && <MessagesSection isApproved={isApproved} user={user} />}
           {activeKey === 'analytics'  && <AnalyticsSection isApproved={isApproved} />}
           {activeKey === 'support'    && <SupportSection isApproved={isApproved} />}
-          {activeKey === 'terms'      && <TermsSection />}
-          {['locations','media','features','why'].includes(activeKey) && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 12 }}>
-              <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem', mb: 0.5 }}>Coming Soon</Typography>
-              <Typography sx={{ color: '#94a3b8', fontSize: '0.85rem' }}>This section is under development.</Typography>
-            </Box>
-          )}
         </Box>
       </Box>
 

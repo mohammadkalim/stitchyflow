@@ -17,9 +17,10 @@ import Layout from '../components/Layout';
 import { api } from '../utils/api';
 
 const WEBSITE_PAGES = [
-  { path: '/about',      label: 'About' },
-  { path: '/promotions', label: 'Promotions' },
-  { path: '/insights',   label: 'Insights' },
+  { path: '/about', label: 'About', defaultBgColor: '#ffffff', defaultTextColor: '#000000' },
+  { path: '/promotions', label: 'Promotions', defaultBgColor: '#ffffff', defaultTextColor: '#000000' },
+  { path: '/blog', label: 'Insights', defaultBgColor: '#ffffff', defaultTextColor: '#000000' },
+  { path: '/tailor-shops', label: 'Tailor Shops', defaultBgColor: '#1310ca', defaultTextColor: '#ffffff' },
 ];
 
 const emptyForm = {
@@ -32,28 +33,28 @@ const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1
   .replace(/\/api\/v\d+\/?$/i, '');
 
 const C = {
-  primary:    '#1565C0',
+  primary: '#1565C0',
   primaryMid: '#1976D2',
-  bg:         '#E3F2FD',
-  bgSoft:     '#F0F7FF',
-  border:     '#BBDEFB',
-  header:     'linear-gradient(135deg,#1565C0 0%,#1976D2 60%,#42A5F5 100%)',
+  bg: '#E3F2FD',
+  bgSoft: '#F0F7FF',
+  border: '#BBDEFB',
+  header: 'linear-gradient(135deg,#1565C0 0%,#1976D2 60%,#42A5F5 100%)',
 };
 
 export default function SliderMedia() {
-  const [sliders, setSliders]           = useState([]);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState('');
-  const [success, setSuccess]           = useState('');
-  const [activeTab, setActiveTab]       = useState(0);
-  const [dialogOpen, setDialogOpen]     = useState(false);
+  const [sliders, setSliders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [activeTab, setActiveTab] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, item: null });
-  const [editItem, setEditItem]         = useState(null);
-  const [form, setForm]                 = useState(emptyForm);
-  const [uploading, setUploading]       = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [previewUrl, setPreviewUrl]     = useState('');
-  const [dragOver, setDragOver]         = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
   const token = localStorage.getItem('adminToken');
 
@@ -75,17 +76,34 @@ export default function SliderMedia() {
 
   const handleOpenAdd = () => {
     setEditItem(null);
-    setForm({ ...emptyForm, page: currentPage.path, page_label: currentPage.label });
-    setPreviewUrl(''); setDialogOpen(true);
+    setForm({
+      ...emptyForm,
+      page: currentPage.path,
+      page_label: currentPage.label,
+      bg_color: currentPage.defaultBgColor || emptyForm.bg_color,
+      text_color: currentPage.defaultTextColor || emptyForm.text_color
+    });
+    setPreviewUrl('');
+    setDialogOpen(true);
   };
 
   const handleOpenEdit = (item) => {
     setEditItem(item);
-    setForm({ page: item.page, page_label: item.page_label, title: item.title || '',
-      description: item.description || '', image_url: item.image_url, image_path: item.image_path,
-      bg_color: item.bg_color || '#ffffff', text_color: item.text_color || '#000000',
-      animation: item.animation || 'fade', sort_order: item.sort_order || 0, status: item.status });
-    setPreviewUrl(item.image_url); setDialogOpen(true);
+    setForm({
+      page: item.page,
+      page_label: item.page_label,
+      title: item.title || '',
+      description: item.description || '',
+      image_url: item.image_url,
+      image_path: item.image_path,
+      bg_color: item.bg_color || '#ffffff',
+      text_color: item.text_color || '#000000',
+      animation: item.animation || 'fade',
+      sort_order: item.sort_order || 0,
+      status: item.status
+    });
+    setPreviewUrl(item.image_url);
+    setDialogOpen(true);
   };
 
   const handleImageUpload = async (e) => {
@@ -95,7 +113,8 @@ export default function SliderMedia() {
   };
 
   const handleDrop = async (e) => {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
     setDragOver(false);
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
@@ -103,7 +122,8 @@ export default function SliderMedia() {
   };
 
   const uploadFile = async (file) => {
-    setUploading(true); setUploadProgress(0);
+    setUploading(true);
+    setUploadProgress(0);
     try {
       const formData = new FormData();
       formData.append('image', file);
@@ -112,7 +132,9 @@ export default function SliderMedia() {
         if (ev.lengthComputable) setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
       };
       const result = await new Promise((resolve, reject) => {
-        xhr.onload = () => { try { resolve(JSON.parse(xhr.responseText)); } catch { reject(new Error('Invalid response')); } };
+        xhr.onload = () => {
+          try { resolve(JSON.parse(xhr.responseText)); } catch { reject(new Error('Invalid response')); }
+        };
         xhr.onerror = () => reject(new Error('Upload failed'));
         xhr.open('POST', `${API_BASE}/api/v1/slider-media/upload-image`);
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -120,28 +142,51 @@ export default function SliderMedia() {
       });
       if (result.success) {
         const updatedForm = { ...form, image_url: result.data.url, image_path: result.data.path };
-        setForm(updatedForm); setPreviewUrl(result.data.url);
+        setForm(updatedForm);
+        setPreviewUrl(result.data.url);
         if (!editItem) {
           try {
             await api.post('/slider-media', updatedForm);
             setSuccess(`Slider added to "${currentPage?.label}" successfully`);
-            setDialogOpen(false); fetchSliders();
-          } catch (saveErr) { setError(saveErr.response?.data?.error?.message || 'Save failed'); }
+            setDialogOpen(false);
+            fetchSliders();
+          } catch (saveErr) {
+            setError(saveErr.response?.data?.error?.message || 'Save failed');
+          }
         }
-      } else { setError(result.error?.message || 'Upload failed'); }
-    } catch (err) { setError(err.message || 'Upload failed'); }
-    finally { setUploading(false); setUploadProgress(0); }
+      } else {
+        setError(result.error?.message || 'Upload failed');
+      }
+    } catch (err) {
+      setError(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   const handleSave = async () => {
-    if (!form.image_url) { setError('Please upload an image first'); return; }
-    setLoading(true); setError('');
+    if (!form.image_url) {
+      setError('Please upload an image first');
+      return;
+    }
+    setLoading(true);
+    setError('');
     try {
-      if (editItem) { await api.put(`/slider-media/${editItem.id}`, form); setSuccess('Slider updated'); }
-      else { await api.post('/slider-media', form); setSuccess('Slider added'); }
-      setDialogOpen(false); fetchSliders();
-    } catch (e) { setError(e.response?.data?.error?.message || 'Save failed'); }
-    finally { setLoading(false); }
+      if (editItem) {
+        await api.put(`/slider-media/${editItem.id}`, form);
+        setSuccess('Slider updated');
+      } else {
+        await api.post('/slider-media', form);
+        setSuccess('Slider added');
+      }
+      setDialogOpen(false);
+      fetchSliders();
+    } catch (e) {
+      setError(e.response?.data?.error?.message || 'Save failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -149,23 +194,28 @@ export default function SliderMedia() {
     setLoading(true);
     try {
       await api.delete(`/slider-media/${deleteDialog.item.id}`);
-      setSuccess('Deleted'); setDeleteDialog({ open: false, item: null }); fetchSliders();
-    } catch (e) { setError(e.response?.data?.error?.message || 'Delete failed'); }
-    finally { setLoading(false); }
+      setSuccess('Deleted');
+      setDeleteDialog({ open: false, item: null });
+      fetchSliders();
+    } catch (e) {
+      setError(e.response?.data?.error?.message || 'Delete failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleToggleStatus = async (item) => {
     try {
       await api.put(`/slider-media/${item.id}`, { ...item, status: item.status === 'active' ? 'inactive' : 'active' });
       fetchSliders();
-    } catch (e) { setError('Status update failed'); }
+    } catch (e) {
+      setError('Status update failed');
+    }
   };
 
   return (
     <Layout title="Slider Media">
       <Box sx={{ bgcolor: '#F5F9FF', minHeight: '100vh' }}>
-
-        {/* Header */}
         <Box sx={{ background: C.header, borderRadius: '16px', p: '28px 32px', mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 20px rgba(21,101,192,0.25)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ width: 52, height: 52, borderRadius: '14px', bgcolor: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -173,7 +223,7 @@ export default function SliderMedia() {
             </Box>
             <Box>
               <Typography sx={{ fontWeight: 700, color: '#fff', fontSize: '1.35rem' }}>Slider Media</Typography>
-              <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.82rem' }}>Manage slider images for About &amp; Promotions pages</Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.82rem' }}>Manage slider images and theme colors for About, Promotions, Insights, and Tailor Shops pages</Typography>
             </Box>
           </Box>
           <Box sx={{ display: 'flex', gap: 1.5 }}>
@@ -188,16 +238,15 @@ export default function SliderMedia() {
           </Box>
         </Box>
 
-        {error   && <Alert severity="error"   sx={{ mb: 2, borderRadius: '10px' }} onClose={() => setError('')}>{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '10px' }} onClose={() => setError('')}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 2, borderRadius: '10px' }} onClose={() => setSuccess('')}>{success}</Alert>}
 
-        {/* Stats */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {[
-            { label: 'Total Sliders', value: sliders.length,                                      icon: '🖼️', color: C.primary,   bg: C.bg },
-            { label: 'Active',        value: sliders.filter(s => s.status === 'active').length,   icon: '✅', color: '#2E7D32',   bg: '#E8F5E9' },
-            { label: 'Inactive',      value: sliders.filter(s => s.status === 'inactive').length, icon: '⏸️', color: '#E65100',   bg: '#FFF3E0' },
-            { label: 'Pages',         value: new Set(sliders.map(s => s.page)).size,              icon: '📄', color: '#0288D1',   bg: '#E1F5FE' },
+            { label: 'Total Sliders', value: sliders.length, icon: '🖼️', color: C.primary, bg: C.bg },
+            { label: 'Active', value: sliders.filter(s => s.status === 'active').length, icon: '✅', color: '#2E7D32', bg: '#E8F5E9' },
+            { label: 'Inactive', value: sliders.filter(s => s.status === 'inactive').length, icon: '⏸️', color: '#E65100', bg: '#FFF3E0' },
+            { label: 'Pages', value: new Set(sliders.map(s => s.page)).size, icon: '📄', color: '#0288D1', bg: '#E1F5FE' },
           ].map(stat => (
             <Grid item xs={6} sm={3} key={stat.label}>
               <Paper elevation={0} sx={{ p: '18px 20px', borderRadius: '14px', bgcolor: stat.bg, border: `1.5px solid ${stat.color}22`, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -211,7 +260,6 @@ export default function SliderMedia() {
           ))}
         </Grid>
 
-        {/* Tabs + Table */}
         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: `1.5px solid ${C.border}`, boxShadow: '0 2px 12px rgba(21,101,192,0.07)' }}>
           <Box sx={{ bgcolor: C.bgSoft, borderBottom: `1.5px solid ${C.border}` }}>
             <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{
@@ -253,7 +301,7 @@ export default function SliderMedia() {
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ bgcolor: C.bgSoft }}>
-                      {['Preview','Title','Animation','Colors','Order','Status','Created','Actions'].map(h => (
+                      {['Preview', 'Title', 'Animation', 'Colors', 'Order', 'Status', 'Created', 'Actions'].map(h => (
                         <TableCell key={h} align={h === 'Actions' ? 'center' : 'left'} sx={{ fontWeight: 700, color: C.primary, fontSize: '0.78rem', borderBottom: `2px solid ${C.border}`, py: 1.5, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                           {h}
                         </TableCell>
@@ -264,9 +312,13 @@ export default function SliderMedia() {
                     {currentItems.map((item, idx) => (
                       <TableRow key={item.id} hover sx={{ bgcolor: idx % 2 === 0 ? '#fff' : C.bgSoft, '& td': { fontSize: '0.8125rem', borderBottom: `1px solid ${C.border}` }, '&:hover': { bgcolor: C.bg } }}>
                         <TableCell>
-                          <Box component="img" src={item.image_url} alt={item.title || 'slider'}
+                          <Box
+                            component="img"
+                            src={item.image_url}
+                            alt={item.title || 'slider'}
                             sx={{ width: 90, height: 56, objectFit: 'cover', borderRadius: '8px', border: `1.5px solid ${C.border}` }}
-                            onError={e => { e.target.src = 'https://via.placeholder.com/90x56?text=IMG'; }} />
+                            onError={e => { e.target.src = 'https://via.placeholder.com/90x56?text=IMG'; }}
+                          />
                         </TableCell>
                         <TableCell><Typography sx={{ fontWeight: 600, color: '#1A237E', fontSize: '0.8125rem' }}>{item.title || '—'}</Typography></TableCell>
                         <TableCell><Chip label={item.animation} size="small" sx={{ bgcolor: C.bg, color: C.primary, fontWeight: 700, fontSize: '0.7rem', border: `1px solid ${C.border}` }} /></TableCell>
@@ -309,7 +361,6 @@ export default function SliderMedia() {
           </Box>
         </Paper>
 
-        {/* Add/Edit Dialog */}
         <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '18px', overflow: 'hidden' } }}>
           <Box sx={{ background: C.header, px: 3, py: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <SlideshowIcon sx={{ color: '#fff', fontSize: 24 }} />
@@ -319,6 +370,11 @@ export default function SliderMedia() {
           </Box>
           <DialogContent sx={{ pt: 3, pb: 1, bgcolor: C.bgSoft }}>
             {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '8px' }} onClose={() => setError('')}>{error}</Alert>}
+            {currentPage?.path === '/tailor-shops' && (
+              <Alert severity="info" sx={{ mb: 2, borderRadius: '8px' }}>
+                Tailor Shops sliders default to the brand palette centered on #1310ca (rgb(19, 16, 202), hsl(241, 85%, 43%)). You can override background and text colors per slide if needed.
+              </Alert>
+            )}
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
             <Box
               onClick={() => !uploading && fileInputRef.current?.click()}
@@ -328,10 +384,17 @@ export default function SliderMedia() {
               onDrop={handleDrop}
               sx={{
                 border: `2px dashed ${dragOver ? C.primary : C.primaryMid}`,
-                borderRadius: '14px', p: 4,
-                textAlign: 'center', cursor: uploading ? 'default' : 'pointer',
-                transition: 'all 0.2s', minHeight: 230, bgcolor: dragOver ? C.bg : '#fff',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                borderRadius: '14px',
+                p: 4,
+                textAlign: 'center',
+                cursor: uploading ? 'default' : 'pointer',
+                transition: 'all 0.2s',
+                minHeight: 230,
+                bgcolor: dragOver ? C.bg : '#fff',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
                 transform: dragOver ? 'scale(1.01)' : 'scale(1)',
                 boxShadow: dragOver ? `0 0 0 4px ${C.border}` : 'none',
               }}
@@ -368,7 +431,6 @@ export default function SliderMedia() {
           </DialogActions>
         </Dialog>
 
-        {/* Delete Dialog */}
         <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, item: null })} PaperProps={{ sx: { borderRadius: '16px', maxWidth: 420 } }}>
           <Box sx={{ background: 'linear-gradient(135deg,#B71C1C,#E53935)', px: 3, py: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <DeleteIcon sx={{ color: '#fff' }} />
@@ -384,7 +446,6 @@ export default function SliderMedia() {
             </Button>
           </DialogActions>
         </Dialog>
-
       </Box>
     </Layout>
   );

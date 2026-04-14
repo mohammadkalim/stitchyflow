@@ -60,7 +60,7 @@ const NAV_LINKS = [
   { label: 'Tailor Shops', path: '/tailor-shops' },
   { label: 'Tailors', path: '/marketplace/custom-dresses' },
   { label: 'Promotions', path: '/promotions' },
-  { label: 'Insights', path: '/insights' },
+  { label: 'Insights', path: '/blog' },
 ];
 
 // Icon mapping for services

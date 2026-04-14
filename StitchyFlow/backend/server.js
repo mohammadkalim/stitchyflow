@@ -171,9 +171,15 @@ function scheduleRefreshTokenCleanup(intervalMs = 1000 * 60 * 60) {
   setInterval(cleanupExpiredRefreshTokens, intervalMs);
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`✓ StitchyFlow Backend API running on port ${PORT}`);
   console.log(`✓ Environment: ${process.env.NODE_ENV}`);
   console.log(`✓ Splash ad upload routes: POST …/upload-image on /api/v1/ads, /api/v1/admin/ads, /api/v1/ca-sub/ads`);
   scheduleRefreshTokenCleanup();
+  try {
+    const { seedTailorShopsIfEmpty } = require('./seed/tailorShopsSeed');
+    await seedTailorShopsIfEmpty();
+  } catch (e) {
+    console.warn('Tailor shops seed:', e.message);
+  }
 });
