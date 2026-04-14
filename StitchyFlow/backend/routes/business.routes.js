@@ -234,14 +234,16 @@ function isTailorUser(req) {
 const DEFAULT_TAILOR_MAX_SHOPS = 1;
 
 /**
- * Parse `TAILOR_SHOP_CAP_OVERRIDES` — per-email max shop count (no hardcoded accounts in code).
- * Formats:
- *   - `email=count;email2=count` or comma-separated segments
- *   - JSON object: `{"user@example.com":2}`
+ * Per-email max shop count (no hardcoded accounts in code).
+ * Primary env: `TAILOR_MAX_BUSINESSES_OVERRIDES` — `email:max,email2:max2` (also `;` segments).
+ * Alias: `TAILOR_SHOP_CAP_OVERRIDES` with `email=max` segments.
+ * JSON object supported: `{"user@example.com":2}`
  * Email matching is case-insensitive.
  */
 function parseTailorShopCapOverrides() {
-  const raw = String(process.env.TAILOR_SHOP_CAP_OVERRIDES || '').trim();
+  const raw = String(
+    process.env.TAILOR_MAX_BUSINESSES_OVERRIDES || process.env.TAILOR_SHOP_CAP_OVERRIDES || ''
+  ).trim();
   const map = new Map();
   if (!raw) return map;
   if (raw.startsWith('{')) {
@@ -261,16 +263,26 @@ function parseTailorShopCapOverrides() {
     const seg = part.trim();
     if (!seg) continue;
     const eq = seg.indexOf('=');
-    if (eq === -1) continue;
-    const email = seg.slice(0, eq).trim().toLowerCase();
-    const n = parseInt(seg.slice(eq + 1).trim(), 10);
+    const colon = seg.indexOf(':');
+    let email;
+    let n;
+    if (colon !== -1 && (eq === -1 || colon < eq)) {
+      email = seg.slice(0, colon).trim().toLowerCase();
+      n = parseInt(seg.slice(colon + 1).trim(), 10);
+    } else if (eq !== -1) {
+      email = seg.slice(0, eq).trim().toLowerCase();
+      n = parseInt(seg.slice(eq + 1).trim(), 10);
+    } else continue;
     if (email && Number.isFinite(n) && n >= 1) map.set(email, n);
   }
   return map;
 }
 
 function getDefaultMaxShopsPerTailor() {
-  const n = parseInt(process.env.TAILOR_DEFAULT_MAX_SHOPS, 10);
+  const n = parseInt(
+    process.env.TAILOR_MAX_BUSINESSES || process.env.TAILOR_DEFAULT_MAX_SHOPS,
+    10
+  );
   return Number.isFinite(n) && n >= 1 ? n : DEFAULT_TAILOR_MAX_SHOPS;
 }
 

@@ -2,7 +2,7 @@
 
 ## 2026-04-14 (tailor shop cap)
 
-- **Tailor dashboard — extra business slots:** Backend supports configurable max shops per tailor via `TAILOR_DEFAULT_MAX_SHOPS` and per-email `TAILOR_SHOP_CAP_OVERRIDES` in `.env`. `GET /business/shops/enriched` returns `meta.maxShops` for tailors; `My Businesses` uses it so “Add Business” matches the server limit (e.g. second shop for `markhubstore98@gmail.com` when override is set). Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+- **Tailor dashboard — extra business slots:** Backend enforces and documents `TAILOR_MAX_BUSINESSES` and per-email `TAILOR_MAX_BUSINESSES_OVERRIDES` in `.env` (alias keys supported). `GET /business/shops/enriched` returns `meta.maxShops` for tailors; `My Businesses` uses it so “Add Business” matches the server limit (e.g. second shop for `markhubstore98@gmail.com` when override is set). Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
 
 ## 2026-04-11 20:45:00 PKT
 

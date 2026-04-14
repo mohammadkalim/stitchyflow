@@ -56,8 +56,8 @@ The database may reference paths such as `/images/services/mens-shirt.jpg`. The 
 
 Per tailor account, the API caps how many shops they can create (default **1**). Configure in **`StitchyFlow/backend/.env`** (see **`StitchyFlow/backend/.env.example`**):
 
-- `TAILOR_DEFAULT_MAX_SHOPS` — global default (optional).
-- `TAILOR_SHOP_CAP_OVERRIDES` — per-email max, e.g. `markhubstore98@gmail.com=2` or JSON `{"markhubstore98@gmail.com":2}`.
+- `TAILOR_MAX_BUSINESSES` — global default (optional).
+- `TAILOR_MAX_BUSINESSES_OVERRIDES` — per-email max, e.g. `markhubstore98@gmail.com:2` (comma-separated list) or JSON `{"markhubstore98@gmail.com":2}`.
 
 Restart the backend after changing these values.
 
