@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
+const { fetchTailorShopsForCatalogCategory } = require('../utils/tailorsByCatalogCategory');
 
 const RESOURCES = {
   verifications: {
@@ -391,6 +392,10 @@ router.get('/public/shops', async (req, res) => {
     await initPromise;
     const shopQuery = `
       SELECT shop_id, owner_user_id, shop_name, owner_name, city, country, address,
+             s.category_id,
+             s.subcategory_id,
+             c.name AS category_name,
+             sc.name AS subcategory_name,
              s.logo_image,
              s.cover_image,
              s.updated_at,
@@ -401,6 +406,8 @@ router.get('/public/shops', async (req, res) => {
       FROM business_tailor_shops s
       LEFT JOIN business_type_management bt ON s.business_type_id = bt.type_id
       LEFT JOIN specialization_management sp ON s.specialization_id = sp.specialization_id
+      LEFT JOIN categories c ON s.category_id = c.id
+      LEFT JOIN subcategories sc ON s.subcategory_id = sc.id
       WHERE s.shop_status = 'active'
       ORDER BY s.shop_id DESC
       LIMIT 500
@@ -430,6 +437,10 @@ router.get('/public/all-tailors', async (req, res) => {
     await initPromise;
     const shopQuery = `
       SELECT shop_id, owner_user_id, shop_name, owner_name, city, country, address,
+             s.category_id,
+             s.subcategory_id,
+             c.name AS category_name,
+             sc.name AS subcategory_name,
              s.logo_image,
              s.cover_image,
              s.updated_at,
@@ -440,6 +451,8 @@ router.get('/public/all-tailors', async (req, res) => {
       FROM business_tailor_shops s
       LEFT JOIN business_type_management bt ON s.business_type_id = bt.type_id
       LEFT JOIN specialization_management sp ON s.specialization_id = sp.specialization_id
+      LEFT JOIN categories c ON s.category_id = c.id
+      LEFT JOIN subcategories sc ON s.subcategory_id = sc.id
       WHERE s.shop_status = 'active'
       ORDER BY s.shop_id DESC
       LIMIT 500
@@ -462,6 +475,34 @@ router.get('/public/all-tailors', async (req, res) => {
     res.status(500).json({ success: false, error: { message: error.message } });
   }
 });
+
+/**
+ * Public: shops for one admin CA/SUB catalogue category (live DB).
+ * Matches shop.category_id, subcategory parent category_id, or business type name = category.name.
+ * Also registered on `app` in server.js (avoids 404 from proxy/stale router ordering).
+ */
+async function getTailorsForCatalogCategory(req, res) {
+  try {
+    await initPromise;
+    const catId = parseInt(req.params.categoryId, 10);
+    if (!Number.isFinite(catId) || catId < 1) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid category id' } });
+    }
+    const rows = await fetchTailorShopsForCatalogCategory(db, catId);
+    res.set('Cache-Control', 'private, no-cache, must-revalidate');
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(500).json({
+        success: false,
+        error: { message: 'Catalog tables not available.' },
+      });
+    }
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+}
+
+router.get('/public/tailors-for-catalog-category/:categoryId', getTailorsForCatalogCategory);
 
 // ── PUBLIC: Single active shop (detail page, no auth) ──────────────────────────
 // Also registered on `app` in server.js so the path always resolves (avoids proxy/router 404).
@@ -837,3 +878,4 @@ router.delete('/:resource/:id', async (req, res) => {
 module.exports = router;
 module.exports.initPromise = initPromise;
 module.exports.getPublicShopById = getPublicShopById;
+module.exports.getTailorsForCatalogCategory = getTailorsForCatalogCategory;

@@ -11,6 +11,8 @@ const path = require('path');
 const fs = require('fs');
 const db = require('./config/database');
 const { authenticateToken } = require('./middleware/auth');
+const { ensureCASubTables } = require('./utils/caSubTables');
+const { fetchTailorShopsForCatalogCategory } = require('./utils/tailorsByCatalogCategory');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -67,6 +69,10 @@ app.use('/api/v1/smtp', require('./routes/smtp.routes'));
 // Public tailor shop detail — app-level route so GET always hits before any nested auth (fixes 404 from proxy/clients).
 const businessRoutes = require('./routes/business.routes');
 app.get('/api/v1/business/public/shops/:shopId', businessRoutes.getPublicShopById);
+app.get(
+  '/api/v1/business/public/tailors-for-catalog-category/:categoryId',
+  businessRoutes.getTailorsForCatalogCategory
+);
 app.use('/api/v1/business', businessRoutes);
 app.use('/api/v1/ai-errors', require('./routes/ai_errors.routes'));
 app.use('/api/v1/verification', require('./routes/verification.routes'));
@@ -76,7 +82,29 @@ app.use('/api/v1/auth/google', require('./routes/google.auth.routes'));
 app.use('/api/v1/totp',   require('./routes/totp.routes'));
 app.use('/api/v1/tailor-approval', require('./routes/tailor_approval.routes'));
 app.use('/api/v1/sessions',      require('./routes/sessions.routes'));
-app.use('/api/v1/catalog', require('./routes/catalog.public.routes'));
+const catalogPublicRoutes = require('./routes/catalog.public.routes');
+app.get('/api/v1/catalog/tailors-by-category/:categoryId', async (req, res) => {
+  try {
+    await ensureCASubTables();
+    await businessRoutes.initPromise;
+    const catId = parseInt(req.params.categoryId, 10);
+    if (!Number.isFinite(catId) || catId < 1) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid category id' } });
+    }
+    const rows = await fetchTailorShopsForCatalogCategory(db, catId);
+    res.set('Cache-Control', 'private, no-cache, must-revalidate');
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(500).json({
+        success: false,
+        error: { message: 'Catalog or shop tables not available.' },
+      });
+    }
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+app.use('/api/v1/catalog', catalogPublicRoutes);
 app.use('/api/v1/email-templates', require('./routes/email_templates.routes')());
 app.use('/api/v1/ads', require('./routes/ads.routes')());
 app.use('/api/v1/ca-sub', require('./routes/ca_sub.routes'));

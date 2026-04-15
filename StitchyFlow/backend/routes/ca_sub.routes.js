@@ -64,7 +64,49 @@ router.post('/categories', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/categories/:id', authenticateToken, async (req, res) => {
+/** Register before any `/categories/:id` route so `all` is never bound to `:id` (MySQL DOUBLE error). */
+async function purgeAllCategories(req, res) {
+  const conn = await db.getConnection();
+  try {
+    await ensureCASubTables();
+    await conn.beginTransaction();
+    try {
+      await conn.query(
+        'UPDATE business_tailor_shops SET category_id = NULL, subcategory_id = NULL'
+      );
+    } catch (e) {
+      if (!/Unknown table|doesn't exist|ER_NO_SUCH_TABLE/i.test(String(e.message || ''))) {
+        throw e;
+      }
+    }
+    const [subRes] = await conn.query('DELETE FROM subcategories');
+    const [catRes] = await conn.query('DELETE FROM categories');
+    await conn.commit();
+    res.json({
+      success: true,
+      message: `Removed all categories and subcategories. Shop catalogue links were cleared.`,
+      data: {
+        categoriesDeleted: catRes.affectedRows || 0,
+        subcategoriesDeleted: subRes.affectedRows || 0
+      }
+    });
+  } catch (error) {
+    try {
+      await conn.rollback();
+    } catch (_) {
+      /* ignore */
+    }
+    res.status(500).json({ success: false, error: { message: error.message } });
+  } finally {
+    conn.release();
+  }
+}
+
+router.post('/categories/delete-all', authenticateToken, purgeAllCategories);
+router.delete('/categories/all', authenticateToken, purgeAllCategories);
+
+/** `:id(\\d+)` so only numeric ids match (never the word `all`). */
+router.put('/categories/:id(\\d+)', authenticateToken, async (req, res) => {
   try {
     await ensureCASubTables();
     const { id } = req.params;
@@ -82,7 +124,7 @@ router.put('/categories/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.delete('/categories/:id', authenticateToken, async (req, res) => {
+router.delete('/categories/:id(\\d+)', authenticateToken, async (req, res) => {
   try {
     await ensureCASubTables();
     await db.query('DELETE FROM categories WHERE id = ?', [req.params.id]);

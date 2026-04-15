@@ -47,6 +47,14 @@ function heroBannerIsLogoOnly(shop) {
   );
 }
 
+/** Wide banner photo from tailor upload — keep image bright; only fade bottom for text. */
+function hasDedicatedCoverOrShopPhoto(shop) {
+  return Boolean(
+    (shop.cover_image && String(shop.cover_image).trim()) ||
+    (shop.shop_image && String(shop.shop_image).trim())
+  );
+}
+
 const BRAND = '#1310ca';
 const PAGE_BG = '#f1f5f9';
 
@@ -86,6 +94,20 @@ export default function TailorShopDetails() {
   const availableTo = shop?.available_to || '7:00 PM';
   const notAvailable = shop?.not_available_note || 'Evenings, Sundays & outside listed hours';
 
+  const bannerPhoto = shop ? hasDedicatedCoverOrShopPhoto(shop) : false;
+  /* Taller cover band + lighter scrim so uploaded photos stay bright and sharp (“saaf”). */
+  const heroH = { xs: bannerPhoto ? 288 : 220, md: bannerPhoto ? 400 : 300 };
+  const heroMaxH = bannerPhoto ? 480 : 360;
+  const heroOverlayBg = bannerPhoto
+    ? 'linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,0) 55%, rgba(15,23,42,0.04) 72%, rgba(15,23,42,0.14) 100%)'
+    : 'linear-gradient(180deg, transparent 0%, transparent 48%, rgba(15,23,42,0.45) 100%)';
+  const heroTitleShadow = bannerPhoto
+    ? '0 1px 3px rgba(0,0,0,0.9), 0 2px 20px rgba(0,0,0,0.45)'
+    : '0 1px 3px rgba(0,0,0,0.65)';
+  const heroSubtitleShadow = bannerPhoto
+    ? '0 1px 3px rgba(0,0,0,0.85), 0 1px 14px rgba(0,0,0,0.4)'
+    : '0 1px 2px rgba(0,0,0,0.55)';
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: PAGE_BG }}>
       <Header />
@@ -121,8 +143,8 @@ export default function TailorShopDetails() {
             sx={{
               position: 'relative',
               mt: '64px',
-              minHeight: { xs: 220, md: 300 },
-              maxHeight: 360,
+              minHeight: heroH,
+              maxHeight: heroMaxH,
               overflow: 'hidden',
               bgcolor: '#e8e7ff',
             }}
@@ -131,11 +153,13 @@ export default function TailorShopDetails() {
               component="img"
               src={resolveHeroImage(shop)}
               alt=""
+              decoding="async"
+              fetchPriority="high"
               sx={{
                 width: '100%',
-                height: { xs: 220, md: 300 },
+                height: heroH,
                 objectFit: heroBannerIsLogoOnly(shop) ? 'contain' : 'cover',
-                objectPosition: 'center',
+                objectPosition: bannerPhoto ? 'center center' : 'center',
                 display: 'block',
                 px: heroBannerIsLogoOnly(shop) ? { xs: 3, md: 5 } : 0,
                 py: heroBannerIsLogoOnly(shop) ? 2 : 0,
@@ -143,13 +167,13 @@ export default function TailorShopDetails() {
               }}
               onError={(e) => { e.target.src = SHOP_IMAGE_FALLBACK[0]; }}
             />
-            {/* Light fade only at the bottom so cover keeps original colors; text stays readable. */}
+            {/* Uploaded cover: minimal tint so photo stays vivid; logo/fallback: slightly stronger bottom fade. */}
             <Box
               sx={{
                 position: 'absolute',
                 inset: 0,
                 pointerEvents: 'none',
-                background: 'linear-gradient(180deg, transparent 0%, transparent 52%, rgba(15,23,42,0.5) 100%)',
+                background: heroOverlayBg,
               }}
             />
             <Container maxWidth="lg" sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, pb: 3, zIndex: 1 }}>
@@ -173,12 +197,12 @@ export default function TailorShopDetails() {
                       lineHeight: 1.2,
                       overflowWrap: 'anywhere',
                       wordBreak: 'break-word',
-                      textShadow: '0 1px 3px rgba(0,0,0,0.65)',
+                      textShadow: heroTitleShadow,
                     }}
                   >
                     {shop.shop_name}
                   </Typography>
-                  <Typography sx={{ color: 'rgba(255,255,255,0.92)', mt: 0.75, fontSize: '1rem', textShadow: '0 1px 2px rgba(0,0,0,0.55)' }}>
+                  <Typography sx={{ color: 'rgba(255,255,255,0.92)', mt: 0.75, fontSize: '1rem', textShadow: heroSubtitleShadow }}>
                     {shop.owner_name}
                     {shop.city ? ` · ${shop.city}` : ''}
                     {shop.country ? `, ${shop.country}` : ''}
@@ -190,7 +214,6 @@ export default function TailorShopDetails() {
                     {shop.specialization_name && (
                       <Chip label={shop.specialization_name} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 600 }} />
                     )}
-                    <Chip label="Verified listing" size="small" sx={{ bgcolor: 'rgba(34,197,94,0.35)', color: '#ecfdf5', fontWeight: 700 }} />
                   </Stack>
                 </Box>
               </Stack>

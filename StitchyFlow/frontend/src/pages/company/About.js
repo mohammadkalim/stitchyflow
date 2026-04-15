@@ -60,69 +60,152 @@ function About() {
     );
   }
 
+  const lastUpdated = pageData.updatedAt
+    ? new Date(pageData.updatedAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : null;
+
   return (
-    <Box sx={{ bgcolor: '#f8f9fa', minHeight: '100vh', py: { xs: 3, md: 5 } }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        py: { xs: 4, md: 7 },
+        background:
+          'linear-gradient(180deg, #f4f8ff 0%, #eef3ff 24%, #f8f9fc 48%, #ffffff 100%)',
+      }}
+    >
       <Container maxWidth="lg">
-        <Paper
+        <Box
           sx={{
-            p: { xs: 3, md: 5 },
-            borderRadius: { xs: 2, md: 3 },
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+            mb: { xs: 3, md: 4 },
+            px: { xs: 2.5, md: 4 },
+            py: { xs: 3, md: 4 },
+            borderRadius: { xs: 2.5, md: 3 },
+            background: 'linear-gradient(135deg, #0f2a54 0%, #17498d 55%, #2a79d4 100%)',
+            color: '#fff',
+            boxShadow: '0 20px 36px rgba(14, 42, 84, 0.22)',
           }}
         >
           <Typography
-            variant="h4"
+            variant="overline"
             sx={{
-              fontWeight: 700,
-              color: '#1a1a2e',
-              mb: 3,
-              fontSize: { xs: '1.75rem', md: '2.25rem' },
+              letterSpacing: 1.3,
+              opacity: 0.85,
             }}
           >
-            {pageData.title}
+            CORPORATE PROFILE
           </Typography>
-          
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: 700,
+              mt: 0.5,
+              mb: 1.5,
+              fontSize: { xs: '1.9rem', md: '2.8rem' },
+              lineHeight: 1.2,
+            }}
+          >
+            {pageData.title || 'About Us'}
+          </Typography>
+          <Typography
+            sx={{
+              maxWidth: 820,
+              fontSize: { xs: '0.96rem', md: '1.05rem' },
+              lineHeight: 1.75,
+              color: 'rgba(255,255,255,0.9)',
+            }}
+          >
+            Learn more about our mission, values, and commitment to delivering reliable digital
+            solutions with modern standards in quality, innovation, and trust.
+          </Typography>
+          {lastUpdated && (
+            <Typography
+              sx={{
+                mt: 2,
+                fontSize: { xs: '0.75rem', md: '0.82rem' },
+                color: 'rgba(255,255,255,0.78)',
+              }}
+            >
+              Last updated: {lastUpdated}
+            </Typography>
+          )}
+        </Box>
+
+        <Paper
+          sx={{
+            p: { xs: 2.5, md: 5 },
+            borderRadius: { xs: 2.5, md: 3 },
+            boxShadow: '0 16px 34px rgba(12, 24, 46, 0.08)',
+            border: '1px solid rgba(26, 76, 145, 0.08)',
+            backgroundColor: '#fff',
+          }}
+        >
           <Box
             sx={{
-              color: '#374151',
-              lineHeight: 1.8,
-              fontSize: { xs: '0.95rem', md: '1rem' },
+              color: '#23324a',
+              lineHeight: 1.86,
+              fontSize: { xs: '0.95rem', md: '1.02rem' },
+              '& > :first-of-type': {
+                mt: 0,
+              },
               '& h2': {
-                color: '#1565C0',
-                fontWeight: 600,
-                mt: { xs: 2, md: 3 },
-                mb: { xs: 1, md: 1.5 },
-                fontSize: { xs: '1.25rem', md: '1.5rem' },
+                color: '#143f79',
+                fontWeight: 700,
+                mt: { xs: 3, md: 4 },
+                mb: { xs: 1.5, md: 2 },
+                fontSize: { xs: '1.35rem', md: '1.75rem' },
+                lineHeight: 1.35,
               },
               '& h3': {
-                color: '#1976D2',
+                color: '#19529b',
                 fontWeight: 600,
-                mt: { xs: 1.5, md: 2 },
-                mb: { xs: 0.75, md: 1 },
-                fontSize: { xs: '1.1rem', md: '1.25rem' },
+                mt: { xs: 2.5, md: 3 },
+                mb: { xs: 1, md: 1.2 },
+                fontSize: { xs: '1.1rem', md: '1.3rem' },
               },
               '& p': {
-                mb: { xs: 1.5, md: 2 },
+                color: '#3d4d65',
+                mb: { xs: 1.7, md: 2.1 },
               },
               '& ul, & ol': {
                 pl: { xs: 2, md: 3 },
-                mb: { xs: 1.5, md: 2 },
+                mb: { xs: 1.7, md: 2.1 },
               },
               '& li': {
-                mb: { xs: 0.5, md: 0.75 },
+                color: '#3d4d65',
+                mb: { xs: 0.7, md: 0.85 },
               },
               '& a': {
-                color: '#1565C0',
+                color: '#1d61b8',
+                fontWeight: 500,
                 textDecoration: 'none',
                 '&:hover': {
                   textDecoration: 'underline',
                 },
               },
+              '& blockquote': {
+                m: 0,
+                my: { xs: 2, md: 3 },
+                px: { xs: 2, md: 3 },
+                py: { xs: 1.5, md: 2 },
+                borderLeft: '4px solid #1f6ecc',
+                backgroundColor: '#f5f9ff',
+                color: '#27466f',
+                borderRadius: 1,
+              },
               '& img': {
                 maxWidth: '100%',
                 height: 'auto',
-                borderRadius: 1,
+                borderRadius: 1.5,
                 my: 2,
+              },
+              '& hr': {
+                border: 0,
+                borderTop: '1px solid rgba(26, 76, 145, 0.16)',
+                my: { xs: 2.5, md: 3.5 },
               },
             }}
             dangerouslySetInnerHTML={{ __html: pageData.content }}

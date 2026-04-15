@@ -9,6 +9,7 @@ import {
   Add as AddIcon,
   Category as CategoryIcon,
   Delete as DeleteIcon,
+  DeleteSweep as DeleteSweepIcon,
   Edit as EditIcon,
   PostAdd as PostAddIcon,
   Search as SearchIcon
@@ -38,6 +39,7 @@ function CategoriesPage() {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const [removingAll, setRemovingAll] = useState(false);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -97,6 +99,24 @@ function CategoriesPage() {
       setMessageType('error');
     } finally {
       setSeeding(false);
+    }
+  };
+
+  const handleRemoveAllCategories = async () => {
+    if (!window.confirm(
+      'Remove ALL categories?\n\nThis deletes every category and subcategory, and clears category links on tailor shops. This cannot be undone.'
+    )) return;
+    setRemovingAll(true);
+    try {
+      const res = await api.post('/ca-sub/categories/delete-all');
+      setMessage(res.data?.message || 'All categories removed.');
+      setMessageType('success');
+      loadRows();
+    } catch (error) {
+      setMessage(error.response?.data?.error?.message || 'Failed to remove categories');
+      setMessageType('error');
+    } finally {
+      setRemovingAll(false);
     }
   };
 
@@ -220,7 +240,7 @@ function CategoriesPage() {
                     variant="outlined"
                     startIcon={<PostAddIcon />}
                     onClick={handleSeedDemo}
-                    disabled={seeding}
+                    disabled={seeding || removingAll}
                     sx={{
                       textTransform: 'none',
                       fontWeight: 700,
@@ -235,10 +255,30 @@ function CategoriesPage() {
                   </Button>
                 </span>
               </Tooltip>
+              <Tooltip title="Deletes every category and subcategory, and clears shop category links." arrow>
+                <span>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteSweepIcon />}
+                    onClick={handleRemoveAllCategories}
+                    disabled={removingAll || seeding || rows.length === 0}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      borderRadius: '12px',
+                      px: 2
+                    }}
+                  >
+                    {removingAll ? 'Removing…' : 'Remove all categories'}
+                  </Button>
+                </span>
+              </Tooltip>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={openAdd}
+                disabled={removingAll}
                 sx={primaryButtonSx}
               >
                 Add category

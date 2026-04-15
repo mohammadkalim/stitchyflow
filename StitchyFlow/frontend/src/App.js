@@ -17,6 +17,8 @@ import BridalWear from './pages/marketplace/BridalWear';
 import TraditionalWear from './pages/marketplace/TraditionalWear';
 import Alterations from './pages/marketplace/Alterations';
 import FabricSelection from './pages/marketplace/FabricSelection';
+import TailorServiceTypePage from './pages/marketplace/TailorServiceTypePage';
+import TailorServiceCategoryPage from './pages/marketplace/TailorServiceCategoryPage';
 // Company
 import About from './pages/company/About';
 import HowItWorks from './pages/company/HowItWorks';
@@ -57,6 +59,8 @@ function App() {
             <Route path="/marketplace/traditional-wear" element={<TraditionalWear />} />
             <Route path="/marketplace/alterations" element={<Alterations />} />
             <Route path="/marketplace/fabric-selection" element={<FabricSelection />} />
+            <Route path="/tailor-services/category/:categoryId" element={<TailorServiceCategoryPage />} />
+            <Route path="/tailor-services/:serviceId" element={<TailorServiceTypePage />} />
             <Route path="/about" element={<About />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/careers" element={<Careers />} />

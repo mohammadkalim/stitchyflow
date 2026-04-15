@@ -1,10 +1,12 @@
 /**
- * API base: use REACT_APP_API_URL in production (full URL, no trailing slash).
- * In development, default is relative `/api/v1` so Create React App proxies to `package.json` "proxy" (port 5000).
+ * API base: full URL (no trailing slash), e.g. http://localhost:5000/api/v1
+ * If REACT_APP_API_URL is set, it always wins (fixes dev proxy 404s). Otherwise CRA dev on :3000 uses same-origin /api/v1 → setupProxy.
  */
 export function getApiBase() {
-  // In CRA dev on :3000, always use same-origin `/api/v1` so package.json proxy hits one backend.
-  // Direct `http://localhost:5000/...` often points at a stale or different process → confusing 404s.
+  const env = process.env.REACT_APP_API_URL;
+  if (env && env.trim()) {
+    return env.replace(/\/$/, '');
+  }
   if (
     process.env.NODE_ENV === 'development' &&
     typeof window !== 'undefined' &&
@@ -12,10 +14,6 @@ export function getApiBase() {
     window.location.port === '3000'
   ) {
     return '/api/v1';
-  }
-  const env = process.env.REACT_APP_API_URL;
-  if (env && env.trim()) {
-    return env.replace(/\/$/, '');
   }
   return '/api/v1';
 }

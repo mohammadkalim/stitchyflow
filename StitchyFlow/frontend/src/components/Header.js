@@ -30,8 +30,9 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import PinterestIcon from '@mui/icons-material/Pinterest';
 import ShareIcon from '@mui/icons-material/Share';
 import LanguageIcon from '@mui/icons-material/Language';
+import { getApiBase } from '../utils/api';
 
-const API_BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+const API_BASE = getApiBase();
 
 /** API serves /uploads and /images (see backend server.js); paths are absolute on API origin. */
 function resolveServiceImageUrl(url) {
@@ -65,19 +66,20 @@ const NAV_LINKS = [
 
 // Icon mapping for services
 const iconMap = {
-  CustomDresses: <CheckroomIcon sx={{ color: '#2563eb', fontSize: 22 }} />,
-  Suits: <StraightenIcon sx={{ color: '#7c3aed', fontSize: 22 }} />,
-  Traditional: <AutoAwesomeIcon sx={{ color: '#f59e0b', fontSize: 22 }} />,
-  Alterations: <ContentCutOutlinedIcon sx={{ color: '#10b981', fontSize: 22 }} />,
+  CustomDresses: <CheckroomIcon sx={{ color: '#1310ca', fontSize: 22 }} />,
+  Suits: <StraightenIcon sx={{ color: '#1310ca', fontSize: 22 }} />,
+  Traditional: <AutoAwesomeIcon sx={{ color: '#1310ca', fontSize: 22 }} />,
+  Alterations: <ContentCutOutlinedIcon sx={{ color: '#1310ca', fontSize: 22 }} />,
 };
 
-// Default services (fallback if DB fails)
-const DEFAULT_SERVICES = [
-  { icon: 'CustomDresses', label: 'All Tailors',      path: '/All-tailers',                   desc: 'Browse all verified tailors', color: '#2563eb' },
-  { icon: 'Suits',        label: 'Suits & Blazers',  path: '/marketplace/suits-blazers',    desc: 'Sharp formal & corporate wear', color: '#7c3aed' },
-  { icon: 'Traditional',  label: 'Traditional Wear', path: '/marketplace/traditional-wear', desc: 'Authentic Pakistani heritage styles', color: '#f59e0b' },
-  { icon: 'Alterations',  label: 'Alterations',      path: '/marketplace/alterations',      desc: 'Perfect fit for existing clothes', color: '#10b981' },
-];
+function getAutoCategoryIconKey(categoryName) {
+  const n = String(categoryName || '').toLowerCase();
+  if (/(suit|blazer|coat|formal|corporate|waistcoat)/.test(n)) return 'Suits';
+  if (/(traditional|ethnic|shalwar|kurta|sherwani|lehenga|bridal|wedding)/.test(n)) return 'Traditional';
+  if (/(alter|repair|fitting|hemming|stitch fix|resize|adjust)/.test(n)) return 'Alterations';
+  if (/(dress|gown|frock|abaya|uniform|fashion|design|custom|boutique)/.test(n)) return 'CustomDresses';
+  return 'Alterations';
+}
 
 function Header() {
   const navigate = useNavigate();
@@ -86,7 +88,7 @@ function Header() {
   const [userAnchor, setUserAnchor]     = useState(null);
   const [user, setUser]                 = useState(null);
   const [socialLinks, setSocialLinks]   = useState([]);
-  const [servicesMenu, setServicesMenu] = useState(DEFAULT_SERVICES);
+  const [servicesMenu, setServicesMenu] = useState([]);
   const [brokenTailorImages, setBrokenTailorImages] = useState(() => new Set());
 
   /* Read user from localStorage on mount + on storage changes */
@@ -114,23 +116,29 @@ function Header() {
       .catch(() => {});
   }, []);
 
-  /* Fetch tailor services from DB (active rows — matches main site popup / mega menu) */
+  /* Tailor Services mega menu: active CA/SUB categories from admin (/ca-sub/category), same source as public API */
   useEffect(() => {
-    fetch(`${API_BASE}/tailor-services`)
-      .then(r => r.json())
-      .then(data => {
+    fetch(`${API_BASE}/ca-sub/categories/public`)
+      .then((r) => r.json())
+      .then((data) => {
         if (data.success && data.data && data.data.length > 0) {
-          const mapped = data.data.map((s) => ({
-            label: s.service_name,
-            path: s.link_path || '/All-tailers',
-            desc: s.service_description || '',
-            color: s.accent_color || '#2563eb',
-            imageUrl: s.image_url || null,
+          const mapped = data.data.map((c) => ({
+            key: `catalog-cat-${c.id}`,
+            icon: getAutoCategoryIconKey(c.name),
+            label: c.name,
+            path: `/tailor-services/category/${c.id}`,
+            desc: (c.description && String(c.description).trim()) || 'Tailors in this catalogue category',
+            color: '#1310ca',
+            imageUrl: null,
           }));
           setServicesMenu(mapped);
+        } else {
+          setServicesMenu([]);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setServicesMenu([]);
+      });
   }, []);
 
   const handleLogout = () => {
@@ -412,13 +420,19 @@ function Header() {
             <Menu anchorEl={mobileAnchor} open={Boolean(mobileAnchor)}
               onClose={() => setMobileAnchor(null)}
               PaperProps={{ sx: { width: 240, borderRadius: '12px', mt: 1 } }}>
-              {servicesMenu.map((item) => (
-                <MenuItem key={item.label}
-                  onClick={() => { setMobileAnchor(null); navigate(item.path); }}
-                  sx={{ fontSize: '0.85rem' }}>
-                  {item.label}
+              {servicesMenu.length > 0 ? (
+                servicesMenu.map((item) => (
+                  <MenuItem key={item.key || item.label}
+                    onClick={() => { setMobileAnchor(null); navigate(item.path); }}
+                    sx={{ fontSize: '0.85rem' }}>
+                    {item.label}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled sx={{ fontSize: '0.85rem', opacity: 0.8 }}>
+                  Category Not Available
                 </MenuItem>
-              ))}
+              )}
               <Divider />
               {NAV_LINKS.map((link) => (
                 <MenuItem key={link.label}
@@ -461,8 +475,8 @@ function Header() {
             borderBottom: '1px solid #e5e7eb',
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
             width: '598px',
-            maxHeight: '315px',
-            overflow: 'auto',
+            maxHeight: 'none',
+            overflow: 'visible',
             borderRadius: '0 0 12px 12px',
             position: 'absolute',
             top: '60px',
@@ -478,63 +492,80 @@ function Header() {
                 Tailor Services
               </Typography>
               <Typography variant="caption" sx={{ color: '#9ca3af' }}>
-                {servicesMenu.length} services
+                {servicesMenu.length} categories
               </Typography>
             </Box>
-            <Grid container spacing={2}>
-              {servicesMenu.map((item) => (
-                <Grid item xs={12} sm={6} md={6} key={item.label}>
-                  <Paper elevation={0} onClick={() => { setMegaOpen(false); navigate(item.path); }}
-                    sx={{
-                      display: 'flex', alignItems: 'center', gap: 2,
-                      p: 2, borderRadius: '12px',
-                      border: '1px solid #f3f4f6',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s',
-                      '&:hover': {
-                        bgcolor: '#eff6ff',
-                        borderColor: '#bfdbfe',
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(37,99,235,0.08)',
-                      },
-                    }}>
-                    <Box sx={{
-                      width: 44, height: 44, borderRadius: '10px',
-                      bgcolor: item.color ? item.color + '15' : '#f8fafc',
-                      color: item.color || '#2563eb',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0,
-                      overflow: 'hidden',
-                    }}>
-                      {item.imageUrl && !brokenTailorImages.has(`${item.label}|${item.imageUrl}`) ? (
-                        <Avatar
-                          src={resolveServiceImageUrl(item.imageUrl)}
-                          variant="rounded"
-                          sx={{ width: 44, height: 44 }}
-                          imgProps={{
-                            loading: 'lazy',
-                            decoding: 'async',
-                            onError: () => {
-                              setBrokenTailorImages((prev) => new Set(prev).add(`${item.label}|${item.imageUrl}`));
-                            },
-                          }}
-                        />
-                      ) : (
-                        iconMap[item.icon] || <ContentCutIcon sx={{ fontSize: 22 }} />
-                      )}
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.2 }}>
-                        {item.label}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#6b7280' }}>
-                        {item.desc}
-                      </Typography>
-                    </Box>
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
+            {servicesMenu.length > 0 ? (
+              <Grid container spacing={2}>
+                {servicesMenu.map((item) => (
+                  <Grid item xs={12} sm={6} md={6} key={item.key || item.label}>
+                    <Paper elevation={0} onClick={() => { setMegaOpen(false); navigate(item.path); }}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        gap: 1.2,
+                        p: 2, borderRadius: '12px',
+                        border: '1px solid #f3f4f6',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        '&:hover': {
+                          bgcolor: '#eff6ff',
+                          borderColor: '#bfdbfe',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 12px rgba(37,99,235,0.08)',
+                        },
+                      }}>
+                      <Box sx={{
+                        width: 44, height: 44, borderRadius: '10px',
+                        bgcolor: item.color ? item.color + '15' : '#f8fafc',
+                        color: item.color || '#2563eb',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0, 
+                        overflow: 'hidden',
+                      }}>
+                        {item.imageUrl && !brokenTailorImages.has(`${item.label}|${item.imageUrl}`) ? (
+                          <Avatar
+                            src={resolveServiceImageUrl(item.imageUrl)}
+                            variant="rounded"
+                            sx={{ width: 44, height: 44 }}
+                            imgProps={{
+                              loading: 'lazy',
+                              decoding: 'async',
+                              onError: () => {
+                                setBrokenTailorImages((prev) => new Set(prev).add(`${item.label}|${item.imageUrl}`));
+                              },
+                            }}
+                          />
+                        ) : (
+                          iconMap[item.icon] || <ContentCutIcon sx={{ fontSize: 22, color: '#1310ca' }} />
+                        )}
+                      </Box>
+                      <Box sx={{ width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#1a1a2e', mb: 0.2 }}>
+                          {item.label}
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Box
+                sx={{
+                  border: '1px dashed #d1d5db',
+                  borderRadius: '12px',
+                  py: 4,
+                  px: 2,
+                  textAlign: 'center',
+                  color: '#6b7280',
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Category Not Available
+                </Typography>
+              </Box>
+            )}
           </Container>
         </Box>
       </Fade>

@@ -584,7 +584,7 @@ Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
 ---------
 
 
-please You change this page url and page http://localhost:3000/marketplace/custom-dresses and please page new was a Tailers please this page men All Tailers show kare and please new url was a http://localhost:3000/All-tailers and please All pages and Database chage as well
+please You change this page url and page http://localhost:3000/marketplace/custom-dresses and please page new was a Tailers plecl and please All pages and Database chage as well
 
 
 --------- Database creadincles ----------
@@ -599,3 +599,10 @@ Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
 
 
 
+-------
+
+please App this http://localhost:3000/tailor-dashboard Shop Tailer ke markhubstore98@gmail.com ke nadar 1 more Business Ad kar de 
+
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

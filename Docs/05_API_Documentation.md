@@ -316,35 +316,3 @@ Authorization: Bearer <access_token>
 }
 ```
 
----
-
-## 6. Business (tailor shops)
-
-**Base path:** `/business`  
-**Authentication:** Required for protected routes (Bearer JWT).
-
-### 6.1 Get tailor shop slot limit
-
-**Endpoint:** `GET /business/shops/business-slots`  
-**Authentication:** Required (tailor or business_owner)  
-**Description:** Returns how many shops the authenticated tailor may own, how many they already have, and whether they may add another. Limits come from environment variables `TAILOR_MAX_BUSINESSES` (default `1`) and optional `TAILOR_MAX_BUSINESSES_OVERRIDES` (comma-separated `email@x.com:max`).
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "maxShops": 2,
-    "currentCount": 1,
-    "canAddMore": true
-  }
-}
-```
-
-**Response (403):** Non-tailor roles.
-
-### 6.2 Create shop (limit enforced)
-
-**Endpoint:** `POST /business/shops`  
-When the tailor already owns `maxShops` rows in `business_tailor_shops`, the API returns **400** with a message indicating the limit (wording depends on `maxShops`).
-
