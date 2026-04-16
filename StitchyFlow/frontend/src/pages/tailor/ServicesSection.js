@@ -100,7 +100,8 @@ export default function ServicesSection({ isApproved }) {
     if (!open) return;
     setForm((f) => {
       if (!shops.length) return { ...f, shop_id: '' };
-      if (shopIdInList(f.shop_id)) return f;
+      const ok = shops.some((s) => String(s.shop_id) === String(f.shop_id));
+      if (ok) return f;
       return { ...f, shop_id: String(shops[0].shop_id) };
     });
   }, [open, shops]);
@@ -186,7 +187,7 @@ export default function ServicesSection({ isApproved }) {
           label="Shop filter"
           fullWidth
           size="small"
-          value={activeShopFilter}
+          value={activeShopFilter === 'all' || shops.some((s) => String(s.shop_id) === String(activeShopFilter)) ? activeShopFilter : 'all'}
           onChange={(e) => setActiveShopFilter(e.target.value)}
           sx={INPUT_SX}
           SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
