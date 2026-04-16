@@ -1,29 +1,37 @@
 /**
  * API base: full URL (no trailing slash), e.g. http://localhost:5000/api/v1
- * If REACT_APP_API_URL is set, it always wins (fixes dev proxy 404s). Otherwise CRA dev on :3000 uses same-origin /api/v1 → setupProxy.
+ * CRA dev on :3000: prefer same-origin /api/v1 → setupProxy.js (avoids hitting the wrong process on :5000).
+ * Set REACT_APP_DIRECT_API=1 to force using REACT_APP_API_URL in dev when you really want the browser to call :5000 directly.
  */
 export function getApiBase() {
-  const env = process.env.REACT_APP_API_URL;
-  if (env && env.trim()) {
-    let base = env.replace(/\/$/, '');
-    // Common misconfig: API origin only (e.g. http://127.0.0.1:5000) — paths like /business/services must hit /api/v1.
+  const env = (process.env.REACT_APP_API_URL || '').trim();
+  let base = '/api/v1';
+
+  if (env) {
+    base = env.replace(/\/$/, '');
     if (/^https?:\/\//i.test(base) && !/\/api\/v\d+/i.test(base)) {
       base = `${base}/api/v1`;
     }
-    return base;
   }
-  if (
+
+  const isCraDev3000 =
     process.env.NODE_ENV === 'development' &&
     typeof window !== 'undefined' &&
-    window.location.hostname === 'localhost' &&
-    window.location.port === '3000'
-  ) {
-    return '/api/v1';
-  }
-  return '/api/v1';
-}
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+    window.location.port === '3000';
 
-const BASE = getApiBase();
+  const forceDirect =
+    process.env.REACT_APP_DIRECT_API === '1' || String(process.env.REACT_APP_DIRECT_API).toLowerCase() === 'true';
+
+  if (isCraDev3000 && env && !forceDirect) {
+    const localApi =
+      /^https?:\/\/(127\.0\.0\.1|localhost):5000\/api\/v\d*$/i.test(base) ||
+      /^https?:\/\/(127\.0\.0\.1|localhost)\/api\/v\d*$/i.test(base);
+    if (localApi) return '/api/v1';
+  }
+
+  return base;
+}
 
 export function getToken() {
   return localStorage.getItem('token');
@@ -54,7 +62,7 @@ export function resolvePublicBusinessImageUrl(storedPath, cacheMeta = null) {
   const isCraDev =
     process.env.NODE_ENV === 'development' &&
     typeof window !== 'undefined' &&
-    window.location.hostname === 'localhost' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
     window.location.port === '3000';
 
   if (isCraDev && !api.startsWith('http')) {
@@ -71,8 +79,12 @@ export function resolvePublicBusinessImageUrl(storedPath, cacheMeta = null) {
 
 export async function apiFetch(path, options = {}) {
   const token = getToken();
-  const p = path.startsWith('/') ? path : `/${path}`;
-  const url = BASE.startsWith('http') ? `${BASE}${p}` : `${BASE}${p}`;
+  let p = path.startsWith('/') ? path : `/${path}`;
+  const base = getApiBase();
+  if (/^https?:\/\//i.test(base) && /^\/api\/v\d+/i.test(p)) {
+    p = p.replace(/^\/api\/v\d+/, '') || '/';
+  }
+  const url = `${base}${p}`;
 
   const res = await fetch(url, {
     headers: {
