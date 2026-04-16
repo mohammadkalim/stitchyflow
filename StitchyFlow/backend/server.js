@@ -31,9 +31,16 @@ app.use('/images', express.static(publicImagesRoot));
 
 // Middleware — allow admin (4000) / frontend (3000) to embed images from this API (5000)
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ 
-  origin: ['http://localhost:3000', 'http://localhost:4000', process.env.FRONTEND_URL, process.env.ADMIN_URL].filter(Boolean),
-  credentials: true 
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:4000',
+    'http://127.0.0.1:4000',
+    process.env.FRONTEND_URL,
+    process.env.ADMIN_URL,
+  ].filter(Boolean),
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
