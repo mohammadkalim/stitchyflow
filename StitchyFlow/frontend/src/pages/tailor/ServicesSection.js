@@ -90,10 +90,23 @@ export default function ServicesSection({ isApproved }) {
       .catch(() => setShops([]));
   }, [isApproved]);
 
+  useEffect(() => {
+    if (activeShopFilter === 'all') return;
+    if (!shopIdInList(activeShopFilter)) setActiveShopFilter('all');
+  }, [shops, activeShopFilter]);
+
+  useEffect(() => {
+    if (!open) return;
+    setForm((f) => {
+      if (!shops.length) return { ...f, shop_id: '' };
+      if (shopIdInList(f.shop_id)) return f;
+      return { ...f, shop_id: String(shops[0].shop_id) };
+    });
+  }, [open, shops]);
+
   const openAdd  = () => {
-    const defaultShopId = activeShopFilter !== 'all'
-      ? activeShopFilter
-      : (shops[0]?.shop_id ? String(shops[0].shop_id) : '');
+    const fromFilter = activeShopFilter !== 'all' && shopIdInList(activeShopFilter) ? activeShopFilter : '';
+    const defaultShopId = fromFilter || (shops[0]?.shop_id ? String(shops[0].shop_id) : '');
     setForm({ ...EMPTY, shop_id: defaultShopId });
     setEdit(null);
     setError('');
@@ -259,6 +272,7 @@ export default function ServicesSection({ isApproved }) {
         maxWidth={false}
         fullWidth
         scroll="paper"
+        disableRestoreFocus
         BackdropProps={{ sx: { backdropFilter: 'blur(6px)', bgcolor: 'rgba(15, 23, 42, 0.35)' } }}
         PaperProps={{
           sx: {
@@ -337,11 +351,14 @@ export default function ServicesSection({ isApproved }) {
                     label="Business shop *"
                     fullWidth
                     size="medium"
-                    value={form.shop_id}
+                    value={shopIdInList(form.shop_id) ? String(form.shop_id) : ''}
                     onChange={(e) => setForm({ ...form, shop_id: e.target.value })}
                     sx={INPUT_SX}
-                    SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
+                    SelectProps={{ displayEmpty: true, MenuProps: CORPORATE_SELECT_MENU_PROPS }}
                   >
+                    <MenuItem value="" disabled sx={CORPORATE_MENU_ITEM_SX}>
+                      {shops.length ? 'Select a shop' : 'Loading shops…'}
+                    </MenuItem>
                     {shops.map((shop) => (
                       <MenuItem key={shop.shop_id} value={String(shop.shop_id)} sx={CORPORATE_MENU_ITEM_SX}>
                         {shop.shop_name}
