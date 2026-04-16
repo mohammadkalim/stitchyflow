@@ -32,6 +32,43 @@ function normalizePages(pages) {
   return [];
 }
 
+function normalizeImageUrls(imageUrls, fallbackImageUrl) {
+  let urls = [];
+  if (Array.isArray(imageUrls)) {
+    urls = imageUrls;
+  } else if (typeof imageUrls === 'string') {
+    try {
+      const parsed = JSON.parse(imageUrls);
+      urls = Array.isArray(parsed) ? parsed : [imageUrls];
+    } catch (_) {
+      urls = imageUrls
+        .split(/\r?\n|,/)
+        .map((x) => x.trim())
+        .filter(Boolean);
+    }
+  }
+  urls = urls
+    .filter((x) => typeof x === 'string')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  if (!urls.length && typeof fallbackImageUrl === 'string' && fallbackImageUrl.trim()) {
+    urls = [fallbackImageUrl.trim()];
+  }
+  // unique while preserving order
+  return [...new Set(urls)];
+}
+
+function hydrateRow(row) {
+  const pages = typeof row.pages === 'string' ? JSON.parse(row.pages || '[]') : row.pages;
+  const image_urls = normalizeImageUrls(row.image_urls, row.image_url);
+  return {
+    ...row,
+    pages,
+    image_urls,
+    image_url: image_urls[0] || row.image_url || ''
+  };
+}
+
 function createAdsRouter() {
   const router = express.Router();
 
@@ -53,17 +90,13 @@ function createAdsRouter() {
       }
 
       const [ads] = await db.query(
-        `SELECT id, title, image_url, redirect_url, start_date, end_date, status, pages, created_at
+        `SELECT id, title, image_url, image_urls, redirect_url, start_date, end_date, status, pages, created_at
          FROM ads
          WHERE ${conditions.join(' AND ')}
          ORDER BY created_at DESC`,
         values
       );
-
-      const rows = ads.map((row) => ({
-        ...row,
-        pages: typeof row.pages === 'string' ? JSON.parse(row.pages || '[]') : row.pages
-      }));
+      const rows = ads.map(hydrateRow);
 
       res.json({ success: true, data: rows });
     } catch (error) {
@@ -117,13 +150,10 @@ function createAdsRouter() {
     try {
       await ensureAdsTables();
       const [ads] = await db.query(
-        `SELECT id, title, image_url, redirect_url, start_date, end_date, status, pages, created_at
+        `SELECT id, title, image_url, image_urls, redirect_url, start_date, end_date, status, pages, created_at
          FROM ads ORDER BY created_at DESC`
       );
-      const rows = ads.map((row) => ({
-        ...row,
-        pages: typeof row.pages === 'string' ? JSON.parse(row.pages || '[]') : row.pages
-      }));
+      const rows = ads.map(hydrateRow);
       res.json({ success: true, data: rows });
     } catch (error) {
       res.status(500).json({ success: false, error: { message: error.message } });
@@ -149,18 +179,20 @@ function createAdsRouter() {
   router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) => {
     try {
       await ensureAdsTables();
-      const { title, image_url, redirect_url, start_date, end_date, status, pages } = req.body;
-      if (!title || !image_url || !redirect_url) {
-        return res.status(400).json({ success: false, error: { message: 'Title, image URL and redirect URL are required' } });
+      const { title, image_url, image_urls, redirect_url, start_date, end_date, status, pages } = req.body;
+      const normalizedImageUrls = normalizeImageUrls(image_urls, image_url);
+      if (!title || !normalizedImageUrls.length || !redirect_url) {
+        return res.status(400).json({ success: false, error: { message: 'Title, at least one image URL, and redirect URL are required' } });
       }
 
       const normalizedPages = normalizePages(pages);
       const [result] = await db.query(
-        `INSERT INTO ads (title, image_url, redirect_url, start_date, end_date, status, pages)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO ads (title, image_url, image_urls, redirect_url, start_date, end_date, status, pages)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           title,
-          image_url,
+          normalizedImageUrls[0],
+          JSON.stringify(normalizedImageUrls),
           redirect_url,
           sqlDateTime(start_date),
           sqlDateTime(end_date),
@@ -179,14 +211,13 @@ function createAdsRouter() {
     try {
       await ensureAdsTables();
       const [ads] = await db.query(
-        'SELECT id, title, image_url, redirect_url, start_date, end_date, status, pages, created_at FROM ads WHERE id = ?',
+        'SELECT id, title, image_url, image_urls, redirect_url, start_date, end_date, status, pages, created_at FROM ads WHERE id = ?',
         [req.params.id]
       );
       if (!ads.length) {
         return res.status(404).json({ success: false, error: { message: 'Ad not found' } });
       }
-      const row = ads[0];
-      row.pages = typeof row.pages === 'string' ? JSON.parse(row.pages || '[]') : row.pages;
+      const row = hydrateRow(ads[0]);
       res.json({ success: true, data: row });
     } catch (error) {
       res.status(500).json({ success: false, error: { message: error.message } });
@@ -196,13 +227,17 @@ function createAdsRouter() {
   router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
     try {
       await ensureAdsTables();
-      const { title, image_url, redirect_url, start_date, end_date, status, pages } = req.body;
-      const [ads] = await db.query('SELECT id, title, image_url, redirect_url, start_date, end_date, status, pages FROM ads WHERE id = ?', [req.params.id]);
+      const { title, image_url, image_urls, redirect_url, start_date, end_date, status, pages } = req.body;
+      const [ads] = await db.query('SELECT id, title, image_url, image_urls, redirect_url, start_date, end_date, status, pages FROM ads WHERE id = ?', [req.params.id]);
       if (!ads.length) {
         return res.status(404).json({ success: false, error: { message: 'Ad not found' } });
       }
 
       const prev = ads[0];
+      const normalizedImageUrls = normalizeImageUrls(
+        image_urls,
+        image_url != null ? image_url : prev.image_url
+      );
       const normalizedPages = normalizePages(pages);
       const pagesJson =
         normalizedPages.length > 0
@@ -212,10 +247,11 @@ function createAdsRouter() {
             : JSON.stringify(prev.pages || []);
 
       await db.query(
-        `UPDATE ads SET title = ?, image_url = ?, redirect_url = ?, start_date = ?, end_date = ?, status = ?, pages = ? WHERE id = ?`,
+        `UPDATE ads SET title = ?, image_url = ?, image_urls = ?, redirect_url = ?, start_date = ?, end_date = ?, status = ?, pages = ? WHERE id = ?`,
         [
           title != null ? title : prev.title,
-          image_url != null ? image_url : prev.image_url,
+          normalizedImageUrls[0] || prev.image_url,
+          JSON.stringify(normalizedImageUrls.length ? normalizedImageUrls : normalizeImageUrls(prev.image_urls, prev.image_url)),
           redirect_url != null ? redirect_url : prev.redirect_url,
         start_date !== undefined ? sqlDateTime(start_date) : prev.start_date,
         end_date !== undefined ? sqlDateTime(end_date) : prev.end_date,

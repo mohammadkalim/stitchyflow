@@ -62,6 +62,7 @@ const PAGE_OPTIONS = [
 const emptyForm = {
   title: '',
   image_url: '',
+  image_urls: [],
   redirect_url: '',
   start_date: '',
   end_date: '',
@@ -78,6 +79,25 @@ function parsePages(p) {
       return [];
     }
   }
+  return [];
+}
+
+function parseImageUrls(value, fallbackImageUrl = '') {
+  if (Array.isArray(value)) {
+    return value.map((v) => String(v || '').trim()).filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.map((v) => String(v || '').trim()).filter(Boolean);
+    } catch {
+      return value
+        .split(/\r?\n|,/)
+        .map((v) => v.trim())
+        .filter(Boolean);
+    }
+  }
+  if (fallbackImageUrl && String(fallbackImageUrl).trim()) return [String(fallbackImageUrl).trim()];
   return [];
 }
 
@@ -181,6 +201,7 @@ function AdsManagement() {
     setForm({
       title: row.title || '',
       image_url: row.image_url || '',
+      image_urls: parseImageUrls(row.image_urls, row.image_url),
       redirect_url: row.redirect_url || '',
       start_date: row.start_date ? row.start_date.slice(0, 16) : '',
       end_date: row.end_date ? row.end_date.slice(0, 16) : '',
@@ -200,16 +221,24 @@ function AdsManagement() {
   };
 
   const onImageFileSelected = async (e) => {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files || []);
     e.target.value = '';
-    if (!file) return;
+    if (!files.length) return;
     setDialogError('');
     setUploading(true);
     try {
-      const res = await uploadAdImage(file);
-      const url = res.data?.data?.url;
-      if (!url) throw new Error('No image URL returned from server');
-      setForm((f) => ({ ...f, image_url: url }));
+      const uploadedUrls = [];
+      for (const file of files) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await uploadAdImage(file);
+        const url = res.data?.data?.url;
+        if (!url) throw new Error('No image URL returned from server');
+        uploadedUrls.push(url);
+      }
+      setForm((f) => {
+        const merged = [...new Set([...(f.image_urls || []), ...uploadedUrls])];
+        return { ...f, image_urls: merged, image_url: merged[0] || '' };
+      });
     } catch (err) {
       setDialogError(
         err.response?.data?.error?.message || err.message || 'Image upload failed'
@@ -221,11 +250,12 @@ function AdsManagement() {
 
   const save = async () => {
     setDialogError('');
-    if (!form.title.trim() || !form.image_url.trim() || !form.redirect_url.trim()) {
-      setDialogError('Title, image (URL or uploaded file), and redirect URL are required.');
+    const normalizedImageUrls = parseImageUrls(form.image_urls, form.image_url);
+    if (!form.title.trim() || !normalizedImageUrls.length || !form.redirect_url.trim()) {
+      setDialogError('Title, at least one image (URL or uploaded file), and redirect URL are required.');
       return;
     }
-    if (/^file:/i.test(form.image_url.trim())) {
+    if (normalizedImageUrls.some((u) => /^file:/i.test(String(u).trim()))) {
       setDialogError(
         'Local file paths (file://…) cannot be used. Click Upload image to send the file to the server, or paste a public https:// image URL.'
       );
@@ -239,7 +269,8 @@ function AdsManagement() {
     try {
       const payload = {
         title: form.title.trim(),
-        image_url: form.image_url.trim(),
+        image_url: normalizedImageUrls[0],
+        image_urls: normalizedImageUrls,
         redirect_url: form.redirect_url.trim(),
         start_date: toSqlDateTime(form.start_date),
         end_date: toSqlDateTime(form.end_date),
@@ -480,6 +511,7 @@ function AdsManagement() {
                 ) : (
                   filteredAds.map((ad) => {
                     const placements = parsePages(ad.pages);
+                    const adImages = parseImageUrls(ad.image_urls, ad.image_url);
                     const rowAnalytics = adsAnalytics.filter((x) => Number(x.ad_id) === Number(ad.id));
                     const impressions = rowAnalytics.reduce((sum, x) => sum + Number(x.impressions || 0), 0);
                     const clicks = rowAnalytics.reduce((sum, x) => sum + Number(x.clicks || 0), 0);
@@ -498,7 +530,7 @@ function AdsManagement() {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                           <Box
                             component="img"
-                            src={ad.image_url}
+                            src={adImages[0] || ad.image_url}
                             alt=""
                             sx={{ width: 34, height: 34, borderRadius: 1.5, objectFit: 'cover', border: '1px solid #e2e8f0' }}
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -606,7 +638,7 @@ function AdsManagement() {
         }}
       >
         <DialogTitle sx={{ pb: 0, px: 4 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+          <Typography component="div" variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
             {editingId ? 'Edit splash ad' : 'New splash ad'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#546e7a', mt: 1, maxWidth: 760 }}>
@@ -638,17 +670,23 @@ function AdsManagement() {
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="Image URL"
-                      value={form.image_url}
-                      onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-                      placeholder="https://… or upload a file below"
-                      helperText="Paste a public image URL, or upload JPEG / PNG / GIF / WebP (max 5 MB)."
+                      multiline
+                      minRows={3}
+                      label="Image URLs"
+                      value={(form.image_urls || []).join('\n')}
+                      onChange={(e) => {
+                        const image_urls = parseImageUrls(e.target.value, '');
+                        setForm((f) => ({ ...f, image_urls, image_url: image_urls[0] || '' }));
+                      }}
+                      placeholder={'https://...\nhttps://...'}
+                      helperText="Add one image URL per line, or upload files below (JPEG / PNG / GIF / WebP, max 5 MB each)."
                       required
                     />
                     <input
                       ref={fileInputRef}
                       type="file"
                       accept="image/jpeg,image/png,image/gif,image/webp"
+                      multiple
                       hidden
                       onChange={onImageFileSelected}
                     />
@@ -661,11 +699,11 @@ function AdsManagement() {
                         onClick={() => fileInputRef.current?.click()}
                         sx={{ textTransform: 'none', fontWeight: 700 }}
                       >
-                        {uploading ? 'Uploading…' : 'Upload image'}
+                        {uploading ? 'Uploading…' : 'Upload image(s)'}
                       </Button>
-                      {form.image_url && (
+                      {(form.image_urls || []).length > 0 && (
                         <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
-                          Current: {form.image_url}
+                          {(form.image_urls || []).length} image(s) selected
                         </Typography>
                       )}
                     </Box>
@@ -748,10 +786,10 @@ function AdsManagement() {
                   Live preview
                 </Typography>
                 <Box sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid #e2e8f0', mb: 2, minHeight: 280, bgcolor: '#f8faff' }}>
-                  {form.image_url ? (
+                  {(form.image_urls || []).length > 0 ? (
                     <Box
                       component="img"
-                      src={form.image_url}
+                      src={(form.image_urls || [])[0]}
                       alt="Ad preview"
                       sx={{ width: '100%', height: 180, objectFit: 'cover' }}
                       onError={(e) => {
@@ -782,6 +820,19 @@ function AdsManagement() {
                 </Box>
 
                 <Box sx={{ mt: 1 }}>
+                  {(form.image_urls || []).length > 1 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                      {(form.image_urls || []).slice(0, 6).map((url) => (
+                        <Box
+                          key={url}
+                          component="img"
+                          src={url}
+                          alt="ad gallery preview"
+                          sx={{ width: 52, height: 52, borderRadius: 1.5, objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                        />
+                      ))}
+                    </Box>
+                  )}
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#0f172a' }}>
                     Guidelines
                   </Typography>
@@ -794,18 +845,18 @@ function AdsManagement() {
               </Paper>
             </Grid>
           </Grid>
-          {form.image_url && !uploading && (
+          {(form.image_urls || []).length > 0 && !uploading && (
             <Box sx={{ mt: 3, borderRadius: 2, border: '1px solid #e2e8f0', bgcolor: '#ffffff', p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
                 component="img"
-                src={form.image_url}
+                src={(form.image_urls || [])[0]}
                 alt="Ad preview"
                 sx={{ width: 86, height: 86, borderRadius: 2, objectFit: 'cover', border: '1px solid rgba(15, 23, 42, 0.08)' }}
               />
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Preview ready</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Save to publish this ad across the selected pages.
+                  Save to publish this ad across the selected pages ({(form.image_urls || []).length} image(s)).
                 </Typography>
               </Box>
             </Box>

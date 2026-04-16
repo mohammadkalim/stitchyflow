@@ -9,6 +9,7 @@ async function ensureAdsTables() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       title VARCHAR(255) NOT NULL,
       image_url TEXT NOT NULL,
+      image_urls JSON NULL,
       redirect_url TEXT NOT NULL,
       start_date DATETIME NULL,
       end_date DATETIME NULL,
@@ -18,6 +19,13 @@ async function ensureAdsTables() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+  try {
+    await db.query('ALTER TABLE ads ADD COLUMN image_urls JSON NULL');
+  } catch (e) {
+    if (e.errno !== 1060 && e.code !== 'ER_DUP_FIELDNAME') {
+      throw e;
+    }
+  }
   await db.query(`
     CREATE TABLE IF NOT EXISTS ads_analytics (
       ad_id INT NOT NULL,

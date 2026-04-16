@@ -64,6 +64,45 @@ function formatDestinationLabel(url) {
   }
 }
 
+function parseAdImageList(ad) {
+  const out = [];
+  const add = (v) => {
+    const n = normalizeMediaUrl(v);
+    if (n) out.push(n);
+  };
+
+  const parseUnknown = (v) => {
+    if (!v) return;
+    if (Array.isArray(v)) {
+      v.forEach(add);
+      return;
+    }
+    if (typeof v !== 'string') return;
+    const t = v.trim();
+    if (!t) return;
+
+    // JSON array string
+    if (t.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(t);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(add);
+          return;
+        }
+      } catch {
+        /* continue to split parsing */
+      }
+    }
+    // newline/comma separated values
+    t.split(/\r?\n|,/).map((x) => x.trim()).filter(Boolean).forEach(add);
+  };
+
+  parseUnknown(ad?.image_urls);
+  if (out.length === 0) parseUnknown(ad?.image_url);
+
+  return [...new Set(out)];
+}
+
 async function fetchAdsForPage(pathname) {
   const q = `?page=${encodeURIComponent(pathname)}`;
   for (const prefix of ADS_PREFIXES) {
@@ -85,12 +124,16 @@ export default function SplashAdOverlay() {
   const [ad, setAd] = useState(null);
   const [open, setOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
   const adsRootRef = useRef('');
+
+  const adImages = React.useMemo(() => parseAdImageList(ad), [ad]);
 
   const load = useCallback(async () => {
     setAd(null);
     setOpen(false);
     setImageError(false);
+    setSlideIndex(0);
     adsRootRef.current = '';
     try {
       const result = await fetchAdsForPage(pathname);
@@ -127,9 +170,17 @@ export default function SplashAdOverlay() {
     handleClose();
   };
 
+  useEffect(() => {
+    if (adImages.length <= 1) return undefined;
+    const t = setInterval(() => {
+      setSlideIndex((i) => (i + 1) % adImages.length);
+    }, 2600);
+    return () => clearInterval(t);
+  }, [adImages.length]);
+
   if (!ad) return null;
 
-  const imageSrc = normalizeMediaUrl(ad.image_url);
+  const imageSrc = adImages[slideIndex] || '';
   const destinationLabel = formatDestinationLabel(ad.redirect_url);
 
   return (
@@ -261,6 +312,34 @@ export default function SplashAdOverlay() {
             <Typography variant="body2" color="text.secondary" textAlign="center">
               Image could not be loaded. Check that the image URL is public and uses https.
             </Typography>
+          </Stack>
+        )}
+        {adImages.length > 1 && (
+          <Stack
+            direction="row"
+            spacing={0.8}
+            sx={{
+              position: 'absolute',
+              bottom: 10,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              px: 1.2,
+              py: 0.6,
+              borderRadius: 999,
+              bgcolor: 'rgba(15, 23, 42, 0.38)'
+            }}
+          >
+            {adImages.map((_, idx) => (
+              <Box
+                key={idx}
+                sx={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  bgcolor: idx === slideIndex ? '#fff' : 'rgba(255,255,255,0.45)'
+                }}
+              />
+            ))}
           </Stack>
         )}
       </Box>

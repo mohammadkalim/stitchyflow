@@ -53,7 +53,6 @@ export const ADMIN_PAGE_CHUNKS = {
   '/ads-analytics': () => import('./pages/AdsAnalytics'),
   '/slider-media': () => import('./pages/SliderMedia'),
   '/privacy-pages': () => import('./pages/PrivacyEdit'),
-  '/tailor-services': () => import('./pages/TailorServices'),
 };
 
 /** Start loading a route chunk early (hover, idle). Safe to call repeatedly. */

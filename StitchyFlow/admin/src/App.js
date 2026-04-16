@@ -56,7 +56,6 @@ const AdsManagement = lazy(ADMIN_PAGE_CHUNKS['/ads-management']);
 const AdsAnalytics = lazy(ADMIN_PAGE_CHUNKS['/ads-analytics']);
 const SliderMedia = lazy(ADMIN_PAGE_CHUNKS['/slider-media']);
 const PrivacyEdit = lazy(ADMIN_PAGE_CHUNKS['/privacy-pages']);
-const TailorServices = lazy(ADMIN_PAGE_CHUNKS['/tailor-services']);
 
 const theme = createTheme({
   palette: {
@@ -150,7 +149,6 @@ function App() {
             <Route path="/smtp-settings" element={<PrivateRoute><SMTPSettings /></PrivateRoute>} />
             <Route path="/admin-settings" element={<PrivateRoute><AdminSettings /></PrivateRoute>} />
             <Route path="/site-settings" element={<PrivateRoute><SiteSettings /></PrivateRoute>} />
-            <Route path="/tailor-services" element={<PrivateRoute><TailorServices /></PrivateRoute>} />
             <Route path="/site-maintenance" element={<PrivateRoute><SiteMaintenanceMode /></PrivateRoute>} />
             <Route path="/add-more-smtp" element={<PrivateRoute><AddMoreSMTP /></PrivateRoute>} />
             <Route path="/ads-management" element={<PrivateRoute><AdsManagement /></PrivateRoute>} />

@@ -16,7 +16,6 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import OrdersIcon from '@mui/icons-material/ShoppingCart';
-import TailorsIcon from '@mui/icons-material/ContentCut';
 import MeasurementsIcon from '@mui/icons-material/Straighten';
 import PaymentIcon from '@mui/icons-material/Payment';
 import ReportsIcon from '@mui/icons-material/Assessment';
@@ -104,7 +103,6 @@ const businessSubItems = [
 ];
 
 const adminSubItems = [
-  { text: 'Tailor Services',  icon: <TailorsIcon />,        path: '/tailor-services' },
   { text: 'SMTP Settings',    icon: <SMTPIcon />,           path: '/smtp-settings' },
   { text: 'Admin Settings',   icon: <AdminSettingsIcon />,  path: '/admin-settings' },
   { text: 'Site Settings',    icon: <SiteSettingsIcon />,   path: '/site-settings' },
