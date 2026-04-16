@@ -74,6 +74,7 @@ app.use('/api/v1/orders', require('./routes/orders.routes'));
 app.use('/api/v1/admin', require('./routes/admin.routes'));
 app.use('/api/v1/smtp', require('./routes/smtp.routes'));
 // Public tailor shop detail — app-level route so GET always hits before any nested auth (fixes 404 from proxy/clients).
+const businessTailorServiceHandlers = require('./routes/business_tailor_services.handlers');
 const businessRoutes = require('./routes/business.routes');
 app.get('/api/v1/business/public/shops/:shopId', businessRoutes.getPublicShopById);
 app.get(
@@ -95,25 +96,25 @@ app.get(
   '/api/v1/business/services',
   authenticateToken,
   ensureBusinessTailorTablesReady,
-  businessRoutes.listBusinessTailorServices
+  businessTailorServiceHandlers.listBusinessTailorServices
 );
 app.post(
   '/api/v1/business/services',
   authenticateToken,
   ensureBusinessTailorTablesReady,
-  businessRoutes.createBusinessTailorService
+  businessTailorServiceHandlers.createBusinessTailorService
 );
 app.put(
   '/api/v1/business/services/:id',
   authenticateToken,
   ensureBusinessTailorTablesReady,
-  businessRoutes.updateBusinessTailorService
+  businessTailorServiceHandlers.updateBusinessTailorService
 );
 app.delete(
   '/api/v1/business/services/:id',
   authenticateToken,
   ensureBusinessTailorTablesReady,
-  businessRoutes.deleteBusinessTailorService
+  businessTailorServiceHandlers.deleteBusinessTailorService
 );
 
 app.use('/api/v1/business', businessRoutes);
@@ -248,6 +249,9 @@ function scheduleRefreshTokenCleanup(intervalMs = 1000 * 60 * 60) {
 
 server.listen(PORT, async () => {
   console.log(`✓ StitchyFlow Backend API running on port ${PORT}`);
+  console.log(
+    '✓ Business tailor services: GET|POST /api/v1/business/services · PUT|DELETE /api/v1/business/services/:id'
+  );
   console.log(`✓ Environment: ${process.env.NODE_ENV}`);
   console.log(`✓ Splash ad upload routes: POST …/upload-image on /api/v1/ads, /api/v1/admin/ads, /api/v1/ca-sub/ads`);
   scheduleRefreshTokenCleanup();
