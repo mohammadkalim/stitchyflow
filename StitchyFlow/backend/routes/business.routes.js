@@ -1105,3 +1105,7 @@ module.exports = router;
 module.exports.initPromise = initPromise;
 module.exports.getPublicShopById = getPublicShopById;
 module.exports.getTailorsForCatalogCategory = getTailorsForCatalogCategory;
+module.exports.listBusinessTailorServices = listBusinessTailorServices;
+module.exports.createBusinessTailorService = createBusinessTailorService;
+module.exports.updateBusinessTailorService = updateBusinessTailorService;
+module.exports.deleteBusinessTailorService = deleteBusinessTailorService;
