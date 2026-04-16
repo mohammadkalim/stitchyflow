@@ -7,10 +7,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Box, IconButton } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-
-const API_BASE = process.env.REACT_APP_API_URL
-  ? process.env.REACT_APP_API_URL.replace(/\/api\/v\d+\/?$/i, '')
-  : 'http://localhost:5000';
+import { gex } from '../utils/api';
 
 const DEFAULT_OVERLAY = 'rgba(0,0,0,0.18)';
 
@@ -19,28 +16,37 @@ export function useSliderImages(page) {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    if (!page) {
-      setImages([]);
-      setCurrent(0);
-      return;
-    }
+    let cancelled = false;
 
-    fetch(`${API_BASE}/api/v1/slider-media/public?page=${encodeURIComponent(page)}`)
-      .then((r) => r.json())
-      .then((d) => {
+    const loadSliderImages = async () => {
+      if (!page) {
+        setImages([]);
+        setCurrent(0);
+        return;
+      }
+
+      try {
+        const d = await gex(`/slider-media/public?page=${encodeURIComponent(page)}`, { cache: 'no-store' });
+        if (cancelled) return;
         if (d.success && Array.isArray(d.data) && d.data.length) {
           setImages(d.data);
           setCurrent(0);
           return;
         }
+        setImages([]);
+        setCurrent(0);
+      } catch {
+        if (cancelled) return;
+        setImages([]);
+        setCurrent(0);
+      }
+    };
 
-        setImages([]);
-        setCurrent(0);
-      })
-      .catch(() => {
-        setImages([]);
-        setCurrent(0);
-      });
+    void loadSliderImages();
+
+    return () => {
+      cancelled = true;
+    };
   }, [page]);
 
   const prev = useCallback(() => setCurrent((c) => (c - 1 + images.length) % images.length), [images.length]);

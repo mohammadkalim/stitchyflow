@@ -6,7 +6,7 @@
  * Email: info@logixinventor.com
  * Website: www.logixinventor.com
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PageTemplate from '../components/PageTemplate';
 import { gex, PUBLIC_SHOPS_CHANGED_EVENT } from '../utils/api';
 
@@ -37,40 +37,51 @@ const tailorShopsSliderTheme = {
 function TailorShops() {
   const [shops, setShops] = useState([]);
   const [shopsLoading, setShopsLoading] = useState(true);
+  const shopsLoadingRef = useRef(shopsLoading);
+  shopsLoadingRef.current = shopsLoading;
 
   useEffect(() => {
     let cancelled = false;
     let fetchGeneration = 0;
 
-    const load = () => {
+    /**
+     * Loads shops via Ajax (`fetch` through `gex`) without a full browser reload.
+     * When `showLoading` is false, updates the list in the background (e.g. tab focus) so the page does not jump back to the spinner.
+     */
+    const load = async ({ showLoading = true } = {}) => {
       const gen = ++fetchGeneration;
-      setShopsLoading(true);
-      gex('/business/public/shops', { cache: 'no-store' })
-        .then((d) => {
-          if (cancelled || gen !== fetchGeneration) return;
-          const list = d.success && Array.isArray(d.data) ? d.data : [];
-          setShops(list);
-        })
-        .catch(() => {
-          if (cancelled || gen !== fetchGeneration) return;
-          setShops([]);
-        })
-        .finally(() => {
-          if (!cancelled && gen === fetchGeneration) setShopsLoading(false);
-        });
+      if (showLoading) setShopsLoading(true);
+      try {
+        const d = await gex('/business/public/shops', { cache: 'no-store' });
+        if (cancelled || gen !== fetchGeneration) return;
+        const list = d.success && Array.isArray(d.data) ? d.data : [];
+        setShops(list);
+      } catch {
+        if (cancelled || gen !== fetchGeneration) return;
+        if (showLoading) setShops([]);
+      } finally {
+        if (!cancelled && gen === fetchGeneration && showLoading) setShopsLoading(false);
+      }
     };
 
-    load();
+    void load({ showLoading: true });
+
+    const onPublicShopsChanged = () => {
+      void load({ showLoading: true });
+    };
 
     const onVisible = () => {
-      if (document.visibilityState === 'visible') load();
+      if (document.visibilityState !== 'visible') return;
+      if (shopsLoadingRef.current) return;
+      void load({ showLoading: false });
     };
-    window.addEventListener(PUBLIC_SHOPS_CHANGED_EVENT, load);
+
+    window.addEventListener(PUBLIC_SHOPS_CHANGED_EVENT, onPublicShopsChanged);
     document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       cancelled = true;
-      window.removeEventListener(PUBLIC_SHOPS_CHANGED_EVENT, load);
+      window.removeEventListener(PUBLIC_SHOPS_CHANGED_EVENT, onPublicShopsChanged);
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);

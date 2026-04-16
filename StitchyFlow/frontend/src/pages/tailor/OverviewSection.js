@@ -208,13 +208,42 @@ export default function OverviewSection({ user, isApproved, onNavigate, showHero
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      apiFetch('/business/shops/enriched').catch(() => ({ data: [] })),
-      apiFetch('/orders').catch(() => ({ data: [] })),
-    ]).then(([s, o]) => {
-      setShops(Array.isArray(s?.data) ? s.data : []);
-      setOrders(Array.isArray(o?.data) ? o.data : []);
-    }).finally(() => setLoading(false));
+    let cancelled = false;
+
+    const loadOverview = async ({ showLoading = true } = {}) => {
+      if (showLoading) setLoading(true);
+      const [shopsRes, ordersRes] = await Promise.allSettled([
+        apiFetch('/business/shops/enriched', { cache: 'no-store' }),
+        apiFetch('/orders', { cache: 'no-store' }),
+      ]);
+      if (cancelled) return;
+
+      if (shopsRes.status === 'fulfilled') {
+        setShops(Array.isArray(shopsRes.value?.data) ? shopsRes.value.data : []);
+      }
+      if (ordersRes.status === 'fulfilled') {
+        setOrders(Array.isArray(ordersRes.value?.data) ? ordersRes.value.data : []);
+      }
+      if (showLoading) setLoading(false);
+    };
+
+    void loadOverview({ showLoading: true });
+
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      void loadOverview({ showLoading: false });
+    };
+    const onFocus = () => { void loadOverview({ showLoading: false }); };
+    const iv = setInterval(() => { void loadOverview({ showLoading: false }); }, 60000);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   const completedOrders = orders.filter((o) => getOrderStatus(o) === 'completed');

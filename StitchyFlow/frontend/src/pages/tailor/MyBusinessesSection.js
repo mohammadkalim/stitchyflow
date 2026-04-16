@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box, Typography, Paper, Button, Grid, Chip, Divider,
   TextField, Dialog, DialogContent, DialogTitle, DialogActions, IconButton,
@@ -129,25 +129,85 @@ export default function MyBusinessesSection({ isApproved }) {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [maxShops, setMaxShops] = useState(1);
+  const mountedRef = useRef(true);
+  const listRef = useRef([]);
+  const userId = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      const u = raw ? JSON.parse(raw) : null;
+      return u?.id || u?.user_id || u?.tailor_id || 'self';
+    } catch {
+      return 'self';
+    }
+  }, []);
+  const cacheKey = useMemo(() => `stitchyflow:tailor-businesses:${userId}`, [userId]);
 
-  const load = () => {
-    setLoading(true);
-    apiFetch('/business/shops/enriched')
-      .then((r) => {
-        setList(Array.isArray(r.data) ? r.data : []);
-        const cap = r.meta?.maxShops;
-        if (typeof cap === 'number' && cap >= 1) setMaxShops(cap);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+  useEffect(() => {
+    listRef.current = list;
+  }, [list]);
+
+  const load = async ({ showLoading = true } = {}) => {
+    if (showLoading) setLoading(true);
+    try {
+      const r = await apiFetch('/business/shops/enriched', { cache: 'no-store' });
+      if (!mountedRef.current) return;
+      const nextList = Array.isArray(r.data) ? r.data : [];
+      setList(nextList);
+      const cap = r.meta?.maxShops;
+      if (typeof cap === 'number' && cap >= 1) setMaxShops(cap);
+      setError('');
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          list: nextList,
+          maxShops: typeof cap === 'number' && cap >= 1 ? cap : maxShops,
+          ts: Date.now(),
+        }));
+      } catch (_) { /* ignore cache failures */ }
+    } catch (e) {
+      if (!mountedRef.current) return;
+      if (listRef.current.length === 0) {
+        setError(e?.message || 'Unable to refresh businesses right now.');
+      }
+    } finally {
+      if (mountedRef.current && showLoading) setLoading(false);
+    }
   };
 
   useEffect(() => {
+    mountedRef.current = true;
     if (!isApproved) { setLoading(false); return; }
-    load();
+    try {
+      const raw = sessionStorage.getItem(cacheKey);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (Array.isArray(cached?.list)) {
+          setList(cached.list);
+          if (typeof cached?.maxShops === 'number' && cached.maxShops >= 1) setMaxShops(cached.maxShops);
+          setLoading(false);
+        }
+      }
+    } catch (_) { /* ignore bad cache */ }
+
+    void load({ showLoading: listRef.current.length === 0 });
     apiFetch('/business/options/business-types').then(r => setTypes(r.data || [])).catch(() => {});
     apiFetch('/catalog/categories').then(r => setCategories(r.data || [])).catch(() => {});
-  }, [isApproved]);
+
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      void load({ showLoading: false });
+    };
+    const onFocus = () => { void load({ showLoading: false }); };
+    const iv = setInterval(() => { void load({ showLoading: false }); }, 60000);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      mountedRef.current = false;
+      clearInterval(iv);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [isApproved, cacheKey]);
 
   useEffect(() => {
     if (!form.category_id) { setSubcategories([]); return; }
@@ -369,19 +429,34 @@ export default function MyBusinessesSection({ isApproved }) {
             const s = badge(b.shop_status);
             return (
               <Grid item xs={12} sm={6} lg={4} key={b.shop_id}>
-                <Paper elevation={0} sx={{ borderRadius: '16px', p: 2.5, border: '1px solid #dbeafe', bgcolor: '#fff', transition: 'all 0.18s', '&:hover': { boxShadow: '0 10px 26px rgba(37,99,235,0.16)', transform: 'translateY(-2px)', borderColor: BLUE_BORDER } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1, mb: 1.75 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25, minWidth: 0, flex: 1 }}>
-                      <Box sx={{ width: 48, height: 48, flexShrink: 0, borderRadius: '13px', bgcolor: BLUE_SOFT, border: '1px solid #dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <StorefrontOutlinedIcon sx={{ fontSize: 24, color: BLUE }} />
+                <Paper elevation={0} sx={{ borderRadius: '16px', border: '1px solid #dbeafe', bgcolor: '#fff', overflow: 'hidden', transition: 'all 0.18s', '&:hover': { boxShadow: '0 10px 26px rgba(37,99,235,0.16)', transform: 'translateY(-2px)', borderColor: BLUE_BORDER } }}>
+                  <Box sx={{ position: 'relative', height: 132, bgcolor: '#e8e7ff', overflow: 'hidden' }}>
+                    {b.logo_image ? (
+                      <Box
+                        component="img"
+                        src={resolvePublicBusinessImageUrl(b.logo_image, b)}
+                        alt={b.shop_name || 'Shop logo'}
+                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(19, 16, 202, 0.14)' }}>
+                        <Typography sx={{ fontSize: '3.2rem', fontWeight: 800, color: '#1310ca', lineHeight: 1 }}>
+                          {String(b.shop_name || b.owner_name || '?').trim().charAt(0).toUpperCase() || '?'}
+                        </Typography>
                       </Box>
+                    )}
+                    <Chip label={s.label} size="small" sx={{ position: 'absolute', top: 10, right: 10, bgcolor: s.bg, color: s.color, fontWeight: 700, fontSize: '0.68rem' }} />
+                  </Box>
+                  <Box sx={{ p: 2.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1, mb: 1.75 }}>
                       <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.93rem', lineHeight: 1.35, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{b.shop_name}</Typography>
                         <Typography sx={{ color: '#94a3b8', fontSize: '0.74rem', mt: 0.25, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{b.business_type_name || b.owner_name || '—'}</Typography>
                       </Box>
                     </Box>
-                    <Chip label={s.label} size="small" sx={{ flexShrink: 0, bgcolor: s.bg, color: s.color, fontWeight: 700, fontSize: '0.68rem' }} />
-                  </Box>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6, mb: 1.75 }}>
                     {b.address && <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}><LocationOnOutlinedIcon sx={{ fontSize: 14, color: '#94a3b8', mt: 0.2, flexShrink: 0 }} /><Typography sx={{ fontSize: '0.78rem', color: '#64748b', minWidth: 0, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{b.address}{b.city ? `, ${b.city}` : ''}</Typography></Box>}
                     {b.contact_number && <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}><PhoneOutlinedIcon sx={{ fontSize: 14, color: '#94a3b8' }} /><Typography sx={{ fontSize: '0.78rem', color: '#64748b' }}>{b.contact_number}</Typography></Box>}
@@ -410,6 +485,7 @@ export default function MyBusinessesSection({ isApproved }) {
                       <VerifiedOutlinedIcon sx={{ fontSize: 14, color: b.shop_status === 'active' ? '#16a34a' : '#94a3b8' }} />
                       <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8' }}>Verified</Typography>
                     </Box>
+                  </Box>
                   </Box>
                 </Paper>
               </Grid>

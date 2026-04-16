@@ -606,3 +606,18 @@ please App this http://localhost:3000/tailor-dashboard Shop Tailer ke markhubsto
 
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+--------
+
+please har Shop Tailer ke Apne Services create kare and please alag alag ho please saab ke saab ko na show kare and please create a Proper and please gab aik create kare to please os he ke Services page men rahe our kese Business owner ko na show kare and please Database save services as well
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
