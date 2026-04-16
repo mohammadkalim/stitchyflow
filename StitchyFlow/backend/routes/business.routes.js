@@ -6,6 +6,7 @@ const path = require('path');
 const multer = require('multer');
 const { authenticateToken } = require('../middleware/auth');
 const { fetchTailorShopsForCatalogCategory } = require('../utils/tailorsByCatalogCategory');
+const tailorBusinessServices = require('./business_tailor_services.handlers');
 
 const RESOURCES = {
   verifications: {
