@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Paper, Button, Grid, Chip, Divider,
-  TextField, Dialog, DialogContent, DialogTitle, IconButton,
+  TextField, Dialog, DialogContent, DialogTitle, DialogActions, IconButton,
   MenuItem, CircularProgress, Alert, InputAdornment,
 } from '@mui/material';
 import MiscellaneousServicesOutlinedIcon from '@mui/icons-material/MiscellaneousServicesOutlined';
@@ -14,13 +14,49 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { apiFetch } from '../../utils/api';
 
-const BLUE = '#2563eb';
-const BLUE_DARK = '#1d4ed8';
-const BLUE_SOFT = '#f5f9ff';
-const BLUE_BORDER = '#dbeafe';
+const BLUE = '#0ea5e9';
+const BLUE_DARK = '#0284c7';
+const BLUE_SOFT = '#f0f9ff';
+const BLUE_BORDER = '#bae6fd';
+const BLUE_MUTED = '#64748b';
+
+const CORPORATE_SELECT_MENU_PROPS = {
+  PaperProps: {
+    sx: {
+      borderRadius: '12px',
+      border: '1px solid #e0f2fe',
+      boxShadow: '0 16px 48px rgba(14, 165, 233, 0.12)',
+      maxHeight: 320,
+      mt: 0.5,
+      bgcolor: '#ffffff',
+    },
+  },
+};
+
+const CORPORATE_MENU_ITEM_SX = {
+  fontSize: '0.875rem',
+  color: '#334155',
+  borderRadius: '8px',
+  mx: 0.5,
+  my: 0.1,
+  '&:hover': { bgcolor: '#f0f9ff' },
+  '&.Mui-selected': { bgcolor: '#e0f2fe', fontWeight: 600 },
+  '&.Mui-selected:hover': { bgcolor: '#e0f2fe' },
+};
+
+const INPUT_SX = {
+  '& .MuiInputLabel-root': { color: BLUE_MUTED, fontWeight: 600 },
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '12px',
+    bgcolor: '#fff',
+    '& fieldset': { borderColor: '#e2e8f0' },
+    '&:hover fieldset': { borderColor: '#bae6fd' },
+    '&.Mui-focused fieldset': { borderColor: BLUE, borderWidth: '1px' },
+  },
+};
 const TYPES = ['Custom Stitching','Alterations','Bridal Wear','Suits & Blazers','Traditional Wear','Fabric Selection','Embroidery','Kids Wear','Other'];
 const TIMES = ['1-3 days','3-5 days','1 week','2 weeks','3-4 weeks','Custom'];
-const EMPTY = { garment_type: '', description: '', price_min: '', price_max: '', delivery_time: '', order_status: 'pending' };
+const EMPTY = { shop_id: '', garment_type: '', description: '', price_min: '', price_max: '', delivery_time: '', service_status: 'available' };
 
 export default function ServicesSection({ isApproved }) {
   const [open, setOpen]       = useState(false);
@@ -30,41 +66,68 @@ export default function ServicesSection({ isApproved }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState('');
+  const [shops, setShops]     = useState([]);
+  const [activeShopFilter, setActiveShopFilter] = useState('all');
+
+  const shopIdInList = (id) => shops.some((s) => String(s.shop_id) === String(id));
 
   const load = () => {
     setLoading(true);
-    apiFetch('/business/orders')
+    apiFetch('/business/services')
       .then(r => setList(r.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { if (isApproved) load(); else setLoading(false); }, [isApproved]);
+  useEffect(() => {
+    if (!isApproved) { setLoading(false); return; }
+    load();
+    apiFetch('/business/shops/enriched')
+      .then((r) => {
+        const ownShops = Array.isArray(r.data) ? r.data : [];
+        setShops(ownShops);
+      })
+      .catch(() => setShops([]));
+  }, [isApproved]);
 
-  const openAdd  = () => { setForm(EMPTY); setEdit(null); setError(''); setOpen(true); };
+  const openAdd  = () => {
+    const defaultShopId = activeShopFilter !== 'all'
+      ? activeShopFilter
+      : (shops[0]?.shop_id ? String(shops[0].shop_id) : '');
+    setForm({ ...EMPTY, shop_id: defaultShopId });
+    setEdit(null);
+    setError('');
+    setOpen(true);
+  };
   const openEdit = s => {
-    setForm({ garment_type: s.garment_type || '', description: s.description || '', price_min: s.price_min || s.total_amount || '', price_max: s.price_max || '', delivery_time: s.delivery_time || '', order_status: s.order_status || 'pending' });
+    setForm({
+      shop_id: s.shop_id ? String(s.shop_id) : '',
+      garment_type: s.garment_type || '',
+      description: s.description || '',
+      price_min: s.price_min || '',
+      price_max: s.price_max || '',
+      delivery_time: s.delivery_time || '',
+      service_status: s.service_status || 'available',
+    });
     setEdit(s); setError(''); setOpen(true);
   };
 
   const save = async () => {
     if (!form.garment_type) { setError('Service type is required.'); return; }
+    if (!form.shop_id) { setError('Please select a business shop for this service.'); return; }
     setSaving(true); setError('');
     try {
       const payload = {
+        shop_id: Number(form.shop_id),
         garment_type: form.garment_type,
         description: form.description,
-        total_amount: form.price_min || 0,
         price_min: form.price_min || 0,
         price_max: form.price_max || 0,
         delivery_time: form.delivery_time,
-        order_status: 'pending',
-        tailor_name: 'Service Listing',
-        order_number: edit?.order_number || `SVC-${Date.now()}`,
-        customer_name: 'Service Listing',
+        service_status: form.service_status || 'available',
       };
-      if (edit) await apiFetch(`/business/orders/${edit.business_order_id}`, { method: 'PUT', body: JSON.stringify(payload) });
-      else       await apiFetch('/business/orders', { method: 'POST', body: JSON.stringify(payload) });
+      if (edit) await apiFetch(`/business/services/${edit.business_service_id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      else       await apiFetch('/business/services', { method: 'POST', body: JSON.stringify(payload) });
       setOpen(false); load();
     } catch (e) { setError(e.message || 'Failed to save.'); }
     finally { setSaving(false); }
@@ -72,7 +135,7 @@ export default function ServicesSection({ isApproved }) {
 
   const del = async id => {
     if (!window.confirm('Delete this service?')) return;
-    try { await apiFetch(`/business/orders/${id}`, { method: 'DELETE' }); load(); }
+    try { await apiFetch(`/business/services/${id}`, { method: 'DELETE' }); load(); }
     catch (e) { alert(e.message); }
   };
 
@@ -86,7 +149,10 @@ export default function ServicesSection({ isApproved }) {
     </Box>
   );
 
-  const avg = list.length > 0 ? Math.round(list.reduce((a, s) => a + Number(s.total_amount || 0), 0) / list.length) : 0;
+  const filteredList = activeShopFilter === 'all'
+    ? list
+    : list.filter((s) => String(s.shop_id) === String(activeShopFilter));
+  const avg = filteredList.length > 0 ? Math.round(filteredList.reduce((a, s) => a + Number(s.price_min || 0), 0) / filteredList.length) : 0;
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -100,13 +166,32 @@ export default function ServicesSection({ isApproved }) {
           Add Service
         </Button>
       </Box>
+      <Box sx={{ mb: 2.5, maxWidth: 360 }}>
+        <TextField
+          select
+          label="Shop filter"
+          fullWidth
+          size="small"
+          value={activeShopFilter}
+          onChange={(e) => setActiveShopFilter(e.target.value)}
+          sx={INPUT_SX}
+          SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
+        >
+          <MenuItem value="all" sx={CORPORATE_MENU_ITEM_SX}>All my shops</MenuItem>
+          {shops.map((shop) => (
+            <MenuItem key={shop.shop_id} value={String(shop.shop_id)} sx={CORPORATE_MENU_ITEM_SX}>
+              {shop.shop_name}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
-          { label: 'Total Services', value: list.length, color: '#2563eb' },
-          { label: 'Available', value: list.filter(s => s.order_status !== 'cancelled').length, color: '#16a34a' },
+          { label: 'Total Services', value: filteredList.length, color: '#2563eb' },
+          { label: 'Available', value: filteredList.filter(s => s.service_status !== 'unavailable').length, color: '#16a34a' },
           { label: 'Avg. Price (PKR)', value: avg.toLocaleString(), color: '#d97706' },
-          { label: 'Completed', value: list.filter(s => s.order_status === 'completed').length, color: '#7c3aed' },
+          { label: 'Unavailable', value: filteredList.filter(s => s.service_status === 'unavailable').length, color: '#7c3aed' },
         ].map(s => (
           <Grid item xs={6} sm={3} key={s.label}>
             <Paper elevation={0} sx={{ borderRadius: '14px', p: 2.25, border: '1px solid #e2e8f0', bgcolor: BLUE_SOFT, textAlign: 'center' }}>
@@ -119,7 +204,7 @@ export default function ServicesSection({ isApproved }) {
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress size={32} sx={{ color: BLUE }} /></Box>
-      ) : list.length === 0 ? (
+      ) : filteredList.length === 0 ? (
         <Paper elevation={0} sx={{ borderRadius: '16px', p: 8, border: '1px solid #dbeafe', bgcolor: BLUE_SOFT, textAlign: 'center' }}>
           <MiscellaneousServicesOutlinedIcon sx={{ fontSize: 56, color: '#e2e8f0', mb: 1.5 }} />
           <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '1.05rem', mb: 0.5 }}>No services added yet</Typography>
@@ -131,8 +216,8 @@ export default function ServicesSection({ isApproved }) {
         </Paper>
       ) : (
         <Grid container spacing={2.25}>
-          {list.map(s => (
-            <Grid item xs={12} sm={6} lg={6} xl={4} key={s.business_order_id}>
+          {filteredList.map(s => (
+            <Grid item xs={12} sm={6} lg={6} xl={4} key={s.business_service_id}>
               <Paper elevation={0} sx={{ borderRadius: '16px', p: 2.5, border: '1px solid #dbeafe', bgcolor: '#fff', transition: 'all 0.15s', '&:hover': { boxShadow: '0 10px 26px rgba(37,99,235,0.16)', transform: 'translateY(-2px)', borderColor: BLUE_BORDER } }}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
@@ -141,18 +226,18 @@ export default function ServicesSection({ isApproved }) {
                     </Box>
                     <Box>
                       <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.93rem' }}>{s.garment_type}</Typography>
-                      <Typography sx={{ color: '#94a3b8', fontSize: '0.74rem' }}>{s.delivery_time || 'Delivery TBD'}</Typography>
+                      <Typography sx={{ color: '#94a3b8', fontSize: '0.74rem' }}>{s.shop_name || 'My Shop'} • {s.delivery_time || 'Delivery TBD'}</Typography>
                     </Box>
                   </Box>
-                  <Chip label={s.order_status === 'cancelled' ? 'Unavailable' : 'Available'} size="small"
-                    sx={{ bgcolor: s.order_status === 'cancelled' ? '#fef2f2' : '#eff6ff', color: s.order_status === 'cancelled' ? '#dc2626' : '#2563eb', fontWeight: 700, fontSize: '0.68rem' }} />
+                  <Chip label={s.service_status === 'unavailable' ? 'Unavailable' : 'Available'} size="small"
+                    sx={{ bgcolor: s.service_status === 'unavailable' ? '#fef2f2' : '#eff6ff', color: s.service_status === 'unavailable' ? '#dc2626' : '#2563eb', fontWeight: 700, fontSize: '0.68rem' }} />
                 </Box>
                 {s.description && <Typography sx={{ fontSize: '0.78rem', color: '#64748b', mb: 1.25, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{s.description}</Typography>}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
                     <AttachMoneyIcon sx={{ fontSize: 15, color: BLUE }} />
                     <Typography sx={{ fontWeight: 700, color: BLUE, fontSize: '0.88rem' }}>
-                      PKR {s.price_min || s.total_amount || 0}{s.price_max && s.price_max !== s.price_min ? ` – ${s.price_max}` : ''}
+                      PKR {s.price_min || 0}{s.price_max && s.price_max !== s.price_min ? ` – ${s.price_max}` : ''}
                     </Typography>
                   </Box>
                   {s.delivery_time && <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}><AccessTimeIcon sx={{ fontSize: 13, color: '#94a3b8' }} /><Typography sx={{ fontSize: '0.73rem', color: '#94a3b8' }}>{s.delivery_time}</Typography></Box>}
@@ -160,7 +245,7 @@ export default function ServicesSection({ isApproved }) {
                 <Divider sx={{ my: 1.25 }} />
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Button size="small" startIcon={<EditOutlinedIcon sx={{ fontSize: 14 }} />} onClick={() => openEdit(s)} sx={{ color: BLUE, bgcolor: BLUE_SOFT, border: '1px solid #dbeafe', textTransform: 'none', fontWeight: 700, fontSize: '0.76rem', borderRadius: '9px', '&:hover': { bgcolor: '#dbeafe' } }}>Edit</Button>
-                  <Button size="small" startIcon={<DeleteOutlineIcon sx={{ fontSize: 14 }} />} onClick={() => del(s.business_order_id)} sx={{ color: '#dc2626', bgcolor: '#fef2f2', border: '1px solid #fecaca', textTransform: 'none', fontWeight: 700, fontSize: '0.76rem', borderRadius: '9px', '&:hover': { bgcolor: '#fee2e2' } }}>Delete</Button>
+                  <Button size="small" startIcon={<DeleteOutlineIcon sx={{ fontSize: 14 }} />} onClick={() => del(s.business_service_id)} sx={{ color: '#dc2626', bgcolor: '#fef2f2', border: '1px solid #fecaca', textTransform: 'none', fontWeight: 700, fontSize: '0.76rem', borderRadius: '9px', '&:hover': { bgcolor: '#fee2e2' } }}>Delete</Button>
                 </Box>
               </Paper>
             </Grid>
@@ -168,32 +253,246 @@ export default function ServicesSection({ isApproved }) {
         </Grid>
       )}
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px', border: '1px solid #dbeafe', boxShadow: '0 20px 40px rgba(15,23,42,0.12)' } }}>
-        <Box sx={{ height: 4, bgcolor: BLUE }} />
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: '1rem' }}>{edit ? 'Edit Service' : 'Add New Service'}</Typography>
-          <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+      <Dialog
+        open={open}
+        onClose={() => !saving && setOpen(false)}
+        maxWidth={false}
+        fullWidth
+        scroll="paper"
+        BackdropProps={{ sx: { backdropFilter: 'blur(6px)', bgcolor: 'rgba(15, 23, 42, 0.35)' } }}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 'min(920px, 96vw)' },
+            maxWidth: 920,
+            maxHeight: 'min(92vh, 880px)',
+            borderRadius: '20px',
+            border: '1px solid #e0f2fe',
+            boxShadow: '0 32px 64px rgba(14, 165, 233, 0.14), 0 0 0 1px rgba(255,255,255,0.8) inset',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            bgcolor: '#fafbfc',
+          },
+        }}
+      >
+        <Box
+          sx={{
+            height: 5,
+            flexShrink: 0,
+            background: 'linear-gradient(90deg, #7dd3fc 0%, #0ea5e9 45%, #38bdf8 100%)',
+          }}
+        />
+        <DialogTitle
+          sx={{
+            flexShrink: 0,
+            px: { xs: 2.5, sm: 3.5 },
+            pt: 2.75,
+            pb: 2,
+            bgcolor: '#fff',
+            borderBottom: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 2,
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: BLUE, letterSpacing: '0.12em', textTransform: 'uppercase', mb: 0.75 }}>
+              Service catalog
+            </Typography>
+            <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.15rem', sm: '1.35rem' }, color: '#0f172a', lineHeight: 1.25, letterSpacing: '-0.02em' }}>
+              {edit ? 'Edit service' : 'Add new service'}
+            </Typography>
+            <Typography sx={{ color: BLUE_MUTED, fontSize: '0.84rem', mt: 0.75, maxWidth: 520, lineHeight: 1.55 }}>
+              Define pricing, delivery expectations, and availability. Each listing is tied to one of your verified shops.
+            </Typography>
+          </Box>
+          <IconButton
+            size="small"
+            onClick={() => setOpen(false)}
+            disabled={saving}
+            aria-label="Close"
+            sx={{
+              color: '#64748b',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              flexShrink: 0,
+              '&:hover': { bgcolor: '#f0f9ff', borderColor: '#bae6fd', color: BLUE_DARK },
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-            {error && <Alert severity="error" sx={{ borderRadius: '10px' }}>{error}</Alert>}
-            <TextField select label="Service Type *" fullWidth size="small" value={form.garment_type} onChange={e => setForm({ ...form, garment_type: e.target.value })}>
-              {TYPES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-            </TextField>
-            <TextField label="Description" fullWidth size="small" multiline rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-            <Grid container spacing={1.5}>
-              <Grid item xs={6}><TextField label="Min Price (PKR)" fullWidth size="small" type="number" value={form.price_min} onChange={e => setForm({ ...form, price_min: e.target.value })} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} /></Grid>
-              <Grid item xs={6}><TextField label="Max Price (PKR)" fullWidth size="small" type="number" value={form.price_max} onChange={e => setForm({ ...form, price_max: e.target.value })} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} /></Grid>
-            </Grid>
-            <TextField select label="Delivery Time" fullWidth size="small" value={form.delivery_time} onChange={e => setForm({ ...form, delivery_time: e.target.value })}>
-              {TIMES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-            </TextField>
-            <Button variant="contained" fullWidth disabled={saving} onClick={save}
-              sx={{ bgcolor: BLUE, color: '#fff', textTransform: 'none', fontWeight: 700, borderRadius: '12px', py: 1.3, boxShadow: '0 8px 18px rgba(37,99,235,0.24)', '&:hover': { bgcolor: BLUE_DARK } }}>
-              {saving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : edit ? 'Save Changes' : 'Add Service'}
-            </Button>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3.5 }, py: 0, flex: '1 1 auto', overflowY: 'auto', bgcolor: '#fafbfc' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.25, pt: 2.5, pb: 2 }}>
+            {error && <Alert severity="error" sx={{ borderRadius: '12px', border: '1px solid #fecaca' }}>{error}</Alert>}
+            <Paper elevation={0} sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: '16px', border: '1px solid #e2e8f0', bgcolor: '#fff' }}>
+              <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, color: '#475569', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 2, borderLeft: `3px solid ${BLUE}`, pl: 1.5 }}>
+                Shop & service
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    select
+                    label="Business shop *"
+                    fullWidth
+                    size="medium"
+                    value={form.shop_id}
+                    onChange={(e) => setForm({ ...form, shop_id: e.target.value })}
+                    sx={INPUT_SX}
+                    SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
+                  >
+                    {shops.map((shop) => (
+                      <MenuItem key={shop.shop_id} value={String(shop.shop_id)} sx={CORPORATE_MENU_ITEM_SX}>
+                        {shop.shop_name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    select
+                    label="Service type *"
+                    fullWidth
+                    size="medium"
+                    value={form.garment_type}
+                    onChange={(e) => setForm({ ...form, garment_type: e.target.value })}
+                    sx={INPUT_SX}
+                    SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
+                  >
+                    {TYPES.map((t) => (
+                      <MenuItem key={t} value={t} sx={CORPORATE_MENU_ITEM_SX}>{t}</MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Description"
+                    fullWidth
+                    size="medium"
+                    multiline
+                    minRows={3}
+                    placeholder="Briefly describe what’s included, materials, or turnaround notes…"
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    sx={INPUT_SX}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+            <Paper elevation={0} sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: '16px', border: '1px solid #e2e8f0', bgcolor: '#fff' }}>
+              <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, color: '#475569', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 2, borderLeft: `3px solid ${BLUE}`, pl: 1.5 }}>
+                Pricing & delivery
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Min price (PKR)"
+                    fullWidth
+                    size="medium"
+                    type="number"
+                    value={form.price_min}
+                    onChange={(e) => setForm({ ...form, price_min: e.target.value })}
+                    sx={INPUT_SX}
+                    InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: BLUE_MUTED }}>Rs</InputAdornment> }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Max price (PKR)"
+                    fullWidth
+                    size="medium"
+                    type="number"
+                    value={form.price_max}
+                    onChange={(e) => setForm({ ...form, price_max: e.target.value })}
+                    sx={INPUT_SX}
+                    InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: BLUE_MUTED }}>Rs</InputAdornment> }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    select
+                    label="Delivery time"
+                    fullWidth
+                    size="medium"
+                    value={form.delivery_time}
+                    onChange={(e) => setForm({ ...form, delivery_time: e.target.value })}
+                    sx={INPUT_SX}
+                    SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
+                  >
+                    {TIMES.map((t) => (
+                      <MenuItem key={t} value={t} sx={CORPORATE_MENU_ITEM_SX}>{t}</MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    select
+                    label="Availability"
+                    fullWidth
+                    size="medium"
+                    value={form.service_status}
+                    onChange={(e) => setForm({ ...form, service_status: e.target.value })}
+                    sx={INPUT_SX}
+                    SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
+                  >
+                    <MenuItem value="available" sx={CORPORATE_MENU_ITEM_SX}>Available</MenuItem>
+                    <MenuItem value="unavailable" sx={CORPORATE_MENU_ITEM_SX}>Unavailable</MenuItem>
+                  </TextField>
+                </Grid>
+              </Grid>
+            </Paper>
           </Box>
         </DialogContent>
+        <DialogActions
+          sx={{
+            flexShrink: 0,
+            px: { xs: 2.5, sm: 3.5 },
+            py: 2.25,
+            bgcolor: '#fff',
+            borderTop: '1px solid #f1f5f9',
+            gap: 1.25,
+            justifyContent: 'flex-end',
+          }}
+        >
+          <Button
+            variant="outlined"
+            disabled={saving}
+            onClick={() => setOpen(false)}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 700,
+              borderRadius: '12px',
+              px: 2.5,
+              py: 1,
+              borderColor: '#cbd5e1',
+              color: '#475569',
+              bgcolor: '#fff',
+              '&:hover': { borderColor: '#94a3b8', bgcolor: '#f8fafc' },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={saving}
+            onClick={save}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 700,
+              borderRadius: '12px',
+              px: 3,
+              py: 1,
+              minWidth: 200,
+              bgcolor: BLUE,
+              color: '#fff',
+              boxShadow: '0 10px 28px rgba(14, 165, 233, 0.35)',
+              '&:hover': { bgcolor: BLUE_DARK },
+            }}
+          >
+            {saving ? <CircularProgress size={22} sx={{ color: '#fff' }} /> : edit ? 'Save changes' : 'Add service'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

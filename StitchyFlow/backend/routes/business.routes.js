@@ -37,6 +37,12 @@ const RESOURCES = {
     required: ['order_number', 'tailor_name', 'order_status'],
     allowed: ['order_number', 'tailor_name', 'customer_name', 'garment_type', 'order_status', 'total_amount', 'due_date']
   },
+  services: {
+    table: 'business_tailor_services',
+    id: 'business_service_id',
+    required: ['shop_id', 'garment_type'],
+    allowed: ['owner_user_id', 'shop_id', 'garment_type', 'description', 'price_min', 'price_max', 'delivery_time', 'service_status', 'is_active']
+  },
   status: {
     table: 'business_tailor_status',
     id: 'status_id',
@@ -136,6 +142,22 @@ async function initBusinessTables() {
       due_date DATE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS business_tailor_services (
+      business_service_id INT AUTO_INCREMENT PRIMARY KEY,
+      owner_user_id INT NOT NULL,
+      shop_id INT NOT NULL,
+      garment_type VARCHAR(120) NOT NULL,
+      description TEXT,
+      price_min DECIMAL(10,2) DEFAULT 0.00,
+      price_max DECIMAL(10,2) DEFAULT 0.00,
+      delivery_time VARCHAR(80),
+      service_status ENUM('available', 'unavailable') DEFAULT 'available',
+      is_active TINYINT(1) DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_services_owner (owner_user_id),
+      INDEX idx_services_shop (shop_id)
     )`,
     `CREATE TABLE IF NOT EXISTS business_tailor_status (
       status_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -384,6 +406,17 @@ async function writeLog(req, { pageName, actionType, entityId = null, descriptio
 
 function getResourceConfig(resourceName) {
   return RESOURCES[resourceName];
+}
+
+async function ensureServiceShopOwnership(req, shopId) {
+  if (!isTailorUser(req)) return true;
+  const id = Number(shopId);
+  if (!Number.isFinite(id) || id < 1) return false;
+  const [rows] = await db.query(
+    'SELECT shop_id FROM business_tailor_shops WHERE shop_id = ? AND owner_user_id = ? LIMIT 1',
+    [id, req.user.userId]
+  );
+  return rows.length > 0;
 }
 
 // ── PUBLIC: Active shops for frontend slider (no auth required) ───────────────
@@ -689,8 +722,18 @@ router.get('/:resource', async (req, res) => {
     }
     let query = `SELECT * FROM ${config.table}`;
     const params = [];
+    if (req.params.resource === 'services') {
+      query = `
+        SELECT s.*, sh.shop_name
+        FROM business_tailor_services s
+        LEFT JOIN business_tailor_shops sh ON sh.shop_id = s.shop_id
+      `;
+    }
     if (req.params.resource === 'shops' && isTailorUser(req)) {
       query += ' WHERE owner_user_id = ?';
+      params.push(req.user.userId);
+    } else if (req.params.resource === 'services' && isTailorUser(req)) {
+      query += ' WHERE s.owner_user_id = ?';
       params.push(req.user.userId);
     }
     query += ` ORDER BY ${config.id} DESC`;
@@ -716,6 +759,14 @@ router.post('/:resource', async (req, res) => {
     if (req.params.resource === 'shops') {
       sanitizeShopResourcePayload(payload, 'create');
       await coerceShopForeignKeys(payload, 'create');
+    }
+    if (req.params.resource === 'services') {
+      if (isTailorUser(req)) payload.owner_user_id = req.user.userId;
+      payload.service_status = payload.service_status || 'available';
+      payload.is_active = payload.is_active !== undefined ? payload.is_active : 1;
+      if (!(await ensureServiceShopOwnership(req, payload.shop_id))) {
+        return res.status(403).json({ success: false, error: { message: 'You can only add services to your own shop.' } });
+      }
     }
 
     if (req.params.resource === 'shops' && isTailorUser(req)) {
@@ -796,6 +847,12 @@ router.put('/:resource/:id', async (req, res) => {
       // Ensure each saved shop stays linked to the authenticated business/tailor user.
       if (isTailorUser(req)) payload.owner_user_id = req.user.userId;
     }
+    if (req.params.resource === 'services') {
+      if (isTailorUser(req)) payload.owner_user_id = req.user.userId;
+      if (payload.shop_id !== undefined && !(await ensureServiceShopOwnership(req, payload.shop_id))) {
+        return res.status(403).json({ success: false, error: { message: 'You can only assign services to your own shop.' } });
+      }
+    }
 
     const fields = Object.keys(payload);
     if (!fields.length) {
@@ -807,7 +864,7 @@ router.put('/:resource/:id', async (req, res) => {
     values.push(req.params.id);
 
     let whereClause = `${config.id} = ?`;
-    if (req.params.resource === 'shops' && isTailorUser(req)) {
+    if ((req.params.resource === 'shops' || req.params.resource === 'services') && isTailorUser(req)) {
       whereClause += ' AND owner_user_id = ?';
       values.push(req.user.userId);
     }
@@ -849,7 +906,7 @@ router.delete('/:resource/:id', async (req, res) => {
 
     let query = `DELETE FROM ${config.table} WHERE ${config.id} = ?`;
     const params = [req.params.id];
-    if (req.params.resource === 'shops' && isTailorUser(req)) {
+    if ((req.params.resource === 'shops' || req.params.resource === 'services') && isTailorUser(req)) {
       query += ' AND owner_user_id = ?';
       params.push(req.user.userId);
     }
