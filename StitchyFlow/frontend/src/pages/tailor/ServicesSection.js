@@ -92,7 +92,8 @@ export default function ServicesSection({ isApproved }) {
 
   useEffect(() => {
     if (activeShopFilter === 'all') return;
-    if (!shopIdInList(activeShopFilter)) setActiveShopFilter('all');
+    const ok = shops.some((s) => String(s.shop_id) === String(activeShopFilter));
+    if (!ok) setActiveShopFilter('all');
   }, [shops, activeShopFilter]);
 
   useEffect(() => {
