@@ -5,7 +5,12 @@
 export function getApiBase() {
   const env = process.env.REACT_APP_API_URL;
   if (env && env.trim()) {
-    return env.replace(/\/$/, '');
+    let base = env.replace(/\/$/, '');
+    // Common misconfig: API origin only (e.g. http://127.0.0.1:5000) — paths like /business/services must hit /api/v1.
+    if (/^https?:\/\//i.test(base) && !/\/api\/v\d+/i.test(base)) {
+      base = `${base}/api/v1`;
+    }
+    return base;
   }
   if (
     process.env.NODE_ENV === 'development' &&
