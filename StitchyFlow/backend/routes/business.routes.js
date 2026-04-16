@@ -715,9 +715,9 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
-/** Per-shop tailor services — explicit paths (handlers shared with server.js app-level routes). */
-router.get('/services', listBusinessTailorServices);
-router.post('/services', createBusinessTailorService);
+/** Per-shop tailor services — explicit paths (handlers in business_tailor_services.handlers.js). */
+router.get('/services', tailorBusinessServices.listBusinessTailorServices);
+router.post('/services', tailorBusinessServices.createBusinessTailorService);
 
 router.get('/:resource', async (req, res) => {
   try {
@@ -834,8 +834,8 @@ router.post('/:resource', async (req, res) => {
   }
 });
 
-router.put('/services/:id', updateBusinessTailorService);
-router.delete('/services/:id', deleteBusinessTailorService);
+router.put('/services/:id', tailorBusinessServices.updateBusinessTailorService);
+router.delete('/services/:id', tailorBusinessServices.deleteBusinessTailorService);
 
 router.put('/:resource/:id', async (req, res) => {
   try {
@@ -944,7 +944,3 @@ module.exports = router;
 module.exports.initPromise = initPromise;
 module.exports.getPublicShopById = getPublicShopById;
 module.exports.getTailorsForCatalogCategory = getTailorsForCatalogCategory;
-module.exports.listBusinessTailorServices = listBusinessTailorServices;
-module.exports.createBusinessTailorService = createBusinessTailorService;
-module.exports.updateBusinessTailorService = updateBusinessTailorService;
-module.exports.deleteBusinessTailorService = deleteBusinessTailorService;
