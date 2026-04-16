@@ -46,6 +46,13 @@ const CORPORATE_MENU_ITEM_SX = {
 
 const INPUT_SX = {
   '& .MuiInputLabel-root': { color: BLUE_MUTED, fontWeight: 600 },
+  /* Stops “double” / ghosted label text on outlined Selects when value is empty */
+  '& .MuiInputLabel-root.MuiInputLabel-shrink': {
+    backgroundColor: '#fff',
+    px: 0.5,
+    borderRadius: '4px',
+    zIndex: 1,
+  },
   '& .MuiOutlinedInput-root': {
     borderRadius: '12px',
     bgcolor: '#fff',
@@ -54,6 +61,8 @@ const INPUT_SX = {
     '&.Mui-focused fieldset': { borderColor: BLUE, borderWidth: '1px' },
   },
 };
+
+const SELECT_INPUT_LABEL_PROPS = { shrink: true };
 const TYPES = ['Custom Stitching','Alterations','Bridal Wear','Suits & Blazers','Traditional Wear','Fabric Selection','Embroidery','Kids Wear','Other'];
 const TIMES = ['1-3 days','3-5 days','1 week','2 weeks','3-4 weeks','Custom'];
 const EMPTY = { shop_id: '', garment_type: '', description: '', price_min: '', price_max: '', delivery_time: '', service_status: 'available' };
@@ -350,17 +359,31 @@ export default function ServicesSection({ isApproved }) {
                 <Grid item xs={12} md={6}>
                   <TextField
                     select
-                    label="Business shop *"
+                    required
+                    label="Business shop"
                     fullWidth
                     size="medium"
                     value={shopIdInList(form.shop_id) ? String(form.shop_id) : ''}
                     onChange={(e) => setForm({ ...form, shop_id: e.target.value })}
                     sx={INPUT_SX}
-                    SelectProps={{ displayEmpty: true, MenuProps: CORPORATE_SELECT_MENU_PROPS }}
+                    InputLabelProps={SELECT_INPUT_LABEL_PROPS}
+                    SelectProps={{
+                      displayEmpty: true,
+                      MenuProps: CORPORATE_SELECT_MENU_PROPS,
+                      renderValue: (v) => {
+                        if (v && shopIdInList(v)) {
+                          const shop = shops.find((s) => String(s.shop_id) === String(v));
+                          return shop?.shop_name || v;
+                        }
+                        return (
+                          <Box component="span" sx={{ color: '#94a3b8', fontWeight: 400 }}>
+                            {shops.length ? 'Choose a shop…' : 'Loading shops…'}
+                          </Box>
+                        );
+                      },
+                    }}
                   >
-                    <MenuItem value="" disabled sx={CORPORATE_MENU_ITEM_SX}>
-                      {shops.length ? 'Select a shop' : 'Loading shops…'}
-                    </MenuItem>
+                    <MenuItem value="" sx={{ display: 'none' }} aria-hidden />
                     {shops.map((shop) => (
                       <MenuItem key={shop.shop_id} value={String(shop.shop_id)} sx={CORPORATE_MENU_ITEM_SX}>
                         {shop.shop_name}
@@ -371,14 +394,31 @@ export default function ServicesSection({ isApproved }) {
                 <Grid item xs={12} md={6}>
                   <TextField
                     select
-                    label="Service type *"
+                    required
+                    label="Service type"
                     fullWidth
                     size="medium"
-                    value={form.garment_type}
+                    value={form.garment_type || ''}
                     onChange={(e) => setForm({ ...form, garment_type: e.target.value })}
                     sx={INPUT_SX}
-                    SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
+                    InputLabelProps={SELECT_INPUT_LABEL_PROPS}
+                    SelectProps={{
+                      displayEmpty: true,
+                      MenuProps: CORPORATE_SELECT_MENU_PROPS,
+                      renderValue: (v) =>
+                        v ? (
+                          String(v)
+                        ) : (
+                          <Box component="span" sx={{ color: '#94a3b8', fontWeight: 400 }}>
+                            Choose service type…
+                          </Box>
+                        ),
+                    }}
                   >
+                    <MenuItem value="" sx={{ display: 'none' }} aria-hidden />
+                    {form.garment_type && !TYPES.includes(form.garment_type) && (
+                      <MenuItem value={form.garment_type} sx={CORPORATE_MENU_ITEM_SX}>{form.garment_type}</MenuItem>
+                    )}
                     {TYPES.map((t) => (
                       <MenuItem key={t} value={t} sx={CORPORATE_MENU_ITEM_SX}>{t}</MenuItem>
                     ))}
@@ -434,11 +474,27 @@ export default function ServicesSection({ isApproved }) {
                     label="Delivery time"
                     fullWidth
                     size="medium"
-                    value={form.delivery_time}
+                    value={form.delivery_time || ''}
                     onChange={(e) => setForm({ ...form, delivery_time: e.target.value })}
                     sx={INPUT_SX}
-                    SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
+                    InputLabelProps={SELECT_INPUT_LABEL_PROPS}
+                    SelectProps={{
+                      displayEmpty: true,
+                      MenuProps: CORPORATE_SELECT_MENU_PROPS,
+                      renderValue: (v) =>
+                        v ? (
+                          String(v)
+                        ) : (
+                          <Box component="span" sx={{ color: '#94a3b8', fontWeight: 400 }}>
+                            Optional — not set
+                          </Box>
+                        ),
+                    }}
                   >
+                    <MenuItem value="" sx={{ display: 'none' }} aria-hidden />
+                    {form.delivery_time && !TIMES.includes(form.delivery_time) && (
+                      <MenuItem value={form.delivery_time} sx={CORPORATE_MENU_ITEM_SX}>{form.delivery_time}</MenuItem>
+                    )}
                     {TIMES.map((t) => (
                       <MenuItem key={t} value={t} sx={CORPORATE_MENU_ITEM_SX}>{t}</MenuItem>
                     ))}
@@ -450,9 +506,10 @@ export default function ServicesSection({ isApproved }) {
                     label="Availability"
                     fullWidth
                     size="medium"
-                    value={form.service_status}
+                    value={form.service_status || 'available'}
                     onChange={(e) => setForm({ ...form, service_status: e.target.value })}
                     sx={INPUT_SX}
+                    InputLabelProps={SELECT_INPUT_LABEL_PROPS}
                     SelectProps={{ MenuProps: CORPORATE_SELECT_MENU_PROPS }}
                   >
                     <MenuItem value="available" sx={CORPORATE_MENU_ITEM_SX}>Available</MenuItem>

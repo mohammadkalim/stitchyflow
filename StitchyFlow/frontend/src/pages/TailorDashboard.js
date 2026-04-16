@@ -43,10 +43,7 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import BusinessIcon from '@mui/icons-material/Business';
 
-const SIDEBAR_W = 280;
-const SIDEBAR_ACCENT = '#0ea5e9';
-const SIDEBAR_ACCENT_SOFT = '#f0f9ff';
-const SIDEBAR_ACCENT_BORDER = '#e0f2fe';
+const SIDEBAR_W = 260;
 const HEADER_H = 60;
 /** Full options green bar height — only shown on Overview (Dashboard) */
 const SUBBAR_H = 52;
@@ -138,43 +135,41 @@ function TailorDashboard() {
 
   const SidebarContent = () => (
     <Box sx={{
-      width: SIDEBAR_W, height: '100%', bgcolor: '#fafbfc',
-      borderRight: `1px solid ${SIDEBAR_ACCENT_BORDER}`, display: 'flex', flexDirection: 'column',
+      width: SIDEBAR_W, height: '100%', bgcolor: '#fff',
+      borderRight: '1px solid #e8ecf1', display: 'flex', flexDirection: 'column',
     }}>
-      {/* ── Brand Card (light corporate) ── */}
+      {/* ── Brand Card (original dark hub) ── */}
       <Box sx={{ p: 1.75, pb: 1.25 }}>
         <Box sx={{
-          borderRadius: '16px', p: 2,
-          background: 'linear-gradient(145deg, #ffffff 0%, #f0f9ff 55%, #e0f2fe 100%)',
-          border: `1px solid ${SIDEBAR_ACCENT_BORDER}`,
-          position: 'relative', overflow: 'hidden', minHeight: 92,
-          boxShadow: '0 8px 24px rgba(14, 165, 233, 0.08)',
+          borderRadius: '14px', p: 2,
+          background: 'linear-gradient(135deg, #0d1b2a 0%, #112233 60%, #0d2137 100%)',
+          position: 'relative', overflow: 'hidden', minHeight: 88,
         }}>
           <Box sx={{
-            position: 'absolute', top: 8, right: 10, opacity: 0.12,
-            display: 'flex',
+            position: 'absolute', top: 6, right: 8, opacity: 0.18,
+            fontSize: 52, color: '#fff', lineHeight: 1,
+            fontFamily: 'Material Icons', display: 'flex',
           }}>
-            <BusinessIcon sx={{ fontSize: 48, color: SIDEBAR_ACCENT }} />
+            <BusinessIcon sx={{ fontSize: 52 }} />
           </Box>
           <Box sx={{
-            width: 40, height: 40, borderRadius: '12px',
-            bgcolor: SIDEBAR_ACCENT_SOFT, border: `1px solid ${SIDEBAR_ACCENT_BORDER}`,
-            display: 'flex',
+            width: 38, height: 38, borderRadius: '10px',
+            bgcolor: 'rgba(45,106,79,0.85)', display: 'flex',
             alignItems: 'center', justifyContent: 'center', mb: 1.25,
           }}>
-            <BusinessIcon sx={{ color: SIDEBAR_ACCENT, fontSize: 22 }} />
+            <BusinessIcon sx={{ color: '#fff', fontSize: 20 }} />
           </Box>
-          <Typography sx={{ color: '#0f172a', fontWeight: 800, fontSize: '0.95rem', lineHeight: 1.2 }}>
+          <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '0.95rem', lineHeight: 1.2 }}>
             Business Hub
           </Typography>
-          <Typography sx={{ color: '#64748b', fontSize: '0.7rem', mt: 0.35, fontWeight: 500 }}>
-            Corporate dashboard
+          <Typography sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem', mt: 0.2 }}>
+            Manage your empire
           </Typography>
         </Box>
       </Box>
 
-      {/* ── Nav Items ── */}
-      <Box sx={{ flex: 1, px: 1.35, pb: 1.5, overflowY: 'auto', '&::-webkit-scrollbar': { width: 4 } }}>
+      {/* ── Nav Items (green active state) ── */}
+      <Box sx={{ flex: 1, px: 1.25, pb: 1.5, overflowY: 'auto', '&::-webkit-scrollbar': { width: 3 } }}>
         {SIDEBAR_NAV.map((item) => {
           const locked = !isApproved && item.key !== 'overview';
           const active = activeKey === item.key;
@@ -184,53 +179,46 @@ function TailorDashboard() {
               <Box
                 onClick={() => navTo(item.key)}
                 sx={{
-                  mb: 0.35,
-                  pl: active ? 1.35 : 1.5,
-                  pr: 1.5,
-                  py: 1,
-                  borderRadius: '12px',
+                  mb: 0.15, px: 1.5, py: 0.9,
+                  borderRadius: '10px',
                   display: 'flex', alignItems: 'center', gap: 1.25,
                   cursor: locked ? 'not-allowed' : 'pointer',
-                  borderLeft: active ? `3px solid ${SIDEBAR_ACCENT}` : '3px solid transparent',
-                  bgcolor: active ? SIDEBAR_ACCENT_SOFT : 'transparent',
-                  transition: 'background 0.18s, border-color 0.18s, box-shadow 0.18s',
-                  boxShadow: active ? '0 4px 14px rgba(14, 165, 233, 0.12)' : 'none',
+                  bgcolor: active ? 'rgba(40,167,69,0.1)' : 'transparent',
+                  transition: 'background 0.15s',
                   '&:hover': {
-                    bgcolor: locked ? 'transparent' : active ? SIDEBAR_ACCENT_SOFT : 'rgba(14, 165, 233, 0.06)',
+                    bgcolor: locked ? 'transparent' : active ? 'rgba(40,167,69,0.13)' : '#f5f7fa',
                   },
                 }}
               >
                 <Box sx={{
-                  width: 32, height: 32, borderRadius: '10px', flexShrink: 0,
+                  width: 28, height: 28, borderRadius: '7px', flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  bgcolor: active ? '#e0f2fe' : 'rgba(255,255,255,0.6)',
-                  border: active ? `1px solid ${SIDEBAR_ACCENT_BORDER}` : '1px solid transparent',
+                  bgcolor: active ? 'rgba(40,167,69,0.15)' : 'transparent',
                 }}>
                   {locked
-                    ? <LockOutlinedIcon sx={{ fontSize: 16, color: '#cbd5e1' }} />
-                    : <IconComp sx={{ fontSize: 17, color: active ? SIDEBAR_ACCENT : '#64748b' }} />
+                    ? <LockOutlinedIcon sx={{ fontSize: 15, color: '#c0c8d4' }} />
+                    : <IconComp sx={{ fontSize: 16, color: active ? '#2d6a4f' : '#8a96a3' }} />
                   }
                 </Box>
                 <Typography sx={{
                   flex: 1,
-                  fontSize: '0.84rem',
+                  fontSize: '0.83rem',
                   fontWeight: active ? 700 : 500,
-                  color: active ? '#0369a1' : '#475569',
+                  color: active ? '#1b4332' : '#4a5568',
                   letterSpacing: '0.01em',
                 }}>
                   {item.label}
                 </Typography>
                 {active && (
-                  <ChevronRightIcon sx={{ fontSize: 18, color: SIDEBAR_ACCENT, flexShrink: 0 }} />
+                  <ChevronRightIcon sx={{ fontSize: 16, color: '#2d6a4f', flexShrink: 0 }} />
                 )}
               </Box>
             </Tooltip>
           );
         })}
       </Box>
-      {/* ── Footer ── */}
-      <Box sx={{ px: 2, py: 1.5, borderTop: `1px solid ${SIDEBAR_ACCENT_BORDER}`, bgcolor: '#fff' }}>
-        <Typography sx={{ color: '#94a3b8', fontSize: '0.63rem', textAlign: 'center', fontWeight: 500 }}>
+      <Box sx={{ px: 2, py: 1.5, borderTop: '1px solid #f0f2f5' }}>
+        <Typography sx={{ color: '#b0bac5', fontSize: '0.63rem', textAlign: 'center' }}>
           © {new Date().getFullYear()} StitchyFlow Tailor Shop
         </Typography>
       </Box>
