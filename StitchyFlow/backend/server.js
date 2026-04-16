@@ -74,6 +74,41 @@ app.get(
   businessRoutes.getTailorsForCatalogCategory
 );
 
+/** Must run before mounting the business router so /business/services always matches (avoids client 404s). */
+async function ensureBusinessTailorTablesReady(req, res, next) {
+  try {
+    await businessRoutes.initPromise;
+    next();
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: 'Business module initialization failed' } });
+  }
+}
+
+app.get(
+  '/api/v1/business/services',
+  authenticateToken,
+  ensureBusinessTailorTablesReady,
+  businessRoutes.listBusinessTailorServices
+);
+app.post(
+  '/api/v1/business/services',
+  authenticateToken,
+  ensureBusinessTailorTablesReady,
+  businessRoutes.createBusinessTailorService
+);
+app.put(
+  '/api/v1/business/services/:id',
+  authenticateToken,
+  ensureBusinessTailorTablesReady,
+  businessRoutes.updateBusinessTailorService
+);
+app.delete(
+  '/api/v1/business/services/:id',
+  authenticateToken,
+  ensureBusinessTailorTablesReady,
+  businessRoutes.deleteBusinessTailorService
+);
+
 app.use('/api/v1/business', businessRoutes);
 app.use('/api/v1/ai-errors', require('./routes/ai_errors.routes'));
 app.use('/api/v1/verification', require('./routes/verification.routes'));
