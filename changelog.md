@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-04-17 (frontend dev console)
+
+- **CRA dev:** `src/devConsoleFilter.js` is imported first from `index.js` to suppress the informational **“Download the React DevTools”** `console.info` line only in development. Extension-injected scripts (e.g. `share-modal.js`) are not part of this repo — disable the browser extension or ignore those errors.
+
+## 2026-04-17 (tailor shop detail — no extra /services request)
+
+- **Public shop page:** Removed the fallback **`GET …/business/public/shops/:id/services`** call. Services come only from **`services`** on **`GET …/business/public/shops/:id`**, so the browser no longer logs **404** when the standalone route is missing or the API process is stale. Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
+## 2026-04-17 (catalog — remove “Event” pillar)
+
+- **Public site & APIs:** The legacy catalogue category **Event** is excluded from **`GET /catalog/categories`**, **`GET /ca-sub/categories/public`**, public subcategory lists, and tailor-by-category results (empty list for that category id). Shared predicates live in **`backend/utils/catalogPublicFilters.js`**. **Admin** authenticated **`GET /ca-sub/categories`** is unchanged so staff can still see, rename, or delete the row in **Categories**. **Seed:** **`catalogCategoryBusinessSeed.js`** no longer targets Event (Acting, Calligraphy, Painting only). Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
+## 2026-04-17 (public shop — services)
+
+- **Tailor shop detail (`/tailor-shops/view/:id`):** Added a **Services** block below Business profile (expand/collapse accordion). Tailors manage rows in the dashboard **Services** tab. **`GET /business/public/shops/:shopId`** now includes a **`services`** array (same filter as the dedicated list endpoint), so the UI does not depend on a second request when the separate **`…/services`** route is missing or not restarted. The frontend still falls back to **`GET …/shops/:id/services`** when `services` is absent (older API). Dedicated public list route remains on **`server.js`** and the **`business` router**. **React:** hero `<img>` uses **`fetchpriority`** (lowercase). Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
+## 2026-04-17 (session / tailor dashboard data after idle)
+
+- **Tailor & customer dashboards empty after ~24h until re-login:** Access JWTs expire per `JWT_EXPIRE` while the UI still looked “logged in”, so APIs returned 403 and sections showed empty lists. The frontend now persists `refreshToken` from login (and registration verify / Google callback when configured), implements **`POST /api/v1/auth/refresh`**, and **`apiFetch`** automatically refreshes the access token once per failing request then retries; if refresh is missing or fails, the client clears session and redirects to **`/login?reason=session`**. Logout clears `refreshToken` as well. Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
 ## 2026-04-14 (tailor shop cap)
 
 - **Tailor dashboard — extra business slots:** Backend enforces and documents `TAILOR_MAX_BUSINESSES` and per-email `TAILOR_MAX_BUSINESSES_OVERRIDES` in `.env` (alias keys supported). `GET /business/shops/enriched` returns `meta.maxShops` for tailors; `My Businesses` uses it so “Add Business” matches the server limit (e.g. second shop for `markhubstore98@gmail.com` when override is set). Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.

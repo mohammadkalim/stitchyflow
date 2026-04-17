@@ -33,6 +33,28 @@ const tailorShopsSliderTheme = {
   sliderDotActive: '#ffffff',
   sliderDotInactive: 'rgba(19, 16, 202, 0.5)',
 };
+const PINNED_TOP_SHOP_NAMES = new Set(['asdasd']);
+
+function getShopRankTimestamp(shop) {
+  const raw = shop?.updated_at || shop?.created_at || '';
+  const t = Date.parse(String(raw));
+  return Number.isNaN(t) ? 0 : t;
+}
+
+function prioritizeTopEightShops(list) {
+  const rows = Array.isArray(list) ? list : [];
+  const sorted = [...rows].sort((a, b) => {
+    const aPinned = PINNED_TOP_SHOP_NAMES.has(String(a?.shop_name || '').trim().toLowerCase()) ? 1 : 0;
+    const bPinned = PINNED_TOP_SHOP_NAMES.has(String(b?.shop_name || '').trim().toLowerCase()) ? 1 : 0;
+    if (aPinned !== bPinned) return bPinned - aPinned;
+    // Show active businesses first, then latest updates.
+    const aActive = String(a?.shop_status || '').toLowerCase() === 'active' ? 1 : 0;
+    const bActive = String(b?.shop_status || '').toLowerCase() === 'active' ? 1 : 0;
+    if (aActive !== bActive) return bActive - aActive;
+    return getShopRankTimestamp(b) - getShopRankTimestamp(a);
+  });
+  return sorted;
+}
 
 function TailorShops() {
   const [shops, setShops] = useState([]);
@@ -55,7 +77,7 @@ function TailorShops() {
         const d = await gex('/business/public/shops', { cache: 'no-store' });
         if (cancelled || gen !== fetchGeneration) return;
         const list = d.success && Array.isArray(d.data) ? d.data : [];
-        setShops(list);
+        setShops(prioritizeTopEightShops(list));
       } catch {
         if (cancelled || gen !== fetchGeneration) return;
         if (showLoading) setShops([]);

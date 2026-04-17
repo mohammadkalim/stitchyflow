@@ -584,8 +584,32 @@ async function getPublicShopById(req, res) {
     if (!rows.length) {
       return res.status(404).json({ success: false, error: { message: 'Shop not found.' } });
     }
+    let services = [];
+    try {
+      const [svcRows] = await db.query(
+        `SELECT
+           business_service_id,
+           shop_id,
+           garment_type,
+           description,
+           price_min,
+           price_max,
+           delivery_time,
+           service_status
+         FROM business_tailor_services
+         WHERE shop_id = ?
+           AND COALESCE(is_active, 1) = 1
+           AND (service_status IS NULL OR service_status = '' OR service_status = 'available')
+         ORDER BY business_service_id ASC`,
+        [shopId]
+      );
+      services = svcRows;
+    } catch (svcErr) {
+      if (svcErr.code !== 'ER_NO_SUCH_TABLE') console.warn('getPublicShopById services:', svcErr.message);
+      services = [];
+    }
     res.set('Cache-Control', 'private, no-cache, must-revalidate');
-    res.json({ success: true, data: rows[0] });
+    res.json({ success: true, data: { ...rows[0], services } });
   } catch (error) {
     if (error.code === 'ER_NO_SUCH_TABLE') {
       try {
@@ -613,8 +637,35 @@ async function getPublicShopById(req, res) {
         if (!rows.length) {
           return res.status(404).json({ success: false, error: { message: 'Shop not found.' } });
         }
+        let services = [];
+        try {
+          const [svcRows] = await db.query(
+            `SELECT
+               business_service_id,
+               shop_id,
+               garment_type,
+               description,
+               price_min,
+               price_max,
+               delivery_time,
+               service_status
+             FROM business_tailor_services
+             WHERE shop_id = ?
+               AND COALESCE(is_active, 1) = 1
+               AND (service_status IS NULL OR service_status = '' OR service_status = 'available')
+             ORDER BY business_service_id ASC`,
+            [shopId]
+          );
+          services = svcRows;
+        } catch (svcErr) {
+          if (svcErr.code !== 'ER_NO_SUCH_TABLE') console.warn('getPublicShopById services (fallback):', svcErr.message);
+          services = [];
+        }
         res.set('Cache-Control', 'private, no-cache, must-revalidate');
-        return res.json({ success: true, data: { ...rows[0], category_name: null, subcategory_name: null } });
+        return res.json({
+          success: true,
+          data: { ...rows[0], category_name: null, subcategory_name: null, services },
+        });
       } catch (e2) {
         return res.status(500).json({ success: false, error: { message: e2.message } });
       }
@@ -622,6 +673,18 @@ async function getPublicShopById(req, res) {
     res.status(500).json({ success: false, error: { message: error.message } });
   }
 }
+
+// Longer path first — public shop services (tailor dashboard → Services); no auth.
+router.get('/public/shops/:shopId/services', async (req, res) => {
+  try {
+    await initPromise;
+    await tailorBusinessServices.listPublicShopServices(req, res);
+  } catch (error) {
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: { message: error.message } });
+    }
+  }
+});
 
 router.get('/public/shops/:shopId', getPublicShopById);
 

@@ -621,3 +621,10 @@ Database username ****** root *****
 Database Password **** 12345 ******
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+-------
+
+please phir wahi wala error please gab men 24 hours ke baat main website khol tha and Business ka http://localhost:3000/tailor-dashboard and All pages khol ta na to please koi bhe Business and kuch bhe nahe show ar ta lekin gab men logout ho kar login ho to please Saab show kare ta hai please hamisha ginne bhe ghan te ke baat bhe show kare please ye jo bhe error hai Kindly fixed kare
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

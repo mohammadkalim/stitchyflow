@@ -12,6 +12,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { apiFetch } from '../../utils/api';
 
 const BLUE = '#0ea5e9';
@@ -19,6 +21,7 @@ const BLUE_DARK = '#0284c7';
 const BLUE_SOFT = '#f0f9ff';
 const BLUE_BORDER = '#bae6fd';
 const BLUE_MUTED = '#64748b';
+const MAX_FREE_SERVICES = 4;
 
 const CORPORATE_SELECT_MENU_PROPS = {
   PaperProps: {
@@ -77,6 +80,7 @@ export default function ServicesSection({ isApproved }) {
   const [error, setError]     = useState('');
   const [shops, setShops]     = useState([]);
   const [activeShopFilter, setActiveShopFilter] = useState('all');
+  const [paymentOpen, setPaymentOpen] = useState(false);
 
   const shopIdInList = (id) => shops.some((s) => String(s.shop_id) === String(id));
 
@@ -116,6 +120,10 @@ export default function ServicesSection({ isApproved }) {
   }, [open, shops]);
 
   const openAdd  = () => {
+    if (list.length >= MAX_FREE_SERVICES) {
+      setPaymentOpen(true);
+      return;
+    }
     const fromFilter = activeShopFilter !== 'all' && shopIdInList(activeShopFilter) ? activeShopFilter : '';
     const defaultShopId = fromFilter || (shops[0]?.shop_id ? String(shops[0].shop_id) : '');
     setForm({ ...EMPTY, shop_id: defaultShopId });
@@ -153,7 +161,15 @@ export default function ServicesSection({ isApproved }) {
       if (edit) await apiFetch(`/business/services/${edit.business_service_id}`, { method: 'PUT', body: JSON.stringify(payload) });
       else       await apiFetch('/business/services', { method: 'POST', body: JSON.stringify(payload) });
       setOpen(false); load();
-    } catch (e) { setError(e.message || 'Failed to save.'); }
+    } catch (e) {
+      const msg = String(e?.message || '');
+      if (!edit && /free limit reached|pay first|SERVICE_LIMIT_REQUIRES_PAYMENT/i.test(msg)) {
+        setOpen(false);
+        setPaymentOpen(true);
+        return;
+      }
+      setError(msg || 'Failed to save.');
+    }
     finally { setSaving(false); }
   };
 
@@ -190,6 +206,9 @@ export default function ServicesSection({ isApproved }) {
           Add Service
         </Button>
       </Box>
+      <Typography sx={{ color: '#64748b', fontSize: '0.76rem', mb: 2 }}>
+        Free plan allows up to {MAX_FREE_SERVICES} services. For more, payment is required.
+      </Typography>
       <Box sx={{ mb: 2.5, maxWidth: 360 }}>
         <TextField
           select
@@ -567,6 +586,107 @@ export default function ServicesSection({ isApproved }) {
             }}
           >
             {saving ? <CircularProgress size={22} sx={{ color: '#fff' }} /> : edit ? 'Save changes' : 'Add service'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={paymentOpen}
+        onClose={() => setPaymentOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            border: '1px solid #d1d5db',
+            bgcolor: '#ffffff',
+            boxShadow: '0 18px 40px rgba(15, 23, 42, 0.18)',
+            overflow: 'hidden',
+          },
+        }}
+        BackdropProps={{
+          sx: {
+            bgcolor: 'rgba(15, 23, 42, 0.42)',
+            backgroundImage: `
+              linear-gradient(rgba(148,163,184,0.2) 2px, transparent 2px),
+              linear-gradient(90deg, rgba(148,163,184,0.2) 2px, transparent 2px)
+            `,
+            backgroundSize: '30px 30px',
+            backgroundPosition: '15px 15px',
+          },
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', pb: 1, pt: 2.25, px: { xs: 2, sm: 3 }, bgcolor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+            <Box sx={{ width: 44, height: 44, borderRadius: '10px', bgcolor: '#fff', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CreditCardOutlinedIcon sx={{ color: '#111827', fontSize: 24 }} />
+            </Box>
+            <Box>
+              <Typography sx={{ fontSize: '0.6875rem', fontWeight: 700, color: '#6b7280', letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.5 }}>
+                Payment required
+              </Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#111827', lineHeight: 1.25 }}>
+                Add another service
+              </Typography>
+              <Typography sx={{ color: '#6b7280', fontSize: '0.8125rem', mt: 0.5, maxWidth: 520 }}>
+                You already used your free {MAX_FREE_SERVICES} services. Please pay first to add more services.
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton size="small" onClick={() => setPaymentOpen(false)} sx={{ color: '#6b7280', border: '1px solid #d1d5db', borderRadius: '8px' }} aria-label="Close">
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 }, pt: 2.25, pb: 1, bgcolor: '#f3f4f6' }}>
+          <Paper elevation={0} sx={{ p: 2, borderRadius: '10px', border: '1px solid #e5e7eb', bgcolor: '#fafafa' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+              <Box>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#6b7280', fontWeight: 600 }}>Current plan</Typography>
+                <Typography sx={{ fontSize: '0.9375rem', color: '#111827', fontWeight: 800 }}>Free services</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography sx={{ fontSize: '0.8125rem', color: '#6b7280', fontWeight: 600 }}>Limit reached</Typography>
+                <Typography sx={{ fontSize: '1.25rem', color: '#111827', fontWeight: 900 }}>{MAX_FREE_SERVICES}/{MAX_FREE_SERVICES}</Typography>
+              </Box>
+            </Box>
+          </Paper>
+          <Paper elevation={0} sx={{ p: 2, mt: 1.5, borderRadius: '10px', border: '1px solid #e5e7eb', bgcolor: '#ffffff' }}>
+            <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, color: '#6b7280', letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1.25 }}>
+              Upgrade includes
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+              <CheckRoundedIcon sx={{ fontSize: 18, color: '#111827' }} />
+              <Typography sx={{ fontSize: '0.84rem', color: '#374151', fontWeight: 600 }}>Add more than {MAX_FREE_SERVICES} services</Typography>
+            </Box>
+            <Divider sx={{ my: 1 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+              <CheckRoundedIcon sx={{ fontSize: 18, color: '#111827' }} />
+              <Typography sx={{ fontSize: '0.84rem', color: '#374151', fontWeight: 600 }}>Keep all existing services active</Typography>
+            </Box>
+            <Divider sx={{ my: 1 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+              <CheckRoundedIcon sx={{ fontSize: 18, color: '#111827' }} />
+              <Typography sx={{ fontSize: '0.84rem', color: '#374151', fontWeight: 600 }}>Continue adding new service categories anytime</Typography>
+            </Box>
+          </Paper>
+          <Typography sx={{ fontSize: '0.75rem', color: '#9ca3af', mt: 1.75, lineHeight: 1.5 }}>
+            Payment integration can be connected here. Right now, Pay now confirms the upgrade step.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 2, bgcolor: '#f9fafb', borderTop: '1px solid #e5e7eb', gap: 1.25 }}>
+          <Button
+            onClick={() => setPaymentOpen(false)}
+            variant="outlined"
+            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '8px', borderColor: '#d1d5db', color: '#374151', bgcolor: '#fff' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => setPaymentOpen(false)}
+            sx={{ minWidth: 170, bgcolor: '#111827', color: '#fff', textTransform: 'none', fontWeight: 700, borderRadius: '8px', boxShadow: 'none', '&:hover': { bgcolor: '#000' } }}
+          >
+            Pay now
           </Button>
         </DialogActions>
       </Dialog>

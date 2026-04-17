@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Button, TextField, InputAdornment,
   IconButton, Checkbox, FormControlLabel, Divider, Paper,
@@ -26,6 +26,14 @@ function Login() {
   const showPopup = (message, type = 'error') => setPopup({ open: true, message, type });
   const closePopup = () => setPopup(p => ({ ...p, open: false }));
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reason') !== 'session') return;
+    showPopup('Your session expired. Please sign in again.', 'error');
+    window.history.replaceState({}, '', '/login');
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -42,8 +50,9 @@ function Login() {
         body: JSON.stringify(formData),
       });
 
-      const { accessToken, user } = response.data;
+      const { accessToken, refreshToken, user } = response.data;
       localStorage.setItem('token', accessToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
 
       const wasActivated = localStorage.getItem('accountWasActivated');

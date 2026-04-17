@@ -3,13 +3,14 @@ const router = express.Router();
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const { ensureCASubTables } = require('../utils/caSubTables');
+const { WHERE_CATEGORY_NAME_PUBLIC, WHERE_CATEGORY_NAME_PUBLIC_ALIAS_C } = require('../utils/catalogPublicFilters');
 
 /** Public list for homepage / marketplace (active categories only, no auth). */
 router.get('/categories/public', async (req, res) => {
   try {
     await ensureCASubTables();
     const [rows] = await db.query(
-      'SELECT id, name, description FROM categories WHERE is_active = TRUE ORDER BY name ASC'
+      `SELECT id, name, description FROM categories WHERE is_active = TRUE AND ${WHERE_CATEGORY_NAME_PUBLIC} ORDER BY name ASC`
     );
     res.json({ success: true, data: rows });
   } catch (error) {
@@ -26,9 +27,10 @@ router.get('/subcategories/public', async (req, res) => {
       return res.status(400).json({ success: false, error: { message: 'category_id query is required' } });
     }
     const [rows] = await db.query(
-      `SELECT id, name, description FROM subcategories
-       WHERE category_id = ? AND is_active = TRUE
-       ORDER BY name ASC`,
+      `SELECT s.id, s.name, s.description FROM subcategories s
+       INNER JOIN categories c ON c.id = s.category_id
+       WHERE s.category_id = ? AND s.is_active = TRUE AND ${WHERE_CATEGORY_NAME_PUBLIC_ALIAS_C}
+       ORDER BY s.name ASC`,
       [categoryId]
     );
     res.json({ success: true, data: rows });

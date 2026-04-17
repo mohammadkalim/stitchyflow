@@ -6,6 +6,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import {
   Box, Typography, Container, Grid, Paper, Chip, Button, Breadcrumbs, Link, CircularProgress, Divider, Stack, Alert,
+  Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
 } from '@mui/material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -19,6 +20,10 @@ import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import MiscellaneousServicesOutlinedIcon from '@mui/icons-material/MiscellaneousServicesOutlined';
+import CloseIcon from '@mui/icons-material/Close';
+import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 
 const SHOP_IMAGE_FALLBACK = [
   'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80',
@@ -58,6 +63,18 @@ function hasDedicatedCoverOrShopPhoto(shop) {
 const BRAND = '#1310ca';
 const PAGE_BG = '#f1f5f9';
 
+function formatServicePriceRange(min, max) {
+  const a = min != null && min !== '' ? Number(min) : null;
+  const b = max != null && max !== '' ? Number(max) : null;
+  const okA = a != null && !Number.isNaN(a);
+  const okB = b != null && !Number.isNaN(b);
+  if (!okA && !okB) return null;
+  if (okA && okB && a !== b) return `${a} – ${b}`;
+  if (okA) return String(a);
+  if (okB) return String(b);
+  return null;
+}
+
 function SectionTitle({ children, icon: Icon }) {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -74,6 +91,8 @@ export default function TailorShopDetails() {
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [shopServices, setShopServices] = useState([]);
+  const [servicesModalOpen, setServicesModalOpen] = useState(false);
 
   const load = useCallback(() => {
     if (!shopId) return;
@@ -81,10 +100,20 @@ export default function TailorShopDetails() {
     setError('');
     gex(`/business/public/shops/${encodeURIComponent(shopId)}`, { cache: 'no-store' })
       .then((d) => {
-        if (d.success && d.data) setShop(d.data);
-        else setError('Could not load this shop.');
+        if (d.success && d.data) {
+          const row = d.data;
+          setShop(row);
+          /* Services are embedded on GET /business/public/shops/:id (no second request — avoids 404 when /services route is absent). */
+          setShopServices(Array.isArray(row.services) ? row.services : []);
+          return;
+        }
+        setError('Could not load this shop.');
+        setShopServices([]);
       })
-      .catch((e) => setError(e.message || 'Shop not found or unavailable.'))
+      .catch((e) => {
+        setError(e.message || 'Shop not found or unavailable.');
+        setShopServices([]);
+      })
       .finally(() => setLoading(false));
   }, [shopId]);
 
@@ -154,7 +183,7 @@ export default function TailorShopDetails() {
               src={resolveHeroImage(shop)}
               alt=""
               decoding="async"
-              fetchPriority="high"
+              fetchpriority="high"
               sx={{
                 width: '100%',
                 height: heroH,
@@ -253,7 +282,7 @@ export default function TailorShopDetails() {
                   </Grid>
                 </Paper>
 
-                <Paper elevation={0} sx={{ p: { xs: 2.5, md: 3.5 }, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <Paper elevation={0} sx={{ p: { xs: 2.5, md: 3.5 }, borderRadius: '16px', border: '1px solid #e2e8f0', mb: 3 }}>
                   <SectionTitle icon={CategoryOutlinedIcon}>Business profile</SectionTitle>
                   <Stack spacing={1.25}>
                     {shop.business_type_name && (
@@ -285,6 +314,123 @@ export default function TailorShopDetails() {
                     )}
                   </Stack>
                 </Paper>
+
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: { xs: 2.5, md: 3.5 },
+                    borderRadius: '16px',
+                    border: '1px solid #e2e8f0',
+                    mb: 3,
+                  }}
+                >
+                  <Box
+                    role="button"
+                    tabIndex={0}
+                    aria-label="View services in a popup"
+                    onClick={() => setServicesModalOpen(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setServicesModalOpen(true);
+                      }
+                    }}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.25,
+                      cursor: 'pointer',
+                      borderRadius: '12px',
+                      outline: 'none',
+                      m: { xs: -0.5, md: -0.75 },
+                      p: { xs: 0.5, md: 0.75 },
+                      '&:hover': { bgcolor: '#f8fafc' },
+                      '&:focus-visible': { boxShadow: `0 0 0 2px #fff, 0 0 0 4px ${BRAND}` },
+                    }}
+                  >
+                    <MiscellaneousServicesOutlinedIcon sx={{ fontSize: 22, color: BRAND }} />
+                    <Typography sx={{ flex: 1, fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.14em', color: '#64748b', textTransform: 'uppercase' }}>
+                      Services
+                    </Typography>
+                    <Chip
+                      label={shopServices.length > 0 ? `${shopServices.length} listed` : 'View'}
+                      size="small"
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: '#e0e7ff',
+                        color: BRAND,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <ChevronRightIcon sx={{ color: BRAND, fontSize: 28 }} aria-hidden />
+                  </Box>
+                </Paper>
+
+                <Dialog
+                  open={servicesModalOpen}
+                  onClose={() => setServicesModalOpen(false)}
+                  maxWidth="sm"
+                  fullWidth
+                  scroll="paper"
+                  PaperProps={{ sx: { borderRadius: '16px' } }}
+                >
+                  <DialogTitle sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1, pr: 1, fontWeight: 800, color: '#0f172a' }}>
+                    <Box component="span" sx={{ pt: 0.5 }}>
+                      Services
+                      {shop?.shop_name ? (
+                        <Typography component="span" sx={{ display: 'block', fontWeight: 600, fontSize: '0.88rem', color: '#64748b', mt: 0.5 }}>
+                          {shop.shop_name}
+                        </Typography>
+                      ) : null}
+                    </Box>
+                    <IconButton aria-label="Close" onClick={() => setServicesModalOpen(false)} size="small" sx={{ color: '#64748b' }}>
+                      <CloseIcon />
+                    </IconButton>
+                  </DialogTitle>
+                  <DialogContent dividers sx={{ bgcolor: '#f8fafc' }}>
+                    {shopServices.length === 0 ? (
+                      <Typography sx={{ color: '#94a3b8' }}>No services to show.</Typography>
+                    ) : (
+                      <Stack spacing={1.5}>
+                        {shopServices.map((s) => {
+                          const priceLabel = formatServicePriceRange(s.price_min, s.price_max);
+                          return (
+                            <Paper
+                              key={s.business_service_id}
+                              elevation={0}
+                              sx={{ p: 2, borderRadius: '12px', border: '1px solid #e2e8f0', bgcolor: '#fff' }}
+                            >
+                              <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem' }}>{s.garment_type || 'Service'}</Typography>
+                              {s.description && (
+                                <Typography sx={{ color: '#475569', mt: 0.75, fontSize: '0.9rem', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+                                  {s.description}
+                                </Typography>
+                              )}
+                              <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1.25 }}>
+                                {priceLabel && (
+                                  <Chip
+                                    icon={<AttachMoneyOutlinedIcon sx={{ fontSize: '18px !important' }} />}
+                                    label={priceLabel}
+                                    size="small"
+                                    sx={{ fontWeight: 700, bgcolor: '#eff6ff', color: '#1e40af' }}
+                                  />
+                                )}
+                                {s.delivery_time && (
+                                  <Chip label={s.delivery_time} size="small" sx={{ fontWeight: 600, bgcolor: '#f0fdf4', color: '#166534' }} />
+                                )}
+                              </Stack>
+                            </Paper>
+                          );
+                        })}
+                      </Stack>
+                    )}
+                  </DialogContent>
+                  <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={() => setServicesModalOpen(false)} sx={{ textTransform: 'none', fontWeight: 700, color: '#475569' }}>
+                      Close
+                    </Button>
+                  </DialogActions>
+                </Dialog>
               </Grid>
 
               <Grid item xs={12} md={4}>

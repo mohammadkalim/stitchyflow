@@ -9,12 +9,14 @@ export default function GoogleAuthSuccess() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const token  = params.get('token');
+    const refreshToken = params.get('refreshToken');
     const userRaw = params.get('user');
 
     if (token && userRaw) {
       try {
         const user = JSON.parse(decodeURIComponent(userRaw));
         localStorage.setItem('token', token);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user', JSON.stringify(user));
 
         if (user.role === 'customer') navigate('/customer-dashboard');

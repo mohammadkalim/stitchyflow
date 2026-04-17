@@ -4,6 +4,7 @@
  * handlers are only attached to the business router export object).
  */
 const db = require('../config/database');
+const MAX_FREE_SERVICES_PER_TAILOR = 4;
 
 function isTailorUser(req) {
   return ['tailor', 'business_owner'].includes(String(req.user?.role || '').toLowerCase());
@@ -70,6 +71,26 @@ async function createBusinessTailorService(req, res) {
       return res.status(400).json({ success: false, error: { message: 'Missing required fields: garment_type' } });
     }
     const owner_user_id = tailor ? userId : Number(req.body.owner_user_id) || userId;
+    if (tailor) {
+      const [countRows] = await db.query(
+        `SELECT COUNT(*) AS total
+         FROM business_tailor_services
+         WHERE owner_user_id = ?
+           AND COALESCE(is_active, 1) = 1`,
+        [owner_user_id]
+      );
+      const total = Number(countRows?.[0]?.total || 0);
+      if (total >= MAX_FREE_SERVICES_PER_TAILOR) {
+        return res.status(402).json({
+          success: false,
+          error: {
+            message: `Free limit reached (${MAX_FREE_SERVICES_PER_TAILOR} services). Please pay first to add more services.`,
+            code: 'SERVICE_LIMIT_REQUIRES_PAYMENT',
+            meta: { maxFreeServices: MAX_FREE_SERVICES_PER_TAILOR, totalServices: total },
+          },
+        });
+      }
+    }
     const [result] = await db.query(
       `INSERT INTO business_tailor_services (
         owner_user_id, shop_id, garment_type, description, price_min, price_max, delivery_time, service_status, is_active
@@ -159,6 +180,41 @@ async function updateBusinessTailorService(req, res) {
   }
 }
 
+/**
+ * Public: list active “available” services for a shop (tailor dashboard → Services).
+ * No auth — used by the public shop detail page.
+ * Developer by: Muhammad Kalim — Product of LogixInventor (PVT) Ltd.
+ */
+async function listPublicShopServices(req, res) {
+  try {
+    const shopId = parseInt(req.params.shopId, 10);
+    if (!Number.isFinite(shopId) || shopId < 1) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid shop id' } });
+    }
+    const [rows] = await db.query(
+      `SELECT
+         business_service_id,
+         shop_id,
+         garment_type,
+         description,
+         price_min,
+         price_max,
+         delivery_time,
+         service_status
+       FROM business_tailor_services
+       WHERE shop_id = ?
+         AND COALESCE(is_active, 1) = 1
+         AND (service_status IS NULL OR service_status = '' OR service_status = 'available')
+       ORDER BY business_service_id ASC`,
+      [shopId]
+    );
+    res.set('Cache-Control', 'private, no-cache, must-revalidate');
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+}
+
 async function deleteBusinessTailorService(req, res) {
   try {
     const id = parseInt(req.params.id, 10);
@@ -191,6 +247,7 @@ async function deleteBusinessTailorService(req, res) {
 
 module.exports = {
   listBusinessTailorServices,
+  listPublicShopServices,
   createBusinessTailorService,
   updateBusinessTailorService,
   deleteBusinessTailorService,

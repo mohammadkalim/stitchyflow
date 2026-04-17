@@ -276,12 +276,22 @@ router.post('/register/verify', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '24h' }
     );
+
+    const refreshToken =
+      process.env.JWT_REFRESH_SECRET
+        ? jwt.sign(
+            { userId },
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
+          )
+        : null;
     
     res.json({
       success: true,
       message: userData.role === 'tailor' ? 'Account created! Awaiting admin approval.' : 'Account created successfully!',
       data: {
         accessToken,
+        ...(refreshToken ? { refreshToken } : {}),
         user: {
           userId,
           email: userData.email,

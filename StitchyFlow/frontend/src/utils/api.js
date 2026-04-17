@@ -37,6 +37,134 @@ export function getToken() {
   return localStorage.getItem('token');
 }
 
+const REFRESH_STORAGE_KEY = 'refreshToken';
+
+export function getRefreshToken() {
+  if (typeof localStorage === 'undefined') return null;
+  return localStorage.getItem(REFRESH_STORAGE_KEY);
+}
+
+/** True when the API rejected the access token (expired / invalid), not e.g. wrong password or role-only 403. */
+function isAccessTokenRejected(status, data) {
+  const code = data?.code;
+  if (code === 'ACCOUNT_SUSPENDED' || code === 'ACCOUNT_INACTIVE') return false;
+
+  const msg = String(data?.error?.message || data?.message || '').toLowerCase();
+
+  if (status === 401) {
+    if (msg.includes('invalid credentials')) return false;
+    if (msg.includes('access token')) return true;
+    if (msg === 'token required') return true;
+    return false;
+  }
+
+  if (status === 403) {
+    if (msg.includes('access denied')) return false;
+    if (msg.includes('invalid') && msg.includes('token')) return true;
+    if (msg.includes('expired') && msg.includes('token')) return true;
+    if (msg === 'invalid or expired token') return true;
+    return false;
+  }
+
+  return false;
+}
+
+let refreshInFlight = null;
+
+/**
+ * Uses POST /auth/refresh (raw fetch — must not go through apiFetch retry loop).
+ * Returns true when a new access token was stored.
+ */
+async function tryRefreshAccessToken() {
+  if (typeof localStorage === 'undefined') return false;
+  const rt = localStorage.getItem(REFRESH_STORAGE_KEY);
+  if (!rt) return false;
+
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    try {
+      const p = '/auth/refresh';
+      const base = getApiBase();
+      const url = `${base}${p.startsWith('/') ? p : `/${p}`}`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: rt }),
+      });
+
+      const text = await res.text();
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
+
+      if (!res.ok) return false;
+
+      const at = data?.data?.accessToken;
+      if (typeof at === 'string' && at.length) {
+        localStorage.setItem('token', at);
+        const u = data?.data?.user;
+        if (u && typeof u === 'object') {
+          try {
+            const prev = JSON.parse(localStorage.getItem('user') || 'null');
+            const merged = {
+              ...(prev && typeof prev === 'object' ? prev : {}),
+              ...u,
+              firstName: u.firstName ?? prev?.firstName,
+              lastName: u.lastName ?? prev?.lastName,
+              email: u.email ?? prev?.email,
+              role: u.role ?? prev?.role,
+              approvalStatus: u.approvalStatus ?? u.approval_status ?? prev?.approvalStatus,
+            };
+            localStorage.setItem('user', JSON.stringify(merged));
+          } catch {
+            localStorage.setItem('user', JSON.stringify(u));
+          }
+        }
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+}
+
+let sessionRedirectScheduled = false;
+
+export function clearClientSessionAndRedirectToLogin() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem('token');
+    localStorage.removeItem(REFRESH_STORAGE_KEY);
+    localStorage.removeItem('user');
+    try {
+      const keys = Object.keys(sessionStorage);
+      for (const k of keys) {
+        if (k.startsWith('stitchyflow:')) sessionStorage.removeItem(k);
+      }
+    } catch { /* ignore */ }
+  } catch { /* ignore */ }
+
+  const path = `${window.location.pathname || ''}${window.location.search || ''}`;
+  const next = encodeURIComponent(path);
+  window.location.replace(`/login?reason=session&next=${next}`);
+}
+
+function scheduleSessionExpiredRedirect() {
+  if (sessionRedirectScheduled) return;
+  sessionRedirectScheduled = true;
+  clearClientSessionAndRedirectToLogin();
+}
+
 /** Bust browser cache for API-served images when the DB row changes (`updated_at`). */
 export function appendShopAssetCacheBust(url, meta) {
   if (!url) return url;
@@ -105,6 +233,21 @@ export async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     const msg = data?.error?.message || data?.message || `HTTP ${res.status}`;
+    const retryAfterRefresh = options.__retryAfterRefresh !== false;
+
+    if (retryAfterRefresh && isAccessTokenRejected(res.status, data)) {
+      const refreshed = await tryRefreshAccessToken();
+      if (refreshed) {
+        return apiFetch(path, { ...options, __retryAfterRefresh: false });
+      }
+    }
+
+    if (isAccessTokenRejected(res.status, data)) {
+      const hadToken = !!token;
+      const hadRefresh = !!getRefreshToken();
+      if (hadToken || hadRefresh) scheduleSessionExpiredRedirect();
+    }
+
     throw new Error(msg);
   }
   return data;

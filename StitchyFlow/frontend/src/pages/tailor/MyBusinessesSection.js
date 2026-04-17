@@ -118,6 +118,7 @@ export default function MyBusinessesSection({ isApproved }) {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [dragOverTarget, setDragOverTarget] = useState('');
   const [error, setError]   = useState('');
   const [types, setTypes]   = useState([]);
   const [categories, setCategories] = useState([]);
@@ -328,6 +329,32 @@ export default function MyBusinessesSection({ isApproved }) {
     } finally {
       setter(false);
     }
+  };
+
+  const handleImageDragOver = (e, target) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragOverTarget !== target) setDragOverTarget(target);
+  };
+
+  const handleImageDragLeave = (e, target) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragOverTarget === target) setDragOverTarget('');
+  };
+
+  const handleImageDrop = (e, target) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverTarget('');
+    const files = e.dataTransfer?.files;
+    const file = files && files.length > 0 ? files[0] : null;
+    if (!file) return;
+    if (!file.type?.startsWith('image/')) {
+      setError('Please drop a valid image file.');
+      return;
+    }
+    uploadBusinessImage(file, target);
   };
 
   const requestDelete = (b) => {
@@ -779,14 +806,27 @@ export default function MyBusinessesSection({ isApproved }) {
               <Typography sx={{ fontSize: '0.75rem', color: '#475569', fontWeight: 800, mb: 1.5, letterSpacing: '0.06em', borderLeft: '3px solid #0f172a', pl: 1.25 }}>BRAND MEDIA</Typography>
               <Grid container spacing={1.5}>
                 <Grid item xs={12} md={6}>
-                  <Paper elevation={0} sx={{ p: 1.25, borderRadius: '12px', border: '1px dashed #cbd5e1', bgcolor: '#fff' }}>
+                  <Paper
+                    elevation={0}
+                    onDragOver={(e) => handleImageDragOver(e, 'logo')}
+                    onDragEnter={(e) => handleImageDragOver(e, 'logo')}
+                    onDragLeave={(e) => handleImageDragLeave(e, 'logo')}
+                    onDrop={(e) => handleImageDrop(e, 'logo')}
+                    sx={{
+                      p: 1.25,
+                      borderRadius: '12px',
+                      border: dragOverTarget === 'logo' ? '1px dashed #2563eb' : '1px dashed #cbd5e1',
+                      bgcolor: dragOverTarget === 'logo' ? '#eff6ff' : '#fff',
+                      transition: 'border-color 0.15s ease, background-color 0.15s ease',
+                    }}
+                  >
                     <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                       <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#0f172a' }}>Logo</Typography>
                         <Typography sx={{ fontSize: '0.7rem', color: '#64748b' }}>
                           {form.logo_image
                             ? (edit ? 'Uploaded — saved; shows on Tailor Shops' : 'Uploaded — click Save business to publish')
-                            : 'Upload logo image'}
+                            : 'Upload logo image or drag and drop'}
                         </Typography>
                         {form.logo_image ? (
                           <Box
@@ -806,14 +846,27 @@ export default function MyBusinessesSection({ isApproved }) {
                   </Paper>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Paper elevation={0} sx={{ p: 1.25, borderRadius: '12px', border: '1px dashed #cbd5e1', bgcolor: '#fff' }}>
+                  <Paper
+                    elevation={0}
+                    onDragOver={(e) => handleImageDragOver(e, 'cover')}
+                    onDragEnter={(e) => handleImageDragOver(e, 'cover')}
+                    onDragLeave={(e) => handleImageDragLeave(e, 'cover')}
+                    onDrop={(e) => handleImageDrop(e, 'cover')}
+                    sx={{
+                      p: 1.25,
+                      borderRadius: '12px',
+                      border: dragOverTarget === 'cover' ? '1px dashed #2563eb' : '1px dashed #cbd5e1',
+                      bgcolor: dragOverTarget === 'cover' ? '#eff6ff' : '#fff',
+                      transition: 'border-color 0.15s ease, background-color 0.15s ease',
+                    }}
+                  >
                     <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                       <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: '#0f172a' }}>Cover Image</Typography>
                         <Typography sx={{ fontSize: '0.7rem', color: '#64748b' }}>
                           {form.cover_image
                             ? (edit ? 'Uploaded — saved; shop detail banner' : 'Uploaded — click Save business to publish')
-                            : 'Upload cover image'}
+                            : 'Upload cover image or drag and drop'}
                         </Typography>
                         {form.cover_image ? (
                           <Box

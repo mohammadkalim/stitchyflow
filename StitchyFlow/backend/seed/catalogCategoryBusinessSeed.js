@@ -4,7 +4,6 @@
  * Target:
  * - Acting: 99 businesses
  * - Calligraphy: 99 businesses
- * - Event: 99 businesses
  * - Painting: 99 businesses
  *
  * Safe to run multiple times:
@@ -17,7 +16,7 @@ const { ensureCASubTables } = require('../utils/caSubTables');
 
 const TARGET_PER_CATEGORY = 99;
 
-const CATEGORY_NAMES = ['Acting', 'Calligraphy', 'Event', 'Painting'];
+const CATEGORY_NAMES = ['Acting', 'Calligraphy', 'Painting'];
 
 const CITIES = [
   'Karachi',

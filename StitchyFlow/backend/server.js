@@ -76,12 +76,6 @@ app.use('/api/v1/smtp', require('./routes/smtp.routes'));
 // Public tailor shop detail — app-level route so GET always hits before any nested auth (fixes 404 from proxy/clients).
 const businessTailorServiceHandlers = require('./routes/business_tailor_services.handlers');
 const businessRoutes = require('./routes/business.routes');
-app.get('/api/v1/business/public/shops/:shopId', businessRoutes.getPublicShopById);
-app.get(
-  '/api/v1/business/public/tailors-for-catalog-category/:categoryId',
-  businessRoutes.getTailorsForCatalogCategory
-);
-
 /** Must run before mounting the business router so /business/services always matches (avoids client 404s). */
 async function ensureBusinessTailorTablesReady(req, res, next) {
   try {
@@ -91,6 +85,18 @@ async function ensureBusinessTailorTablesReady(req, res, next) {
     res.status(500).json({ success: false, error: { message: 'Business module initialization failed' } });
   }
 }
+
+// More specific path first (app-level duplicate of business router route — ensures proxy always hits a handler).
+app.get(
+  '/api/v1/business/public/shops/:shopId/services',
+  ensureBusinessTailorTablesReady,
+  businessTailorServiceHandlers.listPublicShopServices
+);
+app.get('/api/v1/business/public/shops/:shopId', businessRoutes.getPublicShopById);
+app.get(
+  '/api/v1/business/public/tailors-for-catalog-category/:categoryId',
+  businessRoutes.getTailorsForCatalogCategory
+);
 
 app.get(
   '/api/v1/business/services',

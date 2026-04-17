@@ -97,6 +97,14 @@ router.get('/callback',
       { expiresIn: process.env.JWT_EXPIRE }
     );
 
+    const refreshToken = process.env.JWT_REFRESH_SECRET
+      ? jwt.sign(
+          { userId: user.user_id },
+          process.env.JWT_REFRESH_SECRET,
+          { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
+        )
+      : '';
+
     const userData = encodeURIComponent(JSON.stringify({
       userId: user.user_id,
       email:  user.email,
@@ -105,8 +113,9 @@ router.get('/callback',
       role:   user.role,
     }));
 
-    // Redirect to frontend with token
-    res.redirect(`${process.env.FRONTEND_URL}/auth/google/success?token=${token}&user=${userData}`);
+    // Redirect to frontend with token (+ refresh when configured)
+    const rtParam = refreshToken ? `&refreshToken=${encodeURIComponent(refreshToken)}` : '';
+    res.redirect(`${process.env.FRONTEND_URL}/auth/google/success?token=${encodeURIComponent(token)}${rtParam}&user=${userData}`);
   }
 );
 

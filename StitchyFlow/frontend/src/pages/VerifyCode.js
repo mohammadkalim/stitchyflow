@@ -98,8 +98,9 @@ function VerifyCode() {
       });
 
       if (response.success) {
-        const { accessToken, user } = response.data;
+        const { accessToken, refreshToken, user } = response.data;
         localStorage.setItem('token', accessToken);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user', JSON.stringify(user));
         
         if (user.role === 'tailor') {

@@ -111,7 +111,7 @@ router.post('/login', async (req, res) => {
     const refreshToken = jwt.sign(
       { userId: user.user_id },
       process.env.JWT_REFRESH_SECRET,
-      { expiresIn: process.env.JWT_REFRESH_EXPIRE }
+      { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
     );
     
     res.json({
@@ -133,6 +133,76 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, error: { message: error.message, code: error.code } });
+  }
+});
+
+/**
+ * Issue a new access token from a valid refresh token (keeps users signed in past JWT_EXPIRE).
+ * Developer by: Muhammad Kalim — Product of LogixInventor (PVT) Ltd.
+ */
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body || {};
+    if (!refreshToken) {
+      return res.status(400).json({ success: false, error: { message: 'Refresh token required' } });
+    }
+    if (!process.env.JWT_REFRESH_SECRET) {
+      return res.status(500).json({ success: false, error: { message: 'Refresh token not configured' } });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch {
+      return res.status(401).json({ success: false, error: { message: 'Invalid or expired refresh token' } });
+    }
+
+    const [users] = await db.query(
+      'SELECT user_id, email, role, status, approval_status FROM users WHERE user_id = ? LIMIT 1',
+      [decoded.userId]
+    );
+    if (!users.length) {
+      return res.status(401).json({ success: false, error: { message: 'User not found' } });
+    }
+
+    const row = users[0];
+    if (row.status === 'suspended') {
+      return res.status(403).json({
+        success: false,
+        code: 'ACCOUNT_SUSPENDED',
+        error: { message: 'Your account has been suspended. Please contact support.' }
+      });
+    }
+    if (row.status !== 'active' && row.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        code: 'ACCOUNT_INACTIVE',
+        error: { message: 'Your account is inactive. Please contact support.' }
+      });
+    }
+
+    const accessToken = jwt.sign(
+      { userId: row.user_id, email: row.email, role: row.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        accessToken,
+        user: {
+          userId: row.user_id,
+          email: row.email,
+          role: row.role,
+          status: row.status,
+          approvalStatus: row.approval_status || null
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(500).json({ success: false, error: { message: error.message } });
   }
 });
 

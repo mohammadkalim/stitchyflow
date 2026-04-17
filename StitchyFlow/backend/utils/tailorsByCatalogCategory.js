@@ -3,6 +3,8 @@
  * Used by public catalog + business routes (live DB).
  */
 
+const { isExcludedCategoryId } = require('./catalogPublicFilters');
+
 const SHOPS_FOR_CATALOG_CATEGORY_SQL = `
   SELECT shop_id, owner_user_id, shop_name, owner_name, city, country, address,
          s.category_id,
@@ -49,6 +51,7 @@ const SHOPS_FOR_CATALOG_CATEGORY_SQL = `
 `;
 
 async function fetchTailorShopsForCatalogCategory(db, catId) {
+  if (await isExcludedCategoryId(db, catId)) return [];
   const [rows] = await db.query(SHOPS_FOR_CATALOG_CATEGORY_SQL, [catId, catId, catId, catId]);
   return rows;
 }

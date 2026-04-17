@@ -167,9 +167,15 @@ Authorization: Bearer <access_token>
 {
   "success": true,
   "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  },
-  "message": "Token refreshed successfully"
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "userId": 1,
+      "email": "user@example.com",
+      "role": "tailor",
+      "status": "active",
+      "approvalStatus": "approved"
+    }
+  }
 }
 ```
 
@@ -313,6 +319,64 @@ Authorization: Bearer <access_token>
 {
   "success": true,
   "message": "Password changed successfully"
+}
+```
+
+---
+
+## 6. Public tailor shop (no auth)
+
+### 6.1 Public shop detail (includes services)
+
+**Endpoint:** `GET /business/public/shops/:shopId`  
+**Authentication:** Not required  
+
+**Description:** Returns one shop row plus a **`services`** array (active + **available** rows from `business_tailor_services`), so clients can render the shop page with a single request.
+
+**Response (200) — shape (abbreviated):**
+```json
+{
+  "success": true,
+  "data": {
+    "shop_id": 28,
+    "shop_name": "Example Tailor",
+    "services": [
+      {
+        "business_service_id": 1,
+        "garment_type": "Custom Stitching",
+        "price_min": 5000,
+        "price_max": 12000,
+        "delivery_time": "2 weeks",
+        "service_status": "available"
+      }
+    ]
+  }
+}
+```
+
+### 6.2 Shop services only (optional)
+
+**Endpoint:** `GET /business/public/shops/:shopId/services`  
+**Authentication:** Not required  
+
+**Description:** Same service rows as the **`services`** field on **`GET /business/public/shops/:shopId`**. Useful if you already have shop data and only need to refresh offerings.
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "business_service_id": 1,
+      "shop_id": 28,
+      "garment_type": "Custom Stitching",
+      "description": "Full bespoke suit",
+      "price_min": 5000,
+      "price_max": 12000,
+      "delivery_time": "2 weeks",
+      "service_status": "available"
+    }
+  ]
 }
 ```
 

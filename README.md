@@ -78,6 +78,10 @@ Restart the backend after changing these values.
 - **Database:** MySQL 8.0+
 - **Authentication:** JWT
 
+## Auth session (access + refresh)
+
+The API issues a short-lived **access** JWT (`JWT_EXPIRE`, often `24h`) and a longer **refresh** JWT (`JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRE`). The customer **frontend** stores both and uses **`POST /api/v1/auth/refresh`** (via `apiFetch`) when the access token is rejected, so tailor/customer dashboards keep loading data after idle periods without a manual logout/login. Set **`JWT_REFRESH_SECRET`** (and optionally **`JWT_REFRESH_EXPIRE`**, e.g. `7d`) in **`StitchyFlow/backend/.env`**.
+
 ## Project Structure
 
 ```
