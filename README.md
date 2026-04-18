@@ -47,6 +47,7 @@ mysql -u root -p12345 < Database/add_tailor_services_link_accent.sql
 - **Admin Panel:** http://localhost:4000
 - **Backend API:** http://localhost:5000
 - **phpMyAdmin:** http://localhost:8080/phpmyadmin
+- **Promotions & pricing:** http://localhost:3000/promotions — hero slider uses admin **`/promotions`** slides when configured; otherwise static assets **`/promotions/promotions-1.png`** and **`/promotions/promotions-2.png`**. Tailors with businesses see tier hints (Standard up to 4 services per shop, Pro above) and checkout opens the public shop page.
 
 ## Tailor service images (`/images/services/...`)
 

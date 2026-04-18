@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-18 (public `/promotions` — pricing & hero)
+
+- **Promotions page:** Rebuilt **`/promotions`** with a white, corporate layout; hero uses **`useSliderImages('/promotions')`** when admin uploads slides, otherwise **`/promotions/promotions-1.png`** and **`/promotions/promotions-2.png`** (from `Docs/UI/UX/Promotions 1.png` & `Promotions 2.png`). Logged-in **tailors** see **Your businesses** with per-shop service counts, **Standard** vs **Pro** when services exceed **4** per shop, **Pay & open shop** and a **Checkout** dialog (Standard | Pro side by side, payment method radios) that navigates to **`/tailor-shops/view/:shopId`**. Plans renamed to **Standard / Pro / Enterprise** with updated feature copy. Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
 ## 2026-04-17 (frontend dev console)
 
 - **CRA dev:** `src/devConsoleFilter.js` is imported first from `index.js` to suppress the informational **“Download the React DevTools”** `console.info` line only in development. Extension-injected scripts (e.g. `share-modal.js`) are not part of this repo — disable the browser extension or ignore those errors.
