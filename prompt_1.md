@@ -628,3 +628,11 @@ Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
 please phir wahi wala error please gab men 24 hours ke baat main website khol tha and Business ka http://localhost:3000/tailor-dashboard and All pages khol ta na to please koi bhe Business and kuch bhe nahe show ar ta lekin gab men logout ho kar login ho to please Saab show kare ta hai please hamisha ginne bhe ghan te ke baat bhe show kare please ye jo bhe error hai Kindly fixed kare
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+-------
+
+
+please create this Full Promotions page and please this page men this Create Promotion na ho please is ke andar 1 Business create kar ne ke baad ke pesse ka Pricing show kare and Services 4 se zada wala Procing show kare please yaha se Pay kare to please who Business ka page khol jye and please Promotions Slyder image was a please following the @Docs/UI/UX/Promotions 1.png and @Docs/UI/UX/Promotions 2.png and please page color was a wight UI/UX and Pricing popup was create a Professional Poppus and opshon sides was create a Professional and corporate and mordern UI/UX
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
