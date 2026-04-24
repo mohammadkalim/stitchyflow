@@ -645,3 +645,26 @@ Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
 please gab men main Website http://localhost:3000 All pages and All Dashboard and please Admin panal All pages http://localhost:4000/dashboard men jye to please console men logs bhe bane sare Shece load ho and log bane and Full Frame work websote ka compleate kar de
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+-------
+
+please this page men Shop Media please gab ham Add media per click kare to please 2 opshion show kare 1 ( Text ) and 2 Image please gab text likh le and imae upload kar de to please Save kare to please jo Bsuiness Apne Select kya tha os Business ke andar like http://localhost:3000/tailor-shops/view/28 is ke andar Services ke opshion ke neche zic zic ke Meadia Ad hona shrou ho gye  
+
+
+_________ Database _________
+
+please Database http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow create a 1 Table of Shop Media and please All is showing live Database base and please Data base men bhe save ho All Data Shop Media ka and please create a Full Shop Media Strucher and Framework
+
+--------- Database creadincles ----------
+
+Database Host *** http://localhost:8080/phpmyadmin/index.php?route=/database/structure&db=stitchyflow ******** 
+
+Database username ****** root *****
+
+Database Password **** 12345 ******
+
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
