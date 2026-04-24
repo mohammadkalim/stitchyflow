@@ -30,6 +30,7 @@ import TailorShops from './pages/TailorShops';
 import TailorShopDetails from './pages/TailorShopDetails';
 import TailorProfileDetails from './pages/TailorProfileDetails';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
+import RouteLoadLogger from './dev/RouteLoadLogger';
 
 const theme = createTheme({
   palette: {
@@ -43,6 +44,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <RouteLoadLogger appId="web" />
         <Routes>
           <Route element={<SplashGate />}>
             <Route path="/" element={<Navigate to="/home" replace />} />

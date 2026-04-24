@@ -9,6 +9,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch } from '../utils/api';
+import { logStitchyflowDev } from '../dev/RouteLoadLogger';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -182,6 +183,10 @@ function CustomerDashboard() {
     if (activeKey === 'security') {
       fetchTotpStatus();
     }
+  }, [activeKey]);
+
+  useEffect(() => {
+    logStitchyflowDev('web', 'customer-dashboard section', activeKey);
   }, [activeKey]);
 
   const fetchStats = async (u) => {

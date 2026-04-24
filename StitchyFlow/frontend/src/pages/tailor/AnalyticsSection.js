@@ -12,6 +12,7 @@ import RepeatOutlinedIcon from '@mui/icons-material/RepeatOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { apiFetch } from '../../utils/api';
+import { dedupeOrdersByOrderId, buildTailorAnalyticsFromOrders } from '../../utils/tailorAnalyticsFromOrders';
 
 const G = '#1b4332';
 const GL = '#2d6a4f';
@@ -180,8 +181,15 @@ export default function AnalyticsSection({ isApproved }) {
     setLoading(true);
     setError('');
     try {
-      const res = await apiFetch(`/analytics/tailor?period=${encodeURIComponent(apiPeriod)}`);
-      setPayload(res?.data || null);
+      const res = await apiFetch('/orders');
+      const raw = Array.isArray(res?.data) ? res.data : [];
+      const orders = dedupeOrdersByOrderId(raw);
+      const tr = orders.map((o) => o.tailor_rating).find((x) => x != null && x !== '');
+      const reviewMeta = {
+        avgRating: tr != null ? parseFloat(tr) : 0,
+        reviewCount: 0,
+      };
+      setPayload(buildTailorAnalyticsFromOrders(orders, apiPeriod, reviewMeta));
     } catch (e) {
       setError(e.message || 'Failed to load analytics');
       setPayload(null);
@@ -219,7 +227,7 @@ export default function AnalyticsSection({ isApproved }) {
           label: 'Avg rating',
           value: (Number(k.avgRating) || 0).toFixed(1),
           delta: undefined,
-          deltaNeutral: `${k.reviewCount ?? 0} reviews`,
+          deltaNeutral: (k.reviewCount ?? 0) > 0 ? `${k.reviewCount} reviews` : 'From profile',
           icon: <StarBorderIcon />,
           color: '#f59e0b',
         },

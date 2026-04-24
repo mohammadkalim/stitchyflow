@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import { ADMIN_PAGE_CHUNKS } from './adminPageChunks';
+import RouteLoadLogger from './dev/RouteLoadLogger';
 
 const Login = lazy(ADMIN_PAGE_CHUNKS['/login']);
 const Dashboard = lazy(ADMIN_PAGE_CHUNKS['/dashboard']);
@@ -125,6 +126,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <RouteLoadLogger appId="admin" />
         <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/login" element={<Login />} />

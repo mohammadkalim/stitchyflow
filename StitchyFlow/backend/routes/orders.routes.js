@@ -11,6 +11,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const baseSelect = `
       SELECT
         o.order_id,
+        o.customer_id,
         o.order_number,
         o.status,
         o.garment_type,
@@ -18,6 +19,7 @@ router.get('/', authenticateToken, async (req, res) => {
         o.final_price,
         o.created_at,
         o.estimated_completion_date,
+        o.actual_completion_date,
         CONCAT(cu_user.first_name, ' ', cu_user.last_name) AS customer_name,
         cu_user.email AS customer_email,
         cu_user.phone AS customer_phone,
@@ -66,6 +68,7 @@ router.get('/', authenticateToken, async (req, res) => {
       const baseFallback = `
         SELECT
           o.order_id,
+          o.customer_id,
           o.order_number,
           o.status,
           o.garment_type,
@@ -73,6 +76,7 @@ router.get('/', authenticateToken, async (req, res) => {
           o.final_price,
           o.created_at,
           o.estimated_completion_date,
+          o.actual_completion_date,
           NULL AS customer_name,
           NULL AS customer_email,
           NULL AS customer_phone,

@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../utils/api';
+import { logStitchyflowDev } from '../dev/RouteLoadLogger';
 import Header from '../components/Header';
 import OverviewSection from './tailor/OverviewSection';
 import MyBusinessesSection from './tailor/MyBusinessesSection';
@@ -111,6 +112,10 @@ function TailorDashboard() {
     const iv = setInterval(() => fetchApprovalStatus(), 15000);
     return () => clearInterval(iv);
   }, [navigate, fetchApprovalStatus]);
+
+  useEffect(() => {
+    logStitchyflowDev('web', 'tailor-dashboard section', activeKey);
+  }, [activeKey]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');

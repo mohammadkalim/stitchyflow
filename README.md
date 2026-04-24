@@ -48,6 +48,18 @@ mysql -u root -p12345 < Database/add_tailor_services_link_accent.sql
 - **Backend API:** http://localhost:5000
 - **phpMyAdmin:** http://localhost:8080/phpmyadmin
 
+## Development console (route / scene logs)
+
+In **`npm start`** (development), the browser console records:
+
+- **`[StitchyFlow:web]`** — each URL change on the main site, plus tailor/customer **dashboard section** changes.
+- **`[StitchyFlow:admin]`** — each admin URL change.
+- **`app shell mounted`** — once when the React app boots.
+
+To enable the same route logs in a **production build**, set `REACT_APP_ROUTE_LOGS=1` in the frontend or admin `.env` before `npm run build`.
+
+**Tailor Analytics (dashboard):** The Analytics tab aggregates **`GET /api/v1/orders`** in the browser (see `frontend/src/utils/tailorAnalyticsFromOrders.js`), so it does not depend on a separate analytics route and avoids **404**s when an old API process is still running.
+
 ## Tailor service images (`/images/services/...`)
 
 The database may reference paths such as `/images/services/mens-shirt.jpg`. The API serves these from **`StitchyFlow/backend/public/images/`** (URL prefix `/images/...`). Add JPG/PNG files there to match the DB paths, or upload icons via the admin Tailor Services flow (stored under `/uploads/ads/`). Restart the backend after adding files.

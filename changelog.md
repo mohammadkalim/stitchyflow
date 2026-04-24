@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-04-24 (tailor Analytics — no /analytics 404)
+
+- **Tailor dashboard Analytics tab:** Loads metrics from **`GET /orders`** only (client-side aggregation in **`frontend/src/utils/tailorAnalyticsFromOrders.js`**), so the browser no longer requests **`/api/v1/analytics/tailor`** and does not log **404** when the API process is stale. **`GET /orders`** responses now include **`customer_id`** and **`actual_completion_date`** (main + fallback SQL) for correct client metrics. The backend **`/analytics/tailor`** route remains available for other use. Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
+## 2026-04-24 (route & dashboard scene logging)
+
+- **Main site (`:3000`)** and **admin (`:4000`): In development, the browser console logs each navigation as `[StitchyFlow:web|admin] scene loaded` with path and ISO timestamp (`dev/RouteLoadLogger.js`, mounted from `App.js`). Optional production logging: set `REACT_APP_ROUTE_LOGS=1` in the app `.env`.
+- **Tailor & customer dashboards:** Sidebar section changes log as `[StitchyFlow:web] tailor-dashboard section` / `customer-dashboard section` with the active section key (`logStitchyflowDev` in `RouteLoadLogger.js`).
+- **Bootstrap:** `index.js` logs `[StitchyFlow:web|admin] app shell mounted` once in development.
+- Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
 ## 2026-04-17 (frontend dev console)
 
 - **CRA dev:** `src/devConsoleFilter.js` is imported first from `index.js` to suppress the informational **“Download the React DevTools”** `console.info` line only in development. Extension-injected scripts (e.g. `share-modal.js`) are not part of this repo — disable the browser extension or ignore those errors.
