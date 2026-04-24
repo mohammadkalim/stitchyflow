@@ -633,6 +633,15 @@ Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
 -------
 
 
-please create this Full Promotions page and please this page men this Create Promotion na ho please is ke andar 1 Business create kar ne ke baad ke pesse ka Pricing show kare and Services 4 se zada wala Procing show kare please yaha se Pay kare to please who Business ka page khol jye and please Promotions Slyder image was a please following the @Docs/UI/UX/Promotions 1.png and @Docs/UI/UX/Promotions 2.png and please page color was a wight UI/UX and Pricing popup was create a Professional Poppus and opshon sides was create a Professional and corporate and mordern UI/UX
+please create this Full Promotions page and please this page men this Create Promotion na ho please is ke andar 1 Business create kar ne ke baad ke pesse ka Pricing show kare and Services 4 se zada wala Procing show kare please yaha se Pay kare to please who Business ka page khol jye and please Promotions Slyder image was a please following the @Docs/UI/UX/Promotions 1.png and @Docs/UI/UX/Promotions 2.png and please page color was a wight UI/UX and Pricing popup was create a Professional Poppus and opshon sides was create a Professional and corporate and mordern UI/UX and please Not Home page ke Herder wala Promotions page Tailer Shoop ke sidebar wala page 
+
+Most Important: Please read, analyze and memorize the @prompt_memorizer.md.
+
+
+
+---------
+
+
+please gab men main Website http://localhost:3000 All pages and All Dashboard and please Admin panal All pages http://localhost:4000/dashboard men jye to please console men logs bhe bane sare Shece load ho and log bane and Full Frame work websote ka compleate kar de
 
 Most Important: Please read, analyze and memorize the @prompt_memorizer.md.

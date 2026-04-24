@@ -9,8 +9,8 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
-import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import MiscellaneousServicesOutlinedIcon from '@mui/icons-material/MiscellaneousServicesOutlined';
+import AnalyticsOutlinedIcon from '@mui/icons-material/AnalyticsOutlined';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import TipsAndUpdatesOutlinedIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
@@ -318,7 +318,7 @@ export default function OverviewSection({ user, isApproved, onNavigate, showHero
   const quickActions = [
     { icon: <AddBusinessOutlinedIcon />, label: 'Add Business', desc: 'Register a new shop', color: G, navKey: 'businesses' },
     { icon: <MiscellaneousServicesOutlinedIcon />, label: 'Add Service', desc: 'List a new service', color: '#2563eb', navKey: 'services' },
-    { icon: <LocalOfferOutlinedIcon />, label: 'Create Promo', desc: 'Launch a promotion', color: '#7c3aed', navKey: 'promotions' },
+    { icon: <AnalyticsOutlinedIcon />, label: 'Analytics', desc: 'Performance insights', color: '#0d9488', navKey: 'analytics' },
     { icon: <CalendarTodayOutlinedIcon />, label: 'View Orders', desc: 'Manage your orders', color: '#d97706', navKey: 'bookings' },
   ];
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box, Typography, Paper, Button, Grid, Chip, Divider,
   TextField, Dialog, DialogContent, DialogTitle, DialogActions, IconButton,
-  MenuItem, CircularProgress, Alert, Stack, Slider,
+  MenuItem, CircularProgress, Alert, Stack,
 } from '@mui/material';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -14,41 +14,11 @@ import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
 import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined';
 import UploadFileOutlinedIcon from '@mui/icons-material/UploadFileOutlined';
-import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import EventBusyOutlinedIcon from '@mui/icons-material/EventBusyOutlined';
 import { apiFetch, getApiBase, getToken, notifyPublicShopsChanged, resolvePublicBusinessImageUrl } from '../../utils/api';
-
-/** Corporate payment tiers — slider selects index0..2 */
-const PAYMENT_PRICING_TIERS = [
-  {
-    key: 'essential',
-    name: 'Essential',
-    subtitle: 'Solo expansion',
-    price: 2999,
-    period: 'per year',
-    features: ['1 additional business slot', 'Standard marketplace listing', 'Email support'],
-  },
-  {
-    key: 'professional',
-    name: 'Professional',
-    subtitle: 'Growing tailor',
-    price: 4999,
-    period: 'per year',
-    popular: true,
-    features: ['2 additional business slots', 'Priority discovery placement', 'Promotions toolkit access'],
-  },
-  {
-    key: 'enterprise',
-    name: 'Enterprise',
-    subtitle: 'Studios & brands',
-    price: 7999,
-    period: 'per year',
-    features: ['Up to 5 additional slots', 'Dedicated onboarding', 'Custom branding options'],
-  },
-];
+import { BusinessPlanPaymentHeader, BusinessPlanComparisonBody, BusinessPlanPaymentFooter } from './BusinessPlanComparison';
 
 const G = '#1b4332';
 const GL = '#2d6a4f';
@@ -927,185 +897,23 @@ export default function MyBusinessesSection({ isApproved }) {
           },
         }}
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', pb: 1, pt: 2.25, px: { xs: 2, sm: 3 }, bgcolor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-            <Box sx={{ width: 44, height: 44, borderRadius: '10px', bgcolor: '#fff', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CreditCardOutlinedIcon sx={{ color: '#111827', fontSize: 24 }} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: '0.6875rem', fontWeight: 700, color: '#6b7280', letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.5 }}>
-                Payment required
-              </Typography>
-              <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#111827', lineHeight: 1.25 }}>
-                Add another business
-              </Typography>
-              <Typography sx={{ color: '#6b7280', fontSize: '0.8125rem', mt: 0.5, maxWidth: 520 }}>
-                Your plan includes one business. Choose a package below, then continue to secure checkout.
-              </Typography>
-            </Box>
-          </Box>
-          <IconButton size="small" onClick={() => !paymentSubmitting && setPaymentOpen(false)} sx={{ color: '#6b7280', border: '1px solid #d1d5db', borderRadius: '8px' }} aria-label="Close">
-            <CloseIcon fontSize="small" />
-          </IconButton>
+        <DialogTitle sx={{ p: 0, bgcolor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+          <BusinessPlanPaymentHeader onClose={() => !paymentSubmitting && setPaymentOpen(false)} />
         </DialogTitle>
-        <DialogContent sx={{ px: { xs: 2, sm: 3 }, pt: 2.5, pb: 1, bgcolor: '#f3f4f6' }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 2.25 },
-              mb: 2.5,
-              borderRadius: '10px',
-              border: '1px solid #e5e7eb',
-              bgcolor: '#ffffff',
-              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.06)',
-            }}
-          >
-            <Typography sx={{ fontSize: '0.6875rem', fontWeight: 800, color: '#6b7280', letterSpacing: '0.1em', textTransform: 'uppercase', mb: 1.5 }}>
-              Compare plans — slide or tap a tier
-            </Typography>
-            <Box sx={{ px: { xs: 0.5, sm: 2 }, pt: 0.5, pb: 0.25 }}>
-              <Slider
-                value={paymentTierIndex}
-                onChange={(_, v) => setPaymentTierIndex(v)}
-                min={0}
-                max={2}
-                step={1}
-                marks={[{ value: 0 }, { value: 1 }, { value: 2 }]}
-                disabled={paymentSubmitting}
-                sx={{
-                  color: '#111827',
-                  height: 8,
-                  '& .MuiSlider-track': { border: 'none', bgcolor: '#111827', borderRadius: '4px' },
-                  '& .MuiSlider-rail': { bgcolor: '#e5e7eb', opacity: 1, borderRadius: '4px' },
-                  '& .MuiSlider-thumb': {
-                    width: 24,
-                    height: 24,
-                    bgcolor: '#fff',
-                    border: '2px solid #111827',
-                    '&:hover, &.Mui-focusVisible': { boxShadow: '0 0 0 8px rgba(17, 24, 39, 0.1)' },
-                  },
-                  '& .MuiSlider-mark': {
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    bgcolor: '#d1d5db',
-                    opacity: 1,
-                    '&.MuiSlider-markActive': { bgcolor: '#111827' },
-                  },
-                }}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', px: { xs: 0, sm: 0.5 }, mt: 1, gap: 1 }}>
-              {PAYMENT_PRICING_TIERS.map((tier, i) => {
-                const active = paymentTierIndex === i;
-                return (
-                  <Box
-                    key={tier.key}
-                    component="button"
-                    type="button"
-                    disabled={paymentSubmitting}
-                    onClick={() => setPaymentTierIndex(i)}
-                    sx={{
-                      flex: 1,
-                      minWidth: 0,
-                      textAlign: 'center',
-                      cursor: paymentSubmitting ? 'default' : 'pointer',
-                      border: 'none',
-                      bgcolor: active ? '#f3f4f6' : 'transparent',
-                      borderRadius: '8px',
-                      py: 1,
-                      px: 0.5,
-                      transition: 'background 0.15s',
-                      '&:hover': { bgcolor: paymentSubmitting ? undefined : '#f9fafb' },
-                    }}
-                  >
-                    <Typography sx={{ fontSize: '0.8125rem', fontWeight: active ? 800 : 600, color: active ? '#111827' : '#6b7280', lineHeight: 1.3 }}>
-                      {tier.name}
-                    </Typography>
-                    <Typography sx={{ fontSize: '0.7rem', color: '#9ca3af', fontWeight: 600, mt: 0.25 }}>
-                      Rs {tier.price.toLocaleString()}
-                    </Typography>
-                  </Box>
-                );
-              })}
-            </Box>
-          </Paper>
-
-          <Grid container spacing={2} sx={{ mt: 0 }}>
-            {PAYMENT_PRICING_TIERS.map((tier, i) => {
-              const selected = paymentTierIndex === i;
-              return (
-                <Grid item xs={12} md={4} key={tier.key}>
-                  <Paper
-                    elevation={0}
-                    onClick={() => !paymentSubmitting && setPaymentTierIndex(i)}
-                    sx={{
-                      p: 2.25,
-                      height: '100%',
-                      minHeight: 280,
-                      borderRadius: '10px',
-                      border: selected ? '2px solid #111827' : '1px solid #e5e7eb',
-                      bgcolor: selected ? '#fafafa' : '#ffffff',
-                      cursor: paymentSubmitting ? 'default' : 'pointer',
-                      transition: 'border-color 0.2s, box-shadow 0.2s, background 0.2s',
-                      boxShadow: selected ? '0 10px 28px rgba(17, 24, 39, 0.1)' : '0 1px 2px rgba(15, 23, 42, 0.04)',
-                      position: 'relative',
-                      '&:hover': paymentSubmitting ? {} : { borderColor: '#9ca3af' },
-                    }}
-                  >
-                    <Box sx={{ position: 'absolute', left: 0, right: 0, top: 0, height: 5, borderTopLeftRadius: '8px', borderTopRightRadius: '8px', bgcolor: selected ? '#111827' : '#e5e7eb' }} />
-                    {tier.popular && (
-                      <Chip label="Popular" size="small" sx={{ position: 'absolute', top: 12, right: 12, fontWeight: 800, fontSize: '0.65rem', height: 22, bgcolor: '#111827', color: '#fff' }} />
-                    )}
-                    <Typography sx={{ fontWeight: 800, fontSize: '1rem', color: '#111827', pr: tier.popular ? 6 : 0, mt: 0.5 }}>{tier.name}</Typography>
-                    <Typography sx={{ fontSize: '0.78rem', color: '#6b7280', mt: 0.35, mb: 1.5 }}>{tier.subtitle}</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, mb: 1.5 }}>
-                      <Typography sx={{ fontWeight: 900, fontSize: '1.65rem', color: '#111827', letterSpacing: '-0.02em' }}>
-                        Rs {tier.price.toLocaleString()}
-                      </Typography>
-                      <Typography sx={{ fontSize: '0.75rem', color: '#9ca3af', fontWeight: 600 }}>{tier.period}</Typography>
-                    </Box>
-                    <Divider sx={{ borderColor: '#e5e7eb', my: 1.25 }} />
-                    <Stack spacing={0.85}>
-                      {tier.features.map((line) => (
-                        <Box key={line} sx={{ display: 'flex', gap: 0.75, alignItems: 'flex-start' }}>
-                          <CheckRoundedIcon sx={{ fontSize: 18, color: '#111827', mt: 0.1, flexShrink: 0 }} />
-                          <Typography sx={{ fontSize: '0.8125rem', color: '#374151', lineHeight: 1.45 }}>{line}</Typography>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </Paper>
-                </Grid>
-              );
-            })}
-          </Grid>
-
-          <Paper elevation={0} sx={{ p: 2, mt: 2.5, borderRadius: '10px', border: '1px solid #e5e7eb', bgcolor: '#fafafa' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-              <Box>
-                <Typography sx={{ fontSize: '0.8125rem', color: '#6b7280', fontWeight: 600 }}>Selected package</Typography>
-                <Typography sx={{ fontSize: '0.9375rem', color: '#111827', fontWeight: 800 }}>{PAYMENT_PRICING_TIERS[paymentTierIndex].name}</Typography>
-              </Box>
-              <Box sx={{ textAlign: 'right' }}>
-                <Typography sx={{ fontSize: '0.8125rem', color: '#6b7280', fontWeight: 600 }}>Total due</Typography>
-                <Typography sx={{ fontSize: '1.25rem', color: '#111827', fontWeight: 900 }}>Rs {PAYMENT_PRICING_TIERS[paymentTierIndex].price.toLocaleString()}</Typography>
-              </Box>
-            </Box>
-          </Paper>
-
-          <Typography sx={{ fontSize: '0.75rem', color: '#9ca3af', mt: 1.75, lineHeight: 1.5 }}>
-            Secure checkout will open here once your payment provider is connected. For now, Pay now simulates the next step.
-          </Typography>
+        <DialogContent sx={{ p: 0 }}>
+          <BusinessPlanComparisonBody
+            tierIndex={paymentTierIndex}
+            onTierChange={setPaymentTierIndex}
+            disabled={paymentSubmitting}
+          />
         </DialogContent>
-        <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 2, bgcolor: '#f9fafb', borderTop: '1px solid #e5e7eb', gap: 1.25 }}>
-          <Button variant="outlined" disabled={paymentSubmitting} onClick={() => setPaymentOpen(false)}
-            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '8px', borderColor: '#d1d5db', color: '#374151', bgcolor: '#fff' }}>
-            Cancel
-          </Button>
-          <Button variant="contained" disabled={paymentSubmitting} onClick={handlePaymentConfirm}
-            sx={{ minWidth: 180, bgcolor: '#111827', color: '#fff', textTransform: 'none', fontWeight: 700, borderRadius: '8px', boxShadow: 'none', '&:hover': { bgcolor: '#000' } }}>
-            {paymentSubmitting ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : `Pay Rs ${PAYMENT_PRICING_TIERS[paymentTierIndex].price.toLocaleString()}`}
-          </Button>
+        <DialogActions sx={{ p: 0, display: 'block' }}>
+          <BusinessPlanPaymentFooter
+            tierIndex={paymentTierIndex}
+            onCancel={() => !paymentSubmitting && setPaymentOpen(false)}
+            onPay={handlePaymentConfirm}
+            submitting={paymentSubmitting}
+          />
         </DialogActions>
       </Dialog>
     </Box>

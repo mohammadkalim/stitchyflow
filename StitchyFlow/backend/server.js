@@ -71,6 +71,7 @@ app.get('/api/v1/admin/tailor-services', authenticateToken, async (req, res) => 
 app.use('/api/v1/auth', require('./routes/auth.routes'));
 app.use('/api/v1/users', require('./routes/users.routes'));
 app.use('/api/v1/orders', require('./routes/orders.routes'));
+app.use('/api/v1/analytics', require('./routes/analytics.routes'));
 app.use('/api/v1/admin', require('./routes/admin.routes'));
 app.use('/api/v1/smtp', require('./routes/smtp.routes'));
 // Public tailor shop detail — app-level route so GET always hits before any nested auth (fixes 404 from proxy/clients).

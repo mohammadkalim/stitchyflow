@@ -11,7 +11,7 @@ import Header from '../components/Header';
 import OverviewSection from './tailor/OverviewSection';
 import MyBusinessesSection from './tailor/MyBusinessesSection';
 import ServicesSection from './tailor/ServicesSection';
-import PromotionsSection from './tailor/PromotionsSection';
+import ShopMediaSection from './tailor/ShopMediaSection';
 import OrdersSection from './tailor/OrdersSection';
 import ReviewsSection from './tailor/ReviewsSection';
 import MessagesSection from './tailor/MessagesSection';
@@ -21,11 +21,11 @@ import SupportSection from './tailor/SupportSection';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import MiscellaneousServicesOutlinedIcon from '@mui/icons-material/MiscellaneousServicesOutlined';
-import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import MessageOutlinedIcon from '@mui/icons-material/MessageOutlined';
 import AnalyticsOutlinedIcon from '@mui/icons-material/AnalyticsOutlined';
+import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -56,7 +56,7 @@ const SIDEBAR_NAV = [
   { key: 'overview',    label: 'Overview',        Icon: DashboardOutlinedIcon },
   { key: 'businesses',  label: 'My Businesses',   Icon: StorefrontOutlinedIcon },
   { key: 'services',    label: 'Services',         Icon: MiscellaneousServicesOutlinedIcon },
-  { key: 'promotions',  label: 'Promotions',       Icon: LocalOfferOutlinedIcon },
+  { key: 'shop-media',  label: 'Shop Media',       Icon: PermMediaOutlinedIcon },
   { key: 'bookings',    label: 'Orders',           Icon: CalendarTodayOutlinedIcon },
   { key: 'reviews',     label: 'Reviews',          Icon: StarBorderIcon },
   { key: 'messages',    label: 'Messages',         Icon: MessageOutlinedIcon },
@@ -372,7 +372,7 @@ function TailorDashboard() {
           {activeKey === 'overview'   && <OverviewSection user={user} isApproved={isApproved} onNavigate={navToSection} showHeroBanner={heroBannerOpen} />}
           {activeKey === 'businesses' && <MyBusinessesSection isApproved={isApproved} />}
           {activeKey === 'services'   && <ServicesSection isApproved={isApproved} />}
-          {activeKey === 'promotions' && <PromotionsSection isApproved={isApproved} />}
+          {activeKey === 'shop-media' && <ShopMediaSection isApproved={isApproved} />}
           {activeKey === 'bookings'   && <OrdersSection isApproved={isApproved} />}
           {activeKey === 'reviews'    && <ReviewsSection isApproved={isApproved} />}
           {activeKey === 'messages'   && <MessagesSection isApproved={isApproved} user={user} />}
