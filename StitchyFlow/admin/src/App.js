@@ -33,6 +33,7 @@ const AddMoreSMTP = lazy(ADMIN_PAGE_CHUNKS['/add-more-smtp']);
 const Business = lazy(ADMIN_PAGE_CHUNKS['/business']);
 const TailerVerifications = lazy(ADMIN_PAGE_CHUNKS['/business/tailer-verifications']);
 const TailorsShops = lazy(ADMIN_PAGE_CHUNKS['/business/tailors-shops']);
+const BusinessShopMedia = lazy(ADMIN_PAGE_CHUNKS['/business/shop-media']);
 const BusinessSettings = lazy(ADMIN_PAGE_CHUNKS['/business/settings']);
 const BusinessTailerOrders = lazy(ADMIN_PAGE_CHUNKS['/business/tailer-orders']);
 const BusinessTailorLogs = lazy(ADMIN_PAGE_CHUNKS['/business/tailor-logs']);
@@ -159,6 +160,7 @@ function App() {
             <Route path="/business" element={<PrivateRoute><Business /></PrivateRoute>} />
             <Route path="/business/tailer-verifications" element={<PrivateRoute><TailerVerifications /></PrivateRoute>} />
             <Route path="/business/tailors-shops" element={<PrivateRoute><TailorsShops /></PrivateRoute>} />
+            <Route path="/business/shop-media" element={<PrivateRoute><BusinessShopMedia /></PrivateRoute>} />
             <Route path="/business/settings" element={<PrivateRoute><BusinessSettings /></PrivateRoute>} />
             <Route path="/business/tailer-orders" element={<PrivateRoute><BusinessTailerOrders /></PrivateRoute>} />
             <Route path="/business/tailor-logs" element={<PrivateRoute><BusinessTailorLogs /></PrivateRoute>} />

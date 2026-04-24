@@ -22,6 +22,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MiscellaneousServicesOutlinedIcon from '@mui/icons-material/MiscellaneousServicesOutlined';
+import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 
@@ -92,6 +93,7 @@ export default function TailorShopDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [shopServices, setShopServices] = useState([]);
+  const [shopMedia, setShopMedia] = useState([]);
   const [servicesModalOpen, setServicesModalOpen] = useState(false);
 
   const load = useCallback(() => {
@@ -105,14 +107,17 @@ export default function TailorShopDetails() {
           setShop(row);
           /* Services are embedded on GET /business/public/shops/:id (no second request — avoids 404 when /services route is absent). */
           setShopServices(Array.isArray(row.services) ? row.services : []);
+          setShopMedia(Array.isArray(row.shop_media) ? row.shop_media : []);
           return;
         }
         setError('Could not load this shop.');
         setShopServices([]);
+        setShopMedia([]);
       })
       .catch((e) => {
         setError(e.message || 'Shop not found or unavailable.');
         setShopServices([]);
+        setShopMedia([]);
       })
       .finally(() => setLoading(false));
   }, [shopId]);
@@ -314,6 +319,39 @@ export default function TailorShopDetails() {
                     )}
                   </Stack>
                 </Paper>
+
+                {shopMedia.length > 0 && (
+                  <Paper elevation={0} sx={{ p: { xs: 2.5, md: 3.5 }, borderRadius: '16px', border: '1px solid #e2e8f0', mb: 3 }}>
+                    <SectionTitle icon={PermMediaOutlinedIcon}>Shop gallery</SectionTitle>
+                    <Grid container spacing={2}>
+                      {shopMedia.map((m) => (
+                        <Grid item xs={12} sm={6} key={m.media_id}>
+                          <Box
+                            sx={{
+                              borderRadius: '14px',
+                              overflow: 'hidden',
+                              border: '1px solid #e8ecf1',
+                              bgcolor: '#fafafa',
+                            }}
+                          >
+                            <Box
+                              component="img"
+                              src={resolvePublicBusinessImageUrl(m.image_url, shop)}
+                              alt=""
+                              sx={{ width: '100%', height: 200, objectFit: 'cover', display: 'block', bgcolor: '#f1f5f9' }}
+                            />
+                            <Box sx={{ p: 2 }}>
+                              <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.98rem', mb: 0.75 }}>{m.title}</Typography>
+                              {m.caption ? (
+                                <Typography sx={{ color: '#475569', fontSize: '0.86rem', lineHeight: 1.55 }}>{m.caption}</Typography>
+                              ) : null}
+                            </Box>
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Paper>
+                )}
 
                 <Paper
                   elevation={0}

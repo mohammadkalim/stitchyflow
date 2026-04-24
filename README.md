@@ -29,6 +29,8 @@ cd ../..
 mysql -u root -p12345 < Database/database_setup.sql
 ```
 
+**Shop Media (tailor gallery):** The API creates **`business_shop_media`** on startup with the business module. To add it manually in phpMyAdmin, run **`Database/create_business_shop_media.sql`** on the **`stitchyflow`** database.
+
 If your `stitchyflow` database already existed before **2026-04-11** and the admin Tailor Services screen reports unknown columns, apply the navigation columns migration (adds `link_path`, `accent_color`, and refreshes the public view):
 
 ```bash
@@ -44,7 +46,8 @@ mysql -u root -p12345 < Database/add_tailor_services_link_accent.sql
 ## Application URLs
 
 - **Frontend:** http://localhost:3000
-- **Admin Panel:** http://localhost:4000
+- **Admin Panel:** http://localhost:4000  
+  - Optional **`.env`** in `StitchyFlow/admin`: `REACT_APP_MAIN_SITE_URL=http://localhost:3000` so **Business Shop Media** “view on website” links use the correct public origin.
 - **Backend API:** http://localhost:5000
 - **phpMyAdmin:** http://localhost:8080/phpmyadmin
 

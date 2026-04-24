@@ -192,6 +192,20 @@ async function initBusinessTables() {
       user_agent TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
+    `CREATE TABLE IF NOT EXISTS business_shop_media (
+      media_id INT AUTO_INCREMENT PRIMARY KEY,
+      shop_id INT NOT NULL,
+      owner_user_id INT NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      caption TEXT,
+      image_url VARCHAR(500) NOT NULL,
+      sort_order INT NOT NULL DEFAULT 0,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_shop_media_shop (shop_id),
+      INDEX idx_shop_media_owner (owner_user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     `CREATE TABLE IF NOT EXISTS business_type_management (
       type_id INT AUTO_INCREMENT PRIMARY KEY,
       type_name VARCHAR(255) NOT NULL,
@@ -420,6 +434,23 @@ async function ensureServiceShopOwnership(req, shopId) {
   return rows.length > 0;
 }
 
+/** Active gallery rows for public shop detail (no auth). */
+async function fetchPublicShopMedia(shopId) {
+  try {
+    const [rows] = await db.query(
+      `SELECT media_id, shop_id, title, caption, image_url, sort_order, created_at
+       FROM business_shop_media
+       WHERE shop_id = ? AND COALESCE(is_active, 1) = 1
+       ORDER BY sort_order ASC, media_id ASC`,
+      [shopId]
+    );
+    return rows;
+  } catch (e) {
+    if (e.code === 'ER_NO_SUCH_TABLE') return [];
+    throw e;
+  }
+}
+
 // ── PUBLIC: Active shops for frontend slider (no auth required) ───────────────
 router.get('/public/shops', async (req, res) => {
   try {
@@ -608,8 +639,15 @@ async function getPublicShopById(req, res) {
       if (svcErr.code !== 'ER_NO_SUCH_TABLE') console.warn('getPublicShopById services:', svcErr.message);
       services = [];
     }
+    let shopMedia = [];
+    try {
+      shopMedia = await fetchPublicShopMedia(shopId);
+    } catch (mediaErr) {
+      if (mediaErr.code !== 'ER_NO_SUCH_TABLE') console.warn('getPublicShopById shop_media:', mediaErr.message);
+      shopMedia = [];
+    }
     res.set('Cache-Control', 'private, no-cache, must-revalidate');
-    res.json({ success: true, data: { ...rows[0], services } });
+    res.json({ success: true, data: { ...rows[0], services, shop_media: shopMedia } });
   } catch (error) {
     if (error.code === 'ER_NO_SUCH_TABLE') {
       try {
@@ -661,10 +699,17 @@ async function getPublicShopById(req, res) {
           if (svcErr.code !== 'ER_NO_SUCH_TABLE') console.warn('getPublicShopById services (fallback):', svcErr.message);
           services = [];
         }
+        let shopMedia = [];
+        try {
+          shopMedia = await fetchPublicShopMedia(shopId);
+        } catch (mediaErr) {
+          if (mediaErr.code !== 'ER_NO_SUCH_TABLE') console.warn('getPublicShopById shop_media (fallback):', mediaErr.message);
+          shopMedia = [];
+        }
         res.set('Cache-Control', 'private, no-cache, must-revalidate');
         return res.json({
           success: true,
-          data: { ...rows[0], category_name: null, subcategory_name: null, services },
+          data: { ...rows[0], category_name: null, subcategory_name: null, services, shop_media: shopMedia },
         });
       } catch (e2) {
         return res.status(500).json({ success: false, error: { message: e2.message } });
@@ -730,6 +775,172 @@ router.get('/shops/enriched', async (req, res) => {
       data: rows,
       ...(maxShops != null ? { meta: { maxShops } } : {}),
     });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+// ── Shop media (gallery) — dedicated table business_shop_media ────────────────
+router.get('/shop-media', async (req, res) => {
+  try {
+    if (!isTailorUser(req)) {
+      return res.status(403).json({ success: false, error: { message: 'Only business owners can manage shop media.' } });
+    }
+    const shopIdQ = req.query.shop_id;
+    let sql = `
+      SELECT m.*, s.shop_name
+      FROM business_shop_media m
+      INNER JOIN business_tailor_shops s ON s.shop_id = m.shop_id AND s.owner_user_id = ?
+      WHERE m.owner_user_id = ? AND COALESCE(m.is_active, 1) = 1
+    `;
+    const params = [req.user.userId, req.user.userId];
+    if (shopIdQ !== undefined && shopIdQ !== '') {
+      sql += ' AND m.shop_id = ?';
+      params.push(Number(shopIdQ));
+    }
+    sql += ' ORDER BY m.sort_order ASC, m.media_id ASC';
+    const [rows] = await db.query(sql, params);
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      return res.json({ success: true, data: [] });
+    }
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+router.post('/shop-media', async (req, res) => {
+  try {
+    if (!isTailorUser(req)) {
+      return res.status(403).json({ success: false, error: { message: 'Only tailors can add shop media.' } });
+    }
+    const shop_id = Number(req.body.shop_id);
+    const title = (req.body.title && String(req.body.title).trim()) || '';
+    const caption = String(req.body.caption ?? '').trim();
+    const image_url = (req.body.image_url && String(req.body.image_url).trim()) || '';
+    const sort_order = req.body.sort_order != null ? Number(req.body.sort_order) : 0;
+    if (!Number.isFinite(shop_id) || shop_id < 1) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid shop.' } });
+    }
+    if (!title) {
+      return res.status(400).json({ success: false, error: { message: 'Title is required.' } });
+    }
+    if (!image_url) {
+      return res.status(400).json({ success: false, error: { message: 'Image is required.' } });
+    }
+    if (!(await ensureServiceShopOwnership(req, shop_id))) {
+      return res.status(403).json({ success: false, error: { message: 'You can only add media to your own shop.' } });
+    }
+    const [result] = await db.query(
+      `INSERT INTO business_shop_media (shop_id, owner_user_id, title, caption, image_url, sort_order, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, 1)`,
+      [shop_id, req.user.userId, title, caption, image_url, Number.isFinite(sort_order) ? sort_order : 0]
+    );
+    await writeLog(req, {
+      pageName: 'shop-media',
+      actionType: 'CREATE',
+      entityId: result.insertId,
+      description: 'Shop media created',
+    });
+    res.status(201).json({ success: true, data: { media_id: result.insertId } });
+  } catch (error) {
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(503).json({ success: false, error: { message: 'Shop media table not ready. Restart the API to run migrations.' } });
+    }
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+router.put('/shop-media/:id', async (req, res) => {
+  try {
+    if (!isTailorUser(req)) {
+      return res.status(403).json({ success: false, error: { message: 'Only tailors can update shop media.' } });
+    }
+    const mediaId = Number(req.params.id);
+    if (!Number.isFinite(mediaId) || mediaId < 1) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid media id.' } });
+    }
+    const [existing] = await db.query(
+      'SELECT * FROM business_shop_media WHERE media_id = ? AND owner_user_id = ? LIMIT 1',
+      [mediaId, req.user.userId]
+    );
+    if (!existing.length) {
+      return res.status(404).json({ success: false, error: { message: 'Media not found.' } });
+    }
+    const payload = {};
+    if (req.body.title !== undefined) {
+      const t = String(req.body.title).trim();
+      if (!t) {
+        return res.status(400).json({ success: false, error: { message: 'Title cannot be empty.' } });
+      }
+      payload.title = t;
+    }
+    if (req.body.caption !== undefined) payload.caption = String(req.body.caption ?? '').trim();
+    if (req.body.image_url !== undefined) payload.image_url = String(req.body.image_url || '').trim();
+    if (req.body.sort_order !== undefined) payload.sort_order = Number(req.body.sort_order);
+    if (req.body.is_active !== undefined) payload.is_active = req.body.is_active ? 1 : 0;
+    if (req.body.shop_id !== undefined) {
+      const newShop = Number(req.body.shop_id);
+      if (!Number.isFinite(newShop) || newShop < 1) {
+        return res.status(400).json({ success: false, error: { message: 'Invalid shop.' } });
+      }
+      if (!(await ensureServiceShopOwnership(req, newShop))) {
+        return res.status(403).json({ success: false, error: { message: 'You can only move media to your own shop.' } });
+      }
+      payload.shop_id = newShop;
+    }
+    if (payload.image_url !== undefined && !payload.image_url) {
+      return res.status(400).json({ success: false, error: { message: 'Image URL cannot be empty.' } });
+    }
+    const fields = Object.keys(payload);
+    if (!fields.length) {
+      return res.status(400).json({ success: false, error: { message: 'No fields to update.' } });
+    }
+    const setClause = fields.map((f) => `${f} = ?`).join(', ');
+    const values = fields.map((f) => payload[f]);
+    values.push(mediaId, req.user.userId);
+    const [upd] = await db.query(
+      `UPDATE business_shop_media SET ${setClause} WHERE media_id = ? AND owner_user_id = ?`,
+      values
+    );
+    if (!upd.affectedRows) {
+      return res.status(404).json({ success: false, error: { message: 'Media not found.' } });
+    }
+    await writeLog(req, {
+      pageName: 'shop-media',
+      actionType: 'UPDATE',
+      entityId: mediaId,
+      description: 'Shop media updated',
+    });
+    res.json({ success: true, message: 'Updated' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: error.message } });
+  }
+});
+
+router.delete('/shop-media/:id', async (req, res) => {
+  try {
+    if (!isTailorUser(req)) {
+      return res.status(403).json({ success: false, error: { message: 'Only tailors can delete shop media.' } });
+    }
+    const mediaId = Number(req.params.id);
+    if (!Number.isFinite(mediaId) || mediaId < 1) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid media id.' } });
+    }
+    const [result] = await db.query(
+      'DELETE FROM business_shop_media WHERE media_id = ? AND owner_user_id = ?',
+      [mediaId, req.user.userId]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, error: { message: 'Media not found.' } });
+    }
+    await writeLog(req, {
+      pageName: 'shop-media',
+      actionType: 'DELETE',
+      entityId: mediaId,
+      description: 'Shop media deleted',
+    });
+    res.json({ success: true, message: 'Deleted' });
   } catch (error) {
     res.status(500).json({ success: false, error: { message: error.message } });
   }

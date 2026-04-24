@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-04-24 (Admin — Business Shop Media page)
+
+- **Admin panel (`:4000`):** Under **Business**, new item **Business Shop Media** → `GET /api/v1/admin/shop-media` (table + shop/owner joins), **PATCH** toggle `is_active`, **DELETE** row. Page links to the public shop on the main site (`REACT_APP_MAIN_SITE_URL`, default `http://localhost:3000`). Handlers live in **`routes/admin_shop_media.handlers.js`** and are registered on **`server.js`** before `app.use('/api/v1/admin', …)` so the paths are never lost to nested-router **404**s (same pattern as **`/api/v1/admin/tailor-services`**). Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
+## 2026-04-24 (Shop Media — `business_shop_media` table)
+
+- **Database:** New table **`business_shop_media`** (`media_id`, `shop_id`, `owner_user_id`, `title`, `caption`, `image_url`, `sort_order`, `is_active`, timestamps). Created automatically when the API runs **`initBusinessTables`**, or apply **`Database/create_business_shop_media.sql`** in phpMyAdmin.
+- **API:** **`GET|POST /api/v1/business/shop-media`**, **`PUT|DELETE /api/v1/business/shop-media/:id`** (tailor JWT, shop ownership enforced). **`GET /api/v1/business/public/shops/:shopId`** now includes **`shop_media`** for the public gallery.
+- **Frontend:** Tailor **Shop Media** tab uses the new endpoints; public **Tailor shop detail** shows a **Shop gallery** when items exist. Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.
+
 ## 2026-04-24 (tailor Analytics — no /analytics 404)
 
 - **Tailor dashboard Analytics tab:** Loads metrics from **`GET /orders`** only (client-side aggregation in **`frontend/src/utils/tailorAnalyticsFromOrders.js`**), so the browser no longer requests **`/api/v1/analytics/tailor`** and does not log **404** when the API process is stale. **`GET /orders`** responses now include **`customer_id`** and **`actual_completion_date`** (main + fallback SQL) for correct client metrics. The backend **`/analytics/tailor`** route remains available for other use. Developer: Muhammad Kalim, LogixInventor (PVT) Ltd.

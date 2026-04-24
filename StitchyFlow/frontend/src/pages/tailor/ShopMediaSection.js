@@ -1,6 +1,6 @@
 /**
  * Tailor dashboard — Shop Media (images + captions per business).
- * Persists as business_settings rows (setting_group: shop_media).
+ * Persisted in MySQL table `business_shop_media` via GET|POST|PUT|DELETE /api/v1/business/shop-media.
  * Developer by: Muhammad Kalim · Product of LogixInventor (PVT) Ltd.
  */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -28,7 +28,6 @@ import { apiFetch, getApiBase, getToken, resolvePublicBusinessImageUrl } from '.
 
 const G = '#1b4332';
 const GL = '#2d6a4f';
-const GROUP = 'shop_media';
 
 const EMPTY_FORM = { shop_id: '', title: '', caption: '', imageUrl: '' };
 
@@ -50,20 +49,6 @@ async function uploadBusinessImageFile(file) {
   return data?.data?.imageUrl || '';
 }
 
-function parseRow(settingValue) {
-  try {
-    const v = JSON.parse(settingValue);
-    return {
-      shop_id: v.shop_id != null ? Number(v.shop_id) : null,
-      title: v.title || '',
-      caption: v.caption || '',
-      imageUrl: v.imageUrl || '',
-    };
-  } catch {
-    return { shop_id: null, title: '', caption: '', imageUrl: '' };
-  }
-}
-
 export default function ShopMediaSection({ isApproved }) {
   const [shops, setShops] = useState([]);
   const [list, setList] = useState([]);
@@ -78,11 +63,10 @@ export default function ShopMediaSection({ isApproved }) {
 
   const load = useCallback(() => {
     setLoading(true);
-    Promise.all([apiFetch('/business/shops/enriched'), apiFetch('/business/settings')])
-      .then(([rShops, rSet]) => {
+    Promise.all([apiFetch('/business/shops/enriched'), apiFetch('/business/shop-media')])
+      .then(([rShops, rMedia]) => {
         setShops(Array.isArray(rShops.data) ? rShops.data : []);
-        const rows = Array.isArray(rSet.data) ? rSet.data : [];
-        setList(rows.filter((s) => s.setting_group === GROUP));
+        setList(Array.isArray(rMedia.data) ? rMedia.data : []);
       })
       .catch(() => {
         setShops([]);
@@ -99,12 +83,9 @@ export default function ShopMediaSection({ isApproved }) {
   const shopIds = useMemo(() => new Set(shops.map((s) => Number(s.shop_id))), [shops]);
 
   const filtered = useMemo(() => {
-    const mine = list.filter((row) => {
-      const { shop_id: sid } = parseRow(row.setting_value);
-      return sid != null && shopIds.has(sid);
-    });
+    const mine = list.filter((row) => row.shop_id != null && shopIds.has(Number(row.shop_id)));
     if (filterShop === 'all') return mine;
-    return mine.filter((row) => String(parseRow(row.setting_value).shop_id) === String(filterShop));
+    return mine.filter((row) => String(row.shop_id) === String(filterShop));
   }, [list, filterShop, shopIds]);
 
   const shopName = (id) => shops.find((s) => String(s.shop_id) === String(id))?.shop_name || `Shop ${id}`;
@@ -120,12 +101,11 @@ export default function ShopMediaSection({ isApproved }) {
   };
 
   const openEdit = (row) => {
-    const v = parseRow(row.setting_value);
     setForm({
-      shop_id: v.shop_id != null ? String(v.shop_id) : '',
-      title: v.title,
-      caption: v.caption,
-      imageUrl: v.imageUrl,
+      shop_id: row.shop_id != null ? String(row.shop_id) : '',
+      title: row.title || '',
+      caption: row.caption || '',
+      imageUrl: row.image_url || '',
     });
     setEdit(row);
     setError('');
@@ -164,29 +144,28 @@ export default function ShopMediaSection({ isApproved }) {
       setError('Upload an image.');
       return;
     }
-    const val = JSON.stringify({
-      shop_id: Number(form.shop_id),
-      title: form.title.trim(),
-      caption: (form.caption || '').trim(),
-      imageUrl: form.imageUrl.trim(),
-    });
     setSaving(true);
     setError('');
     try {
       if (edit) {
-        await apiFetch(`/business/settings/${edit.setting_id}`, {
+        await apiFetch(`/business/shop-media/${edit.media_id}`, {
           method: 'PUT',
-          body: JSON.stringify({ setting_value: val, is_active: 1 }),
+          body: JSON.stringify({
+            shop_id: Number(form.shop_id),
+            title: form.title.trim(),
+            caption: (form.caption || '').trim(),
+            image_url: form.imageUrl.trim(),
+          }),
         });
       } else {
-        const key = `shop_media_${form.shop_id}_${Date.now()}`;
-        await apiFetch('/business/settings', {
+        await apiFetch('/business/shop-media', {
           method: 'POST',
           body: JSON.stringify({
-            setting_key: key,
-            setting_value: val,
-            setting_group: GROUP,
-            is_active: 1,
+            shop_id: Number(form.shop_id),
+            title: form.title.trim(),
+            caption: (form.caption || '').trim(),
+            image_url: form.imageUrl.trim(),
+            sort_order: 0,
           }),
         });
       }
@@ -202,7 +181,7 @@ export default function ShopMediaSection({ isApproved }) {
   const del = async (row) => {
     if (!window.confirm('Remove this media item?')) return;
     try {
-      await apiFetch(`/business/settings/${row.setting_id}`, { method: 'DELETE' });
+      await apiFetch(`/business/shop-media/${row.media_id}`, { method: 'DELETE' });
       load();
     } catch (e) {
       alert(e.message || 'Delete failed');
@@ -229,7 +208,7 @@ export default function ShopMediaSection({ isApproved }) {
         <Box>
           <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.2rem' }}>Shop Media</Typography>
           <Typography sx={{ color: '#64748b', fontSize: '0.84rem', mt: 0.35, maxWidth: 640 }}>
-            Showcase photos and short text for each business — great for work samples, offers, or storefront highlights.
+            Showcase photos and short text for each business — saved in the database and shown on your public shop page.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -281,10 +260,9 @@ export default function ShopMediaSection({ isApproved }) {
       ) : (
         <Grid container spacing={2.5}>
           {filtered.map((row) => {
-            const v = parseRow(row.setting_value);
-            const src = resolvePublicBusinessImageUrl(v.imageUrl);
+            const src = resolvePublicBusinessImageUrl(row.image_url);
             return (
-              <Grid item xs={12} sm={6} md={4} key={row.setting_id}>
+              <Grid item xs={12} sm={6} md={4} key={row.media_id}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -307,10 +285,10 @@ export default function ShopMediaSection({ isApproved }) {
                   />
                   <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', mb: 0.5 }}>
-                      {shopName(v.shop_id)}
+                      {shopName(row.shop_id)}
                     </Typography>
-                    <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem', mb: 1 }}>{v.title || 'Untitled'}</Typography>
-                    <Typography sx={{ color: '#475569', fontSize: '0.84rem', lineHeight: 1.55, flex: 1 }}>{v.caption || '—'}</Typography>
+                    <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem', mb: 1 }}>{row.title || 'Untitled'}</Typography>
+                    <Typography sx={{ color: '#475569', fontSize: '0.84rem', lineHeight: 1.55, flex: 1 }}>{row.caption || '—'}</Typography>
                     <Box sx={{ display: 'flex', gap: 1, mt: 1.5, pt: 1.5, borderTop: '1px solid #f1f5f9' }}>
                       <Button size="small" startIcon={<EditOutlinedIcon sx={{ fontSize: 16 }} />} onClick={() => openEdit(row)} sx={{ textTransform: 'none', fontWeight: 600, color: '#2563eb' }}>
                         Edit

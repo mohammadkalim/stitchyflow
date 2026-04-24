@@ -29,6 +29,7 @@ export const ADMIN_PAGE_CHUNKS = {
   '/business': () => import('./pages/Business'),
   '/business/tailer-verifications': () => import('./pages/business/TailerVerifications'),
   '/business/tailors-shops': () => import('./pages/business/TailorsShops'),
+  '/business/shop-media': () => import('./pages/business/BusinessShopMedia'),
   '/business/settings': () => import('./pages/BusinessSettings'),
   '/business/tailer-orders': () => import('./pages/BusinessTailerOrders'),
   '/business/tailor-logs': () => import('./pages/BusinessTailorLogs'),

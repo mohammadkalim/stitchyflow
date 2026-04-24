@@ -67,6 +67,12 @@ app.get('/api/v1/admin/tailor-services', authenticateToken, async (req, res) => 
   }
 });
 
+// Admin shop media — app-level (must register before app.use('/api/v1/admin', …)) so GET|PATCH|DELETE always resolve (avoids nested-router 404s).
+const adminShopMediaHandlers = require('./routes/admin_shop_media.handlers');
+app.get('/api/v1/admin/shop-media', authenticateToken, adminShopMediaHandlers.listShopMedia);
+app.patch('/api/v1/admin/shop-media/:id', authenticateToken, adminShopMediaHandlers.patchShopMedia);
+app.delete('/api/v1/admin/shop-media/:id', authenticateToken, adminShopMediaHandlers.deleteShopMedia);
+
 // Routes
 app.use('/api/v1/auth', require('./routes/auth.routes'));
 app.use('/api/v1/users', require('./routes/users.routes'));
@@ -261,6 +267,7 @@ server.listen(PORT, async () => {
   );
   console.log(`✓ Environment: ${process.env.NODE_ENV}`);
   console.log(`✓ Splash ad upload routes: POST …/upload-image on /api/v1/ads, /api/v1/admin/ads, /api/v1/ca-sub/ads`);
+  console.log('✓ Admin shop media: GET|PATCH|DELETE /api/v1/admin/shop-media');
   scheduleRefreshTokenCleanup();
   try {
     const { seedTailorShopsIfEmpty } = require('./seed/tailorShopsSeed');

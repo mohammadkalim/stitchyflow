@@ -58,6 +58,7 @@ import CASubIcon from '@mui/icons-material/AccountTree';
 import SubcategoryIcon from '@mui/icons-material/Label';
 import EmailTemplateIcon from '@mui/icons-material/Article';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import PermMediaOutlinedIcon from '@mui/icons-material/PermMediaOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import { prefetchAdminPage } from '../adminPageChunks';
@@ -93,6 +94,7 @@ const adsSubItems = [
 const businessSubItems = [
   { text: 'Tailer Verifications',       icon: <VerificationIcon />,     path: '/business/tailer-verifications' },
   { text: 'Tailors Shops',              icon: <StoreIcon />,            path: '/business/tailors-shops' },
+  { text: 'Business Shop Media',        icon: <PermMediaOutlinedIcon />, path: '/business/shop-media', badge: 'NEW' },
   { text: 'Business Settings',          icon: <BusinessSettingsIcon />, path: '/business/settings' },
   { text: 'Business Tailer Orders',     icon: <OrdersBusinessIcon />,   path: '/business/tailer-orders' },
   { text: 'Business Tailor Logs',       icon: <LogsIcon />,             path: '/business/tailor-logs' },

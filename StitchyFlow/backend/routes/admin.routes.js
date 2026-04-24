@@ -11,6 +11,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
+const adminShopMediaHandlers = require('./admin_shop_media.handlers');
 const fs = require('fs');
 const path = require('path');
 
@@ -367,6 +368,11 @@ async function getRefreshTokenMetrics() {
 
 // Tailor services admin list: implemented in server.js as GET /api/v1/admin/tailor-services
 // (registered on app before this router mounts, so the path always resolves.)
+
+/** All tailor shop gallery rows — handlers also mounted on app as GET /api/v1/admin/shop-media (before admin router). */
+router.get('/shop-media', authenticateToken, adminShopMediaHandlers.listShopMedia);
+router.patch('/shop-media/:id', authenticateToken, adminShopMediaHandlers.patchShopMedia);
+router.delete('/shop-media/:id', authenticateToken, adminShopMediaHandlers.deleteShopMedia);
 
 // Get Analytics
 router.get('/analytics', authenticateToken, async (req, res) => {
