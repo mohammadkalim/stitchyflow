@@ -321,35 +321,77 @@ export default function TailorShopDetails() {
                 </Paper>
 
                 {shopMedia.length > 0 && (
-                  <Paper elevation={0} sx={{ p: { xs: 2.5, md: 3.5 }, borderRadius: '16px', border: '1px solid #e2e8f0', mb: 3 }}>
-                    <SectionTitle icon={PermMediaOutlinedIcon}>Shop gallery</SectionTitle>
-                    <Grid container spacing={2}>
-                      {shopMedia.map((m) => (
-                        <Grid item xs={12} sm={6} key={m.media_id}>
+                  <Paper elevation={0} sx={{ p: { xs: 2.5, md: 4 }, borderRadius: '20px', border: '1px solid #e2e8f0', mb: 3, bgcolor: '#fff' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 3, md: 4 } }}>
+                      {shopMedia.map((m, index) => (
+                        <Box
+                          key={m.media_id}
+                          sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', md: index % 2 === 0 ? 'row' : 'row-reverse' },
+                            gap: { xs: 2.5, md: 4 },
+                            alignItems: 'center',
+                            p: { xs: 2, md: 3 },
+                            borderRadius: '18px',
+                            bgcolor: index % 2 === 0 ? '#f8fafc' : '#fff',
+                            border: '1px solid #e2e8f0',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                              transform: 'translateY(-2px)',
+                            },
+                          }}
+                        >
                           <Box
                             sx={{
-                              borderRadius: '14px',
+                              flex: { xs: 1, md: 1.3 },
+                              borderRadius: '16px',
                               overflow: 'hidden',
-                              border: '1px solid #e8ecf1',
-                              bgcolor: '#fafafa',
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                              border: '2px solid #fff',
                             }}
                           >
                             <Box
                               component="img"
                               src={resolvePublicBusinessImageUrl(m.image_url, shop)}
-                              alt=""
-                              sx={{ width: '100%', height: 200, objectFit: 'cover', display: 'block', bgcolor: '#f1f5f9' }}
+                              alt={m.title}
+                              sx={{ 
+                                width: '100%', 
+                                height: { xs: 280, md: 360 }, 
+                                objectFit: 'cover', 
+                                display: 'block', 
+                                bgcolor: '#f1f5f9',
+                                transition: 'transform 0.3s ease',
+                                '&:hover': {
+                                  transform: 'scale(1.02)',
+                                },
+                              }}
                             />
-                            <Box sx={{ p: 2 }}>
-                              <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '0.98rem', mb: 0.75 }}>{m.title}</Typography>
-                              {m.caption ? (
-                                <Typography sx={{ color: '#475569', fontSize: '0.86rem', lineHeight: 1.55 }}>{m.caption}</Typography>
-                              ) : null}
-                            </Box>
                           </Box>
-                        </Grid>
+                          <Box sx={{ flex: 1, textAlign: { xs: 'left', md: index % 2 === 0 ? 'left' : 'right' }, px: { xs: 0, md: 1 } }}>
+                            <Typography sx={{ 
+                              fontWeight: 800, 
+                              color: '#0f172a', 
+                              fontSize: { xs: '1.25rem', md: '1.5rem' }, 
+                              mb: 1.5,
+                              letterSpacing: '-0.02em',
+                            }}>
+                              {m.title}
+                            </Typography>
+                            {m.caption ? (
+                              <Typography sx={{ 
+                                color: '#475569', 
+                                fontSize: { xs: '0.95rem', md: '1rem' }, 
+                                lineHeight: 1.8,
+                                fontWeight: 400,
+                              }}>
+                                {m.caption}
+                              </Typography>
+                            ) : null}
+                          </Box>
+                        </Box>
                       ))}
-                    </Grid>
+                    </Box>
                   </Paper>
                 )}
 
